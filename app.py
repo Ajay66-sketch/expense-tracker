@@ -1,57 +1,11 @@
 from flask import Flask, request, redirect, render_template_string
 import sqlite3
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 
-# ---------- Database ----------
-
 DB = "expenses.db"
-
-def get_db():
-    conn = sqlite3.connect(DB)
-    conn.row_factory = sqlite3.Row  # So we can access columns by name
-    return conn
-
-def init_db():
-    """Create the expenses table if it doesn't exist."""
-    with get_db() as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS expenses (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                amount INTEGER NOT NULL,
-                category TEXT,
-                created_at TEXT NOT NULL
-            )
-        """)
-
-init_db()  # Initialize DB at startup
-
-# ---------- Helpers ----------
-
-def read_expenses():
-    with get_db() as conn:
-        cursor = conn.execute("SELECT * FROM expenses ORDER BY created_at DESC")
-        return cursor.fetchall()
-
-def add_expense(title, amount, category):
-    with get_db() as conn:
-        conn.execute(
-            "INSERT INTO expenses (title, amount, category, created_at) VALUES (?, ?, ?, ?)",
-            (title, amount, category, datetime.now().isoformat())
-        )
-
-def update_expense(expense_id, title, amount, category):
-    with get_db() as conn:
-        conn.execute(
-            "UPDATE expenses SET title = ?, amount = ?, category = ? WHERE id = ?",
-            (title, amount, category, expense_id)
-        )
-
-def delete_expense(expense_id):
-    with get_db() as conn:
-        conn.execute("DELETE FROM expenses WHERE id = ?", (expense_id,))
 
 # ---------- HTML Templates ----------
 
@@ -71,23 +25,19 @@ HTML = """
 </head>
 <body>
   <h2>Expense Tracker</h2>
-
   <form method="POST" action="/">
     <input type="text" name="title" placeholder="Title" required>
     <input type="number" name="amount" placeholder="Amount" required>
-    <input type="text" name="category" placeholder="Category">
+    <input type="text" name="category" placeholder="Category" required>
     <button type="submit">Add Expense</button>
   </form>
-
-  <h3>Expenses</h3>
+  <hr>
   {% for e in expenses %}
     <div class="expense">
-      <span>{{ e['title'] }} ({{ e['category'] }}) - ₹{{ e['amount'] }}</span>
-      <span class="btn"><a href="/edit/{{ e['id'] }}">Edit</a></span>
-      <span class="btn"><a href="/delete/{{ e['id'] }}">Delete</a></span>
+      <span>{{ e[1] }} | {{ e[2] }} | {{ e[3] }}</span>
+      <a class="btn" href="/edit/{{ e[0] }}">Edit</a>
+      <a class="btn" href="/delete/{{ e[0] }}">Delete</a>
     </div>
-  {% else %}
-    <p>No expenses yet.</p>
   {% endfor %}
 </body>
 </html>
@@ -102,55 +52,93 @@ EDIT_HTML = """
 </head>
 <body>
   <h2>Edit Expense</h2>
-  <form method="POST">
-    <input type="text" name="title" value="{{ e['title'] }}" required>
-    <input type="number" name="amount" value="{{ e['amount'] }}" required>
-    <input type="text" name="category" value="{{ e['category'] }}">
+  <form method="POST" action="/edit/{{ e[0] }}">
+    <input type="text" name="title" value="{{ e[1] }}" required>
+    <input type="number" name="amount" value="{{ e[2] }}" required>
+    <input type="text" name="category" value="{{ e[3] }}" required>
     <button type="submit">Update</button>
   </form>
-  <a href="/">Cancel</a>
 </body>
 </html>
 """
+
+# ---------- Database Helpers ----------
+
+def get_db():
+    conn = sqlite3.connect(DB)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    if not os.path.exists(DB):
+        conn = get_db()
+        conn.execute("""
+            CREATE TABLE expenses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                amount INTEGER NOT NULL,
+                category TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+        """)
+        conn.commit()
+        conn.close()
+        print("Database created successfully.")
 
 # ---------- Routes ----------
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    conn = get_db()
     if request.method == "POST":
         title = request.form["title"]
         amount = int(request.form["amount"])
         category = request.form["category"]
-        add_expense(title, amount, category)
-        return redirect("/")
-    expenses = read_expenses()
+        created_at = datetime.now().isoformat()
+        conn.execute(
+            "INSERT INTO expenses (title, amount, category, created_at) VALUES (?, ?, ?, ?)",
+            (title, amount, category, created_at)
+        )
+        conn.commit()
+    cur = conn.execute("SELECT * FROM expenses ORDER BY created_at DESC")
+    expenses = cur.fetchall()
+    conn.close()
     return render_template_string(HTML, expenses=expenses)
 
 @app.route("/edit/<int:expense_id>", methods=["GET", "POST"])
 def edit(expense_id):
-    expenses = read_expenses()
-    expense = next((e for e in expenses if e['id'] == expense_id), None)
-    if not expense:
-        return redirect("/")
+    conn = get_db()
     if request.method == "POST":
         title = request.form["title"]
         amount = int(request.form["amount"])
         category = request.form["category"]
-        update_expense(expense_id, title, amount, category)
+        conn.execute(
+            "UPDATE expenses SET title=?, amount=?, category=? WHERE id=?",
+            (title, amount, category, expense_id)
+        )
+        conn.commit()
+        conn.close()
         return redirect("/")
-    return render_template_string(EDIT_HTML, e=expense)
+    else:
+        cur = conn.execute("SELECT * FROM expenses WHERE id=?", (expense_id,))
+        expense = cur.fetchone()
+        conn.close()
+        if expense:
+            return render_template_string(EDIT_HTML, e=expense)
+        else:
+            return "Expense not found", 404
 
 @app.route("/delete/<int:expense_id>")
 def delete(expense_id):
-    delete_expense(expense_id)
+    conn = get_db()
+    conn.execute("DELETE FROM expenses WHERE id=?", (expense_id,))
+    conn.commit()
+    conn.close()
     return redirect("/")
 
-# ---------- Run ----------
+# ---------- Main ----------
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True)
-
-
-
-
+    init_db()
+    app.run(host="0.0.0.0", debug=False)
 
