@@ -1,7 +1,7 @@
 from flask import Flask, request, redirect, render_template
 import sqlite3
-from datetime import datetime
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 DB_NAME = "expenses.db"
@@ -12,14 +12,30 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+# Auto-create DB if missing (for Render deployment)
+if not os.path.exists(DB_NAME):
+    conn = get_db()
+    conn.execute("""
+        CREATE TABLE expenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            amount INTEGER NOT NULL,
+            category TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
 # ---------- HOME ----------
 @app.route("/", methods=["GET", "POST"])
 def index():
     conn = get_db()
+
     if request.method == "POST":
-        title = request.form["title"].strip()
-        amount = request.form["amount"]
-        category = request.form["category"].strip()
+        title = request.form.get("title", "").strip()
+        amount = request.form.get("amount")
+        category = request.form.get("category", "").strip()
 
         if title and amount and category:
             conn.execute(
@@ -37,17 +53,18 @@ def index():
 # ---------- EDIT ----------
 @app.route("/edit/<int:id>", methods=["POST"])
 def edit(id):
-    title = request.form["title"].strip()
-    amount = request.form["amount"]
-    category = request.form["category"].strip()
+    title = request.form.get("title", "").strip()
+    amount = request.form.get("amount")
+    category = request.form.get("category", "").strip()
 
-    conn = get_db()
-    conn.execute(
-        "UPDATE expenses SET title=?, amount=?, category=? WHERE id=?",
-        (title, amount, category, id)
-    )
-    conn.commit()
-    conn.close()
+    if title and amount and category:
+        conn = get_db()
+        conn.execute(
+            "UPDATE expenses SET title=?, amount=?, category=? WHERE id=?",
+            (title, amount, category, id)
+        )
+        conn.commit()
+        conn.close()
     return redirect("/")
 
 # ---------- DELETE ----------
@@ -59,8 +76,7 @@ def delete(id):
     conn.close()
     return redirect("/")
 
+# ---------- RUN ----------
 if __name__ == "__main__":
-    # For Render: use PORT environment variable if available
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
+    app.run(host="0.0.0.0", port=port, debug=False)
