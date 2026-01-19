@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, request, redirect, render_template
 import sqlite3
 from datetime import datetime
 
@@ -6,7 +6,7 @@ app = Flask(__name__)
 DB_NAME = "expenses.db"
 
 
-# ---------- DB ----------
+# ---------- DATABASE ----------
 def get_db():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
@@ -18,63 +18,58 @@ def get_db():
 def index():
     conn = get_db()
 
+    # Add new expense
     if request.method == "POST":
-        title = request.form["title"].strip()
-        amount = request.form["amount"]
-        category = request.form["category"].strip()
+        title = request.form.get("title", "").strip()
+        amount = request.form.get("amount", "").strip()
+        category = request.form.get("category", "").strip()
 
-        if title and amount and category:
+        if title and amount.isdigit() and category:
             conn.execute(
-                """
-                INSERT INTO expenses (title, amount, category, created_at)
-                VALUES (?, ?, ?, ?)
-                """,
-                (title, amount, category, datetime.now().strftime("%Y-%m-%d %H:%M")),
+                "INSERT INTO expenses (title, amount, category, created_at) VALUES (?, ?, ?, ?)",
+                (title, int(amount), category, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
             )
             conn.commit()
+        return redirect("/")
 
-        return redirect(url_for("index"))
-
-    expenses = conn.execute(
-        "SELECT * FROM expenses ORDER BY id DESC"
-    ).fetchall()
-
-    total = conn.execute(
-        "SELECT COALESCE(SUM(amount),0) FROM expenses"
-    ).fetchone()[0]
+    # Fetch expenses and total
+    expenses = conn.execute("SELECT * FROM expenses ORDER BY id DESC").fetchall()
+    total = conn.execute("SELECT COALESCE(SUM(amount), 0) FROM expenses").fetchone()[0]
 
     conn.close()
     return render_template("index.html", expenses=expenses, total=total)
 
 
 # ---------- EDIT ----------
-@app.route("/edit/<int:id>", methods=["POST"])
-def edit(id):
-    title = request.form["title"]
-    amount = request.form["amount"]
-    category = request.form["category"]
+@app.route("/edit/<int:expense_id>", methods=["POST"])
+def edit(expense_id):
+    title = request.form.get("title", "").strip()
+    amount = request.form.get("amount", "").strip()
+    category = request.form.get("category", "").strip()
+
+    if not (title and amount.isdigit() and category):
+        return redirect("/")
 
     conn = get_db()
     conn.execute(
         "UPDATE expenses SET title=?, amount=?, category=? WHERE id=?",
-        (title, amount, category, id),
+        (title, int(amount), category, expense_id),
     )
     conn.commit()
     conn.close()
-
-    return redirect(url_for("index"))
+    return redirect("/")
 
 
 # ---------- DELETE ----------
-@app.route("/delete/<int:id>", methods=["POST"])
-def delete(id):
+@app.route("/delete/<int:expense_id>", methods=["POST"])
+def delete(expense_id):
     conn = get_db()
-    conn.execute("DELETE FROM expenses WHERE id=?", (id,))
+    conn.execute("DELETE FROM expenses WHERE id=?", (expense_id,))
     conn.commit()
     conn.close()
+    return redirect("/")
 
-    return redirect(url_for("index"))
 
-
+# ---------- RUN SERVER ----------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
