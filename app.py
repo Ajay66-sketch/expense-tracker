@@ -5,71 +5,63 @@ from datetime import datetime
 app = Flask(__name__)
 DB_NAME = "expenses.db"
 
-
 # ---------- DATABASE ----------
 def get_db():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
     return conn
 
-
 # ---------- HOME ----------
 @app.route("/", methods=["GET", "POST"])
 def index():
     conn = get_db()
 
-    # Add new expense
+    # Handle adding a new expense
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         amount = request.form.get("amount", "").strip()
         category = request.form.get("category", "").strip()
 
-        if title and amount.isdigit() and category:
+        if title and amount and category:
             conn.execute(
                 "INSERT INTO expenses (title, amount, category, created_at) VALUES (?, ?, ?, ?)",
-                (title, int(amount), category, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+                (title, float(amount), category, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             )
             conn.commit()
         return redirect("/")
 
-    # Fetch expenses and total
+    # GET request: fetch all expenses and total
     expenses = conn.execute("SELECT * FROM expenses ORDER BY id DESC").fetchall()
-    total = conn.execute("SELECT COALESCE(SUM(amount), 0) FROM expenses").fetchone()[0]
-
+    total = conn.execute("SELECT COALESCE(SUM(amount),0) FROM expenses").fetchone()[0]
     conn.close()
     return render_template("index.html", expenses=expenses, total=total)
 
-
 # ---------- EDIT ----------
-@app.route("/edit/<int:expense_id>", methods=["POST"])
-def edit(expense_id):
+@app.route("/edit/<int:id>", methods=["POST"])
+def edit(id):
     title = request.form.get("title", "").strip()
     amount = request.form.get("amount", "").strip()
     category = request.form.get("category", "").strip()
 
-    if not (title and amount.isdigit() and category):
-        return redirect("/")
-
-    conn = get_db()
-    conn.execute(
-        "UPDATE expenses SET title=?, amount=?, category=? WHERE id=?",
-        (title, int(amount), category, expense_id),
-    )
-    conn.commit()
-    conn.close()
+    if title and amount and category:
+        conn = get_db()
+        conn.execute(
+            "UPDATE expenses SET title=?, amount=?, category=? WHERE id=?",
+            (title, float(amount), category, id)
+        )
+        conn.commit()
+        conn.close()
     return redirect("/")
-
 
 # ---------- DELETE ----------
-@app.route("/delete/<int:expense_id>", methods=["POST"])
-def delete(expense_id):
+@app.route("/delete/<int:id>", methods=["POST"])
+def delete(id):
     conn = get_db()
-    conn.execute("DELETE FROM expenses WHERE id=?", (expense_id,))
+    conn.execute("DELETE FROM expenses WHERE id=?", (id,))
     conn.commit()
     conn.close()
     return redirect("/")
 
-
-# ---------- RUN SERVER ----------
+# ---------- RUN APP ----------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
