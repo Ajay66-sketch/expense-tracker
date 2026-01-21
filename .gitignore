@@ -1,15 +1,19 @@
-# Python
+# Virtual environment
 venv/
+
+# Python cache
 __pycache__/
 *.pyc
 
-# Database
+# Databases
 *.db
+*.csv
 
 # Old / backup files
 *_old.py
 *_old.db
 *_old.sh
+*_old.csv
 
 # OS
 .DS_Store
