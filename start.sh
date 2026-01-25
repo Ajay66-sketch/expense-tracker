@@ -1,3 +1,2 @@
-#!/bin/bash
-source venv/bin/activate
-python -m flask run --host=0.0.0.0 --port=${PORT:-5000}
+#!/usr/bin/env bash
+gunicorn app:app
