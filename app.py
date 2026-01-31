@@ -1,38 +1,117 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, render_template, request, redirect, Response
+import sqlite3
+from datetime import datetime
 import os
 
 app = Flask(_name_)
+DB_NAME = "expenses.db"
 
-# In-memory storage for demo purposes
-# You can replace this with a database later
-expenses = []
+IS_PREMIUM = os.getenv("IS_PREMIUM", "false").lower() == "true"
 
-# Home page: list all expenses
-@app.route("/")
-def home():
-    return render_template("index.html", expenses=expenses)
+def get_db():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-# Add a new expense
-@app.route("/add", methods=["POST"])
-def add_expense():
-    name = request.form.get("name")
-    amount = request.form.get("amount")
-    if name and amount:
-        try:
-            amount = float(amount)
-            expenses.append({"name": name, "amount": amount})
-        except ValueError:
-            pass  # ignore invalid amounts
-    return redirect(url_for("home"))
+def init_db():
+    conn = get_db()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS expenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            amount REAL NOT NULL,
+            category TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
 
-# Delete an expense by index
-@app.route("/delete/<int:index>")
-def delete_expense(index):
-    if 0 <= index < len(expenses):
-        expenses.pop(index)
-    return redirect(url_for("home"))
+init_db()
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    conn = get_db()
+
+    if request.method == "POST":
+        conn.execute(
+            "INSERT INTO expenses (title, amount, category, created_at) VALUES (?, ?, ?, ?)",
+            (
+                request.form["title"],
+                float(request.form["amount"]),
+                request.form["category"],
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            )
+        )
+        conn.commit()
+        return redirect("/")
+
+    expenses = conn.execute(
+        "SELECT * FROM expenses ORDER BY created_at DESC"
+    ).fetchall()
+
+    total = conn.execute(
+        "SELECT COALESCE(SUM(amount), 0) FROM expenses"
+    ).fetchone()[0]
+
+    category_summary = []
+    if IS_PREMIUM:
+        category_summary = conn.execute("""
+            SELECT category, SUM(amount) AS total
+            FROM expenses
+            GROUP BY category
+        """).fetchall()
+
+    conn.close()
+
+    return render_template(
+        "index.html",
+        expenses=expenses,
+        total=total,
+        category_summary=category_summary,
+        is_premium=IS_PREMIUM
+    )
+
+@app.route("/edit/<int:id>", methods=["POST"])
+def edit(id):
+    conn = get_db()
+    conn.execute(
+        "UPDATE expenses SET title=?, amount=?, category=? WHERE id=?",
+        (
+            request.form["title"],
+            float(request.form["amount"]),
+            request.form["category"],
+            id
+        )
+    )
+    conn.commit()
+    conn.close()
+    return redirect("/")
+
+@app.route("/delete/<int:id>", methods=["POST"])
+def delete(id):
+    conn = get_db()
+    conn.execute("DELETE FROM expenses WHERE id=?", (id,))
+    conn.commit()
+    conn.close()
+    return redirect("/")
+
+@app.route("/export")
+def export_csv():
+    if not IS_PREMIUM:
+        return "Premium feature 🔒", 403
+
+    conn = get_db()
+    rows = conn.execute("SELECT * FROM expenses").fetchall()
+    conn.close()
+
+    def generate():
+        yield "id,title,amount,category,created_at\n"
+        for r in rows:
+            yield f"{r['id']},{r['title']},{r['amount']},{r['category']},{r['created_at']}\n"
+
+    return Response(generate(), mimetype="text/csv")
 
 if _name_ == "_main_":
-    # Use Render's PORT environment variable, default to 5000
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port)
