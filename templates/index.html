@@ -3,117 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <title>Expense Tracker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style>
-        body {
-            font-family: system-ui, sans-serif;
-            background: #f4f4f4;
-            padding: 1rem;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 1rem;
-            border-radius: 10px;
-        }
-        h1, h3 { text-align: center; }
-        input, select, button {
-            width: 100%;
-            padding: 0.6rem;
-            margin-bottom: 0.5rem;
-        }
-        .expense {
-            display: flex;
-            gap: 0.5rem;
-            border-bottom: 1px solid #ddd;
-            padding: 0.5rem 0;
-        }
-        .expense form {
-            flex: 1;
-        }
-        .actions {
-            display: flex;
-            align-items: center;
-        }
-        .premium {
-            margin-top: 1rem;
-            padding: 1rem;
-            border: 1px dashed #aaa;
-            text-align: center;
-        }
-        .locked { opacity: 0.6; }
-    </style>
 </head>
-
 <body>
-<div class="container">
-
-<h1>💰 Expense Tracker</h1>
-<p style="text-align:center">
-    Total: <strong>₹{{ "%.2f"|format(total) }}</strong>
-</p>
-
-<!-- ADD EXPENSE -->
-<form method="POST">
-    <input name="title" placeholder="Title" required>
-    <input name="amount" type="number" step="0.01" placeholder="Amount" required>
-    <select name="category" required>
-        <option value="">Category</option>
-        <option>Food</option>
-        <option>Travel</option>
-        <option>Shopping</option>
-        <option>Bills</option>
-        <option>Other</option>
-    </select>
-    <button>Add Expense</button>
-</form>
-
-<!-- EXPENSE LIST -->
-<h3>Expenses</h3>
-
-{% if expenses %}
-    {% for e in expenses %}
-        <div class="expense">
-            <form method="POST" action="/edit/{{ e.id }}">
-                <input name="title" value="{{ e.title }}" required>
-                <input name="amount" type="number" step="0.01" value="{{ e.amount }}" required>
-                <input name="category" value="{{ e.category }}" required>
-                <button>Update</button>
-            </form>
-            <div class="actions">
-                <form method="POST" action="/delete/{{ e.id }}">
-                    <button>❌</button>
-                </form>
-            </div>
-        </div>
-    {% endfor %}
-{% else %}
-    <p style="text-align:center">No expenses yet.</p>
-{% endif %}
-
-<!-- PREMIUM: CATEGORY SUMMARY -->
-{% if is_premium %}
-    <h3>📊 By Category</h3>
-    {% for c in category_summary %}
-        <p>{{ c.category }} — ₹{{ "%.2f"|format(c.total) }}</p>
-    {% endfor %}
-{% else %}
-    <div class="premium locked">
-        <p>📊 Category insights (Premium)</p>
-    </div>
-{% endif %}
-
-<!-- EXPORT -->
-<div class="premium {% if not is_premium %}locked{% endif %}">
-{% if features.export_csv %}
-    <a href="/export"><button>⬇ Export CSV</button></a>
-{% else %}
-    <p>Export CSV 🔒</p>
-{% endif %}
-</div>
-
-</div>
+    <h1>Expense Tracker</h1>
+    <form action="/add" method="post">
+        <input type="text" name="name" placeholder="Expense name" required>
+        <input type="number" step="0.01" name="amount" placeholder="Amount" required>
+        <button type="submit">Add</button>
+    </form>
+    <ul>
+        {% for expense in expenses %}
+        <li>{{ expense.name }}: ${{ expense.amount }} 
+            <a href="/delete/{{ loop.index0 }}">Delete</a>
+        </li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
