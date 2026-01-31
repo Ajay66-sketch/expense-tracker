@@ -3,7 +3,7 @@ import sqlite3
 from datetime import datetime
 import os
 
-app = Flask(_name_)
+app = Flask(__name__)
 DB_NAME = "expenses.db"
 
 IS_PREMIUM = os.getenv("IS_PREMIUM", "false").lower() == "true"
@@ -112,6 +112,6 @@ def export_csv():
 
     return Response(generate(), mimetype="text/csv")
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
