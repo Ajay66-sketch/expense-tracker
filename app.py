@@ -3,18 +3,12 @@ import sqlite3
 from datetime import datetime
 import os
 
-# ---------------- APP CONFIG ----------------
 app = Flask(__name__)
-
 DB_NAME = "expenses.db"
 
-# Premium flag (Render / local env variable)
+# ---------------- PREMIUM FLAG ----------------
 IS_PREMIUM = os.getenv("IS_PREMIUM", "false").lower() == "true"
-
-FEATURES = {
-    "export_csv": IS_PREMIUM,
-    "category_summary": IS_PREMIUM
-}
+FEATURES = {"export_csv": IS_PREMIUM}
 
 # ---------------- DATABASE ----------------
 def get_db():
@@ -22,24 +16,22 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-
 def init_db():
-    if not os.path.exists(DB_NAME):
-        conn = get_db()
-        conn.execute("""
-            CREATE TABLE expenses (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                amount REAL NOT NULL,
-                category TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            )
-        """)
-        conn.commit()
-        conn.close()
+    conn = get_db()
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS expenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            amount REAL NOT NULL,
+            category TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+    conn.commit()
+    conn.close()
 
-
-# Initialize database on startup
 init_db()
 
 # ---------------- HOME ----------------
@@ -47,18 +39,14 @@ init_db()
 def index():
     conn = get_db()
 
-    # -------- ADD EXPENSE --------
     if request.method == "POST":
-        title = request.form.get("title", "").strip()
-        amount = request.form.get("amount", "").strip()
-        category = request.form.get("category", "").strip()
+        title = request.form.get("title")
+        amount = request.form.get("amount")
+        category = request.form.get("category")
 
         if title and amount and category:
             conn.execute(
-                """
-                INSERT INTO expenses (title, amount, category, created_at)
-                VALUES (?, ?, ?, ?)
-                """,
+                "INSERT INTO expenses (title, amount, category, created_at) VALUES (?, ?, ?, ?)",
                 (
                     title,
                     float(amount),
@@ -70,26 +58,24 @@ def index():
 
         return redirect("/")
 
-    # -------- FETCH DATA --------
     expenses = conn.execute(
-        "SELECT * FROM expenses ORDER BY id DESC"
+        "SELECT * FROM expenses ORDER BY created_at DESC"
     ).fetchall()
 
     total = conn.execute(
         "SELECT COALESCE(SUM(amount), 0) FROM expenses"
     ).fetchone()[0]
 
-    # -------- A2: CATEGORY SUMMARY (PREMIUM) --------
     category_summary = []
-
     if IS_PREMIUM:
-        category_summary = conn.execute("""
+        category_summary = conn.execute(
+            """
             SELECT category, SUM(amount) AS total
             FROM expenses
             GROUP BY category
             ORDER BY total DESC
-        """).fetchall()
-    # ----------------------------------------------
+            """
+        ).fetchall()
 
     conn.close()
 
@@ -97,26 +83,22 @@ def index():
         "index.html",
         expenses=expenses,
         total=total,
-        features=FEATURES,
+        category_summary=category_summary,
         is_premium=IS_PREMIUM,
-        category_summary=category_summary
+        features=FEATURES
     )
 
 # ---------------- EDIT ----------------
 @app.route("/edit/<int:id>", methods=["POST"])
 def edit(id):
-    title = request.form.get("title", "").strip()
-    amount = request.form.get("amount", "").strip()
-    category = request.form.get("category", "").strip()
+    title = request.form.get("title")
+    amount = request.form.get("amount")
+    category = request.form.get("category")
 
     if title and amount and category:
         conn = get_db()
         conn.execute(
-            """
-            UPDATE expenses
-            SET title = ?, amount = ?, category = ?
-            WHERE id = ?
-            """,
+            "UPDATE expenses SET title=?, amount=?, category=? WHERE id=?",
             (title, float(amount), category, id)
         )
         conn.commit()
@@ -128,7 +110,7 @@ def edit(id):
 @app.route("/delete/<int:id>", methods=["POST"])
 def delete(id):
     conn = get_db()
-    conn.execute("DELETE FROM expenses WHERE id = ?", (id,))
+    conn.execute("DELETE FROM expenses WHERE id=?", (id,))
     conn.commit()
     conn.close()
     return redirect("/")
@@ -140,11 +122,9 @@ def export_csv():
         return "Premium feature 🔒", 403
 
     conn = get_db()
-    rows = conn.execute("""
-        SELECT id, title, amount, category, created_at
-        FROM expenses
-        ORDER BY id DESC
-    """).fetchall()
+    rows = conn.execute(
+        "SELECT id, title, amount, category, created_at FROM expenses ORDER BY created_at DESC"
+    ).fetchall()
     conn.close()
 
     def generate():
@@ -155,12 +135,9 @@ def export_csv():
     return Response(
         generate(),
         mimetype="text/csv",
-        headers={
-            "Content-Disposition": "attachment; filename=expenses.csv"
-        }
+        headers={"Content-Disposition": "attachment; filename=expenses.csv"}
     )
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)

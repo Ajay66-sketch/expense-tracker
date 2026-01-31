@@ -3,169 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <title>Expense Tracker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
         body {
             font-family: system-ui, sans-serif;
-            background: #f5f5f5;
-            margin: 0;
+            background: #f4f4f4;
             padding: 1rem;
         }
-
         .container {
             max-width: 600px;
             margin: auto;
-            background: #fff;
+            background: white;
             padding: 1rem;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
         }
-
-        h1, h3 {
-            text-align: center;
-        }
-
-        .total {
-            text-align: center;
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
-        }
-
-        form input, form select, form button {
+        h1, h3 { text-align: center; }
+        input, select, button {
             width: 100%;
             padding: 0.6rem;
-            margin-bottom: 0.6rem;
-            font-size: 1rem;
+            margin-bottom: 0.5rem;
         }
-
-        button {
-            cursor: pointer;
-        }
-
         .expense {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #eee;
-            padding: 0.6rem 0;
             gap: 0.5rem;
+            border-bottom: 1px solid #ddd;
+            padding: 0.5rem 0;
         }
-
-        .expense-info {
+        .expense form {
             flex: 1;
         }
-
-        .expense-actions form {
-            display: inline;
+        .actions {
+            display: flex;
+            align-items: center;
         }
-
-        .expense-actions button {
-            margin-left: 0.3rem;
-        }
-
         .premium {
-            margin-top: 1.5rem;
+            margin-top: 1rem;
             padding: 1rem;
-            background: #fafafa;
             border: 1px dashed #aaa;
             text-align: center;
-            border-radius: 8px;
         }
-
-        .locked {
-            opacity: 0.6;
-        }
+        .locked { opacity: 0.6; }
     </style>
 </head>
 
 <body>
 <div class="container">
 
-    <!-- HEADER -->
-    <h1>💰 Expense Tracker</h1>
-    <div class="total">
-        Total Spent: <strong>₹{{ "%.2f"|format(total) }}</strong>
-    </div>
+<h1>💰 Expense Tracker</h1>
+<p style="text-align:center">
+    Total: <strong>₹{{ "%.2f"|format(total) }}</strong>
+</p>
 
-    <!-- ADD EXPENSE -->
-    <form method="POST">
-        <input type="text" name="title" placeholder="Expense title" required>
-        <input type="number" name="amount" step="0.01" placeholder="Amount" required>
-        <select name="category" required>
-            <option value="">Select category</option>
-            <option>Food</option>
-            <option>Travel</option>
-            <option>Shopping</option>
-            <option>Bills</option>
-            <option>Other</option>
-        </select>
-        <button type="submit">➕ Add Expense</button>
-    </form>
+<!-- ADD EXPENSE -->
+<form method="POST">
+    <input name="title" placeholder="Title" required>
+    <input name="amount" type="number" step="0.01" placeholder="Amount" required>
+    <select name="category" required>
+        <option value="">Category</option>
+        <option>Food</option>
+        <option>Travel</option>
+        <option>Shopping</option>
+        <option>Bills</option>
+        <option>Other</option>
+    </select>
+    <button>Add Expense</button>
+</form>
 
-    <!-- EXPENSE LIST -->
-    <h3>🧾 Expenses</h3>
+<!-- EXPENSE LIST -->
+<h3>Expenses</h3>
 
-    {% if expenses %}
-        {% for e in expenses %}
-            <div class="expense">
-
-                <!-- EDIT FORM -->
-                <form method="POST" action="/edit/{{ e.id }}" class="expense-info">
-                    <input name="title" value="{{ e.title }}" required>
-                    <input type="number" name="amount" step="0.01" value="{{ e.amount }}" required>
-                    <input name="category" value="{{ e.category }}" required>
-                    <button type="submit">💾 Update</button>
+{% if expenses %}
+    {% for e in expenses %}
+        <div class="expense">
+            <form method="POST" action="/edit/{{ e.id }}">
+                <input name="title" value="{{ e.title }}" required>
+                <input name="amount" type="number" step="0.01" value="{{ e.amount }}" required>
+                <input name="category" value="{{ e.category }}" required>
+                <button>Update</button>
+            </form>
+            <div class="actions">
+                <form method="POST" action="/delete/{{ e.id }}">
+                    <button>❌</button>
                 </form>
-
-                <!-- DELETE -->
-                <div class="expense-actions">
-                    <form method="POST" action="/delete/{{ e.id }}">
-                        <button type="submit">❌</button>
-                    </form>
-                </div>
-
             </div>
-        {% endfor %}
-    {% else %}
-        <p style="text-align:center;">No expenses yet.</p>
-    {% endif %}
-
-    <!-- CATEGORY SUMMARY (A2 – PREMIUM) -->
-    {% if is_premium and category_summary %}
-        <h3>📊 Spending by Category</h3>
-
-        {% for c in category_summary %}
-            <div class="expense">
-                <div class="expense-info">
-                    <strong>{{ c.category }}</strong>
-                </div>
-                <div>
-                    ₹{{ "%.2f"|format(c.total) }}
-                </div>
-            </div>
-        {% endfor %}
-
-    {% elif not is_premium %}
-        <div class="premium locked">
-            <h3>📊 Category Insights 🔒</h3>
-            <p>Upgrade to Premium to view spending breakdown</p>
         </div>
-    {% endif %}
+    {% endfor %}
+{% else %}
+    <p style="text-align:center">No expenses yet.</p>
+{% endif %}
 
-    <!-- PREMIUM SECTION -->
-    <div class="premium {% if not is_premium %}locked{% endif %}">
-        <h3>⭐ Premium Features</h3>
-
-        {% if features.export_csv %}
-            <a href="/export">
-                <button>⬇ Export CSV</button>
-            </a>
-        {% else %}
-            <p>Export CSV 🔒</p>
-            <small>Upgrade to download your data</small>
-        {% endif %}
+<!-- PREMIUM: CATEGORY SUMMARY -->
+{% if is_premium %}
+    <h3>📊 By Category</h3>
+    {% for c in category_summary %}
+        <p>{{ c.category }} — ₹{{ "%.2f"|format(c.total) }}</p>
+    {% endfor %}
+{% else %}
+    <div class="premium locked">
+        <p>📊 Category insights (Premium)</p>
     </div>
+{% endif %}
+
+<!-- EXPORT -->
+<div class="premium {% if not is_premium %}locked{% endif %}">
+{% if features.export_csv %}
+    <a href="/export"><button>⬇ Export CSV</button></a>
+{% else %}
+    <p>Export CSV 🔒</p>
+{% endif %}
+</div>
 
 </div>
 </body>

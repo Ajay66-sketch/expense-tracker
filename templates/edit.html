@@ -1,44 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Edit Expense</title>
-<style>
-body {
-    background: #f4f6f8;
-    font-family: system-ui;
-}
-.card {
-    max-width: 500px;
-    margin: 40px auto;
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-}
-input, button {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-}
-button {
-    background: #2563eb;
-    color: white;
-    border: none;
-}
-</style>
+    <title>Edit Expense</title>
 </head>
-
 <body>
-<div class="card">
+
 <h2>Edit Expense</h2>
 
-<form method="POST">
-<input name="title" value="{{ expense.title }}" required>
-<input name="amount" type="number" value="{{ expense.amount }}" required>
-<input name="category" value="{{ expense.category }}" required>
-<button>Update</button>
+<form method="post">
+    <input type="text" name="title" value="{{ expense.title }}" required>
+    <input type="text" name="category" value="{{ expense.category }}" required>
+    <input type="number" step="0.01" name="amount" value="{{ expense.amount }}" required>
+    <input type="date" name="date" value="{{ expense.date }}" required>
+
+    <button type="submit">Update</button>
 </form>
 
-</div>
+<a href="/">Back</a>
+
 </body>
 </html>
