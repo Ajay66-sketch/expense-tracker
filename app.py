@@ -6,8 +6,10 @@ import os
 app = Flask(__name__)
 DB_NAME = "expenses.db"
 
+# ---------- PREMIUM ----------
 IS_PREMIUM = os.getenv("IS_PREMIUM", "false").lower() == "true"
 
+# ---------- DATABASE ----------
 def get_db():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
@@ -29,19 +31,19 @@ def init_db():
 
 init_db()
 
+# ---------- HOME ----------
 @app.route("/", methods=["GET", "POST"])
 def index():
     conn = get_db()
 
     if request.method == "POST":
+        title = request.form["title"]
+        amount = request.form["amount"]
+        category = request.form["category"]
+
         conn.execute(
             "INSERT INTO expenses (title, amount, category, created_at) VALUES (?, ?, ?, ?)",
-            (
-                request.form["title"],
-                float(request.form["amount"]),
-                request.form["category"],
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            )
+            (title, float(amount), category, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         )
         conn.commit()
         return redirect("/")
@@ -72,6 +74,7 @@ def index():
         is_premium=IS_PREMIUM
     )
 
+# ---------- EDIT ----------
 @app.route("/edit/<int:id>", methods=["POST"])
 def edit(id):
     conn = get_db()
@@ -88,6 +91,7 @@ def edit(id):
     conn.close()
     return redirect("/")
 
+# ---------- DELETE ----------
 @app.route("/delete/<int:id>", methods=["POST"])
 def delete(id):
     conn = get_db()
@@ -96,8 +100,9 @@ def delete(id):
     conn.close()
     return redirect("/")
 
+# ---------- EXPORT CSV (PREMIUM) ----------
 @app.route("/export")
-def export_csv():
+def export():
     if not IS_PREMIUM:
         return "Premium feature 🔒", 403
 
@@ -110,8 +115,13 @@ def export_csv():
         for r in rows:
             yield f"{r['id']},{r['title']},{r['amount']},{r['category']},{r['created_at']}\n"
 
-    return Response(generate(), mimetype="text/csv")
+    return Response(
+        generate(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=expenses.csv"}
+    )
 
+# ---------- RUN ----------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
