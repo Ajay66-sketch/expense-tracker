@@ -3,86 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <title>Expense Tracker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Link to CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<div class="container">
 
-    <!-- HEADER -->
-    <h1>💰 Expense Tracker</h1>
-    <div class="total">
-        Total Spent: <strong>₹{{ "%.2f"|format(total) }}</strong>
-    </div>
+<h1>Expense Tracker</h1>
 
-    <!-- ADD EXPENSE -->
-    <form method="POST">
-        <input type="text" name="title" placeholder="Expense title" required>
-        <input type="number" name="amount" step="0.01" placeholder="Amount" required>
-        <select name="category" required>
-            <option value="">Select category</option>
-            <option>Food</option>
-            <option>Travel</option>
-            <option>Shopping</option>
-            <option>Bills</option>
-            <option>Other</option>
-        </select>
-        <button type="submit">➕ Add Expense</button>
-    </form>
+<p>Welcome, {{ session.username }}</p>
 
-    <!-- EXPENSE LIST -->
-    <h3>🧾 Expenses</h3>
-    {% if expenses %}
-        {% for e in expenses %}
-            <div class="expense">
-                <form method="POST" action="/edit/{{ e.id }}" class="expense-info">
-                    <input type="text" name="title" value="{{ e.title }}" required>
-                    <input type="number" name="amount" step="0.01" value="{{ e.amount }}" required>
-                    <input type="text" name="category" value="{{ e.category }}" required>
-                    <button type="submit">💾 Update</button>
-                </form>
-                <div class="expense-actions">
-                    <form method="POST" action="/delete/{{ e.id }}">
-                        <button type="submit">❌</button>
-                    </form>
-                </div>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p style="text-align:center;">No expenses yet.</p>
-    {% endif %}
+<a href="/logout">Logout</a>
 
-    <!-- CATEGORY SUMMARY (PREMIUM) -->
-    {% if is_premium and category_summary %}
-        <h3>📊 Spending by Category</h3>
-        <div class="category-summary">
-            {% for c in category_summary %}
-                <div>
-                    <span>{{ c.category }}</span>
-                    <span>₹{{ "%.2f"|format(c.total) }}</span>
-                </div>
-            {% endfor %}
-        </div>
-    {% elif not is_premium %}
-        <div class="premium locked">
-            <h3>📊 Category Insights 🔒</h3>
-            <p>Upgrade to Premium to view spending breakdown</p>
-        </div>
-    {% endif %}
+<h2>Add Expense</h2>
+<form method="POST">
+    <input type="text" name="title" placeholder="Title" required>
+    <input type="number" step="0.01" name="amount" placeholder="Amount" required>
+    <input type="text" name="category" placeholder="Category" required>
+    <button type="submit">Add</button>
+</form>
 
-    <!-- PREMIUM FEATURES -->
-    <div class="premium {% if not is_premium %}locked{% endif %}">
-        <h3>⭐ Premium Features</h3>
-        {% if features.export_csv %}
-            <a href="/export"><button>⬇ Export CSV</button></a>
-        {% else %}
-            <p>Export CSV 🔒</p>
-            <small>Upgrade to download your data</small>
-        {% endif %}
-    </div>
+<h2>Total Spent: ₹{{ total }}</h2>
 
-</div>
+<h2>Your Expenses</h2>
+<table border="1">
+    <tr>
+        <th>Title</th>
+        <th>Amount</th>
+        <th>Category</th>
+        <th>Date</th>
+        <th>Actions</th>
+    </tr>
+    {% for e in expenses %}
+    <tr>
+        <td>{{ e.title }}</td>
+        <td>{{ e.amount }}</td>
+        <td>{{ e.category }}</td>
+        <td>{{ e.created_at }}</td>
+        <td>
+            <form action="/delete/{{ e.id }}" method="POST" style="display:inline;">
+                <button type="submit">Delete</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% if is_premium %}
+<h2>Category Summary</h2>
+<ul>
+    {% for c in category_summary %}
+        <li>{{ c.category }} : ₹{{ c.total }}</li>
+    {% endfor %}
+</ul>
+
+<a href="/export">Export CSV</a>
+{% else %}
+<p>🔒 Upgrade to premium to see category summary & export</p>
+{% endif %}
+
 </body>
 </html>
