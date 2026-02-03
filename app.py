@@ -1,75 +1,79 @@
-from flask import Flask, request, redirect, render_template, Response, session, url_for
+from flask import Flask, request, redirect, render_template, session, Response, url_for
 import sqlite3
 from datetime import datetime
 import os
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 
-# ---------------- CONFIG ----------------
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")  # Needed for session
+app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")
+
 DB_NAME = "expenses.db"
 IS_PREMIUM = os.getenv("IS_PREMIUM", "false").lower() == "true"
 FEATURES = {"export_csv": IS_PREMIUM}
 
-# ---------------- DATABASE ----------------
+# ---------- DATABASE ----------
 def get_db():
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_NAME, timeout=30)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
-    conn = get_db()
-    # Users table
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
-        )
-    """)
-    # Expenses table
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS expenses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            title TEXT NOT NULL,
-            amount REAL NOT NULL,
-            category TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY(user_id) REFERENCES users(id)
-        )
-    """)
-    conn.commit()
-    conn.close()
+    with get_db() as conn:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS expenses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                amount REAL NOT NULL,
+                category TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        """)
+        conn.commit()
 
 init_db()
 
-# ---------------- AUTH ----------------
+# ---------- AUTH ----------
 def login_required(f):
-    from functools import wraps
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def wrapper(*args, **kwargs):
         if "user_id" not in session:
-            return redirect("/login")
+            return redirect(url_for("login"))
         return f(*args, **kwargs)
-    return decorated_function
+    return wrapper
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        if username and password:
-            try:
-                conn = get_db()
+
+        if not username or not password:
+            return render_template("signup.html", error="All fields required")
+
+        hashed = generate_password_hash(password)
+
+        try:
+            with get_db() as conn:
                 conn.execute(
                     "INSERT INTO users (username, password) VALUES (?, ?)",
-                    (username, password)
+                    (username, hashed)
                 )
                 conn.commit()
-                conn.close()
-                return redirect("/login")
-            except sqlite3.IntegrityError:
-                return render_template("signup.html", error="Username already exists")
+            return redirect(url_for("login"))
+        except sqlite3.IntegrityError:
+            return render_template("signup.html", error="Username already exists")
+
     return render_template("signup.html")
 
 @app.route("/login", methods=["GET", "POST"])
@@ -77,66 +81,74 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        conn = get_db()
-        user = conn.execute(
-            "SELECT * FROM users WHERE username=? AND password=?",
-            (username, password)
-        ).fetchone()
-        conn.close()
-        if user:
+
+        try:
+            with get_db() as conn:
+                user = conn.execute(
+                    "SELECT * FROM users WHERE username=?",
+                    (username,)
+                ).fetchone()
+        except sqlite3.OperationalError as e:
+            return render_template("login.html", error=f"DB Error: {e}")
+
+        if user and check_password_hash(user["password"], password):
             session["user_id"] = user["id"]
-            return redirect("/")
-        else:
-            return render_template("login.html", error="Invalid credentials")
+            return redirect(url_for("index"))
+
+        return render_template("login.html", error="Invalid credentials")
+
     return render_template("login.html")
 
 @app.route("/logout")
+@login_required
 def logout():
     session.clear()
-    return redirect("/login")
+    return redirect(url_for("login"))
 
-# ---------------- HOME ----------------
+# ---------- HOME ----------
 @app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
     user_id = session["user_id"]
-    conn = get_db()
 
-    # Add expense
     if request.method == "POST":
         title = request.form.get("title")
         amount = request.form.get("amount")
         category = request.form.get("category")
+
         if title and amount and category:
-            conn.execute(
-                "INSERT INTO expenses (user_id, title, amount, category, created_at) VALUES (?, ?, ?, ?, ?)",
-                (user_id, title, float(amount), category, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-            )
-            conn.commit()
-        return redirect("/")
+            with get_db() as conn:
+                conn.execute(
+                    """INSERT INTO expenses
+                       (user_id, title, amount, category, created_at)
+                       VALUES (?, ?, ?, ?, ?)""",
+                    (user_id, title, float(amount), category,
+                     datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                )
+                conn.commit()
+        return redirect(url_for("index"))
 
-    # Fetch expenses
-    expenses = conn.execute(
-        "SELECT * FROM expenses WHERE user_id=? ORDER BY created_at DESC",
-        (user_id,)
-    ).fetchall()
+    with get_db() as conn:
+        expenses = conn.execute(
+            "SELECT * FROM expenses WHERE user_id=? ORDER BY created_at DESC",
+            (user_id,)
+        ).fetchall()
 
-    total = conn.execute(
-        "SELECT COALESCE(SUM(amount),0) FROM expenses WHERE user_id=?",
-        (user_id,)
-    ).fetchone()[0]
+        total = conn.execute(
+            "SELECT COALESCE(SUM(amount),0) FROM expenses WHERE user_id=?",
+            (user_id,)
+        ).fetchone()[0]
 
-    category_summary = []
-    if IS_PREMIUM:
-        category_summary = conn.execute("""
-            SELECT category, SUM(amount) AS total
-            FROM expenses
-            WHERE user_id=?
-            GROUP BY category
-            ORDER BY total DESC
-        """, (user_id,)).fetchall()
+        category_summary = []
+        if IS_PREMIUM:
+            category_summary = conn.execute("""
+                SELECT category, SUM(amount) AS total
+                FROM expenses
+                WHERE user_id=?
+                GROUP BY category
+                ORDER BY total DESC
+            """, (user_id,)).fetchall()
 
-    conn.close()
     return render_template(
         "index.html",
         expenses=expenses,
@@ -146,40 +158,38 @@ def index():
         features=FEATURES
     )
 
-# ---------------- EDIT ----------------
+# ---------- EDIT ----------
 @app.route("/edit/<int:id>", methods=["POST"])
 @login_required
 def edit(id):
+    user_id = session["user_id"]
     title = request.form.get("title")
     amount = request.form.get("amount")
     category = request.form.get("category")
-    user_id = session["user_id"]
 
     if title and amount and category:
-        conn = get_db()
-        conn.execute(
-            "UPDATE expenses SET title=?, amount=?, category=? WHERE id=? AND user_id=?",
-            (title, float(amount), category, id, user_id)
-        )
-        conn.commit()
-        conn.close()
-    return redirect("/")
+        with get_db() as conn:
+            conn.execute(
+                "UPDATE expenses SET title=?, amount=?, category=? WHERE id=? AND user_id=?",
+                (title, float(amount), category, id, user_id)
+            )
+            conn.commit()
+    return redirect(url_for("index"))
 
-# ---------------- DELETE ----------------
+# ---------- DELETE ----------
 @app.route("/delete/<int:id>", methods=["POST"])
 @login_required
 def delete(id):
     user_id = session["user_id"]
-    conn = get_db()
-    conn.execute(
-        "DELETE FROM expenses WHERE id=? AND user_id=?",
-        (id, user_id)
-    )
-    conn.commit()
-    conn.close()
-    return redirect("/")
+    with get_db() as conn:
+        conn.execute(
+            "DELETE FROM expenses WHERE id=? AND user_id=?",
+            (id, user_id)
+        )
+        conn.commit()
+    return redirect(url_for("index"))
 
-# ---------------- EXPORT CSV ----------------
+# ---------- EXPORT ----------
 @app.route("/export")
 @login_required
 def export_csv():
@@ -187,12 +197,11 @@ def export_csv():
         return "Premium feature 🔒", 403
 
     user_id = session["user_id"]
-    conn = get_db()
-    rows = conn.execute(
-        "SELECT id, title, amount, category, created_at FROM expenses WHERE user_id=? ORDER BY created_at DESC",
-        (user_id,)
-    ).fetchall()
-    conn.close()
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT id, title, amount, category, created_at FROM expenses WHERE user_id=?",
+            (user_id,)
+        ).fetchall()
 
     def generate():
         yield "id,title,amount,category,created_at\n"
@@ -205,7 +214,5 @@ def export_csv():
         headers={"Content-Disposition": "attachment; filename=expenses.csv"}
     )
 
-# ---------------- RUN ----------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run()
