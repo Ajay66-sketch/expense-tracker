@@ -1,15 +1,5 @@
-# Python
 venv/
 _pycache_/
 *.pyc
-
-# Database
-*.db
-
-# Old / backup files
-*_old.py
-*_old.db
-*_old.sh
-
-# OS
-.DS_Store
+expenses.db
+.env

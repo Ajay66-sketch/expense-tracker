@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>💰 Expense Tracker</h1>
+
+    <p>Total: <strong>₹{{ "%.2f"|format(total) }}</strong></p>
+
+    <!-- Add Expense -->
+    <form method="POST">
+        <input name="title" placeholder="Title" required>
+        <input name="amount" type="number" step="0.01" placeholder="Amount" required>
+        <select name="category" required>
+            <option value="">Category</option>
+            <option>Food</option>
+            <option>Travel</option>
+            <option>Shopping</option>
+            <option>Bills</option>
+            <option>Other</option>
+        </select>
+        <button type="submit">Add Expense</button>
+    </form>
+
+    <h3>Expenses</h3>
+
+    {% if expenses %}
+        {% for e in expenses %}
+        <div class="expense">
+
+            <!-- Edit -->
+            <form method="POST" action="{{ url_for('edit', id=e.id) }}">
+                <input name="title" value="{{ e.title }}" required>
+                <input name="amount" type="number" step="0.01" value="{{ e.amount }}" required>
+                <input name="category" value="{{ e.category }}" required>
+                <button type="submit">Update</button>
+            </form>
+
+            <!-- Delete -->
+            <form method="POST" action="{{ url_for('delete', id=e.id) }}">
+                <button type="submit">❌</button>
+            </form>
+
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No expenses yet.</p>
+    {% endif %}
+
+    <!-- Premium -->
+    {% if is_premium %}
+        <h3>📊 By Category</h3>
+        {% for c in category_summary %}
+            <p>{{ c.category }} — ₹{{ "%.2f"|format(c.total) }}</p>
+        {% endfor %}
+    {% else %}
+        <div class="premium locked">📊 Category insights (Premium)</div>
+    {% endif %}
+
+    <!-- Export -->
+    <div class="premium {% if not is_premium %}locked{% endif %}">
+        {% if features and features.export_csv %}
+            <a href="/export"><button>⬇ Export CSV</button></a>
+        {% else %}
+            Export CSV 🔒
+        {% endif %}
+    </div>
+
+    <br>
+    <a href="/logout">Logout</a>
+</div>
+</body>
+</html>

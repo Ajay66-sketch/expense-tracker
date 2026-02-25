@@ -4,17 +4,41 @@
     <meta charset="UTF-8">
     <title>Expense Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 <div class="container">
     <h1>💰 Expense Tracker</h1>
 
-    <p>Total: <strong>₹{{ "%.2f"|format(total) }}</strong></p>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <p>Total: <strong>₹{{ "%.2f"|format(total) }}</strong></p>
 
-    <!-- Add Expense -->
-    <form method="POST">
+        <div>
+            <a href="{{ url_for('export') }}">
+                <button>⬇ Export CSV</button>
+            </a>
+            <a href="{{ url_for('logout') }}">
+                <button style="background:#ff4d4d;">Logout</button>
+            </a>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Add Expense Form -->
+    <form method="POST" style="margin-top:20px;">
         <input name="title" placeholder="Title" required>
         <input name="amount" type="number" step="0.01" placeholder="Amount" required>
+
         <select name="category" required>
             <option value="">Category</option>
             <option>Food</option>
@@ -23,55 +47,70 @@
             <option>Bills</option>
             <option>Other</option>
         </select>
+
         <button type="submit">Add Expense</button>
     </form>
 
-    <h3>Expenses</h3>
+    <h3 style="margin-top:30px;">Expenses</h3>
 
     {% if expenses %}
         {% for e in expenses %}
-        <div class="expense">
+        <div class="expense" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div>
+                <strong>{{ e.title }}</strong> —
+                ₹{{ "%.2f"|format(e.amount) }}
+                ({{ e.category }})
+            </div>
 
-            <!-- Edit -->
-            <form method="POST" action="{{ url_for('edit', id=e.id) }}">
-                <input name="title" value="{{ e.title }}" required>
-                <input name="amount" type="number" step="0.01" value="{{ e.amount }}" required>
-                <input name="category" value="{{ e.category }}" required>
-                <button type="submit">Update</button>
-            </form>
-
-            <!-- Delete -->
             <form method="POST" action="{{ url_for('delete', id=e.id) }}">
-                <button type="submit">❌</button>
+                <button type="submit" class="delete-btn">❌</button>
             </form>
-
         </div>
         {% endfor %}
     {% else %}
         <p>No expenses yet.</p>
     {% endif %}
 
-    <!-- Premium -->
-    {% if is_premium %}
-        <h3>📊 By Category</h3>
-        {% for c in category_summary %}
-            <p>{{ c.category }} — ₹{{ "%.2f"|format(c.total) }}</p>
-        {% endfor %}
+    <h3 style="margin-top:40px;">📊 Category Insights</h3>
+
+    {% if category_summary %}
+        <div class="insights">
+            {% for c in category_summary %}
+                <div class="insight-card">
+                    <span>{{ c.category }}</span>
+                    <strong>₹{{ "%.2f"|format(c.total) }}</strong>
+                </div>
+            {% endfor %}
+        </div>
+
+        <canvas id="categoryChart" style="margin-top:20px;"></canvas>
+
+        <script>
+            const labels = {{ category_summary | map(attribute='category') | list | tojson }};
+            const data = {{ category_summary | map(attribute='total') | list | tojson }};
+
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF'
+                        ]
+                    }]
+                }
+            });
+        </script>
     {% else %}
-        <div class="premium locked">📊 Category insights (Premium)</div>
+        <p>No data yet to display insights.</p>
     {% endif %}
-
-    <!-- Export -->
-    <div class="premium {% if not is_premium %}locked{% endif %}">
-        {% if features and features.export_csv %}
-            <a href="/export"><button>⬇ Export CSV</button></a>
-        {% else %}
-            Export CSV 🔒
-        {% endif %}
-    </div>
-
-    <br>
-    <a href="/logout">Logout</a>
 </div>
 </body>
 </html>

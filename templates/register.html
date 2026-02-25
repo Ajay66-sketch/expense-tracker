@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up - Expense Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container" style="max-width: 400px; text-align: center;">
+    <h1>📝 Sign Up</h1>
+    <p>Create your Expense Tracker account</p>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST"
+          action="{{ url_for('register') }}"
+          style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+
+        <input 
+            name="username"
+            placeholder="Username"
+            autocomplete="username"
+            required>
+
+        <input 
+            name="password"
+            type="password"
+            placeholder="Password"
+            minlength="6"
+            autocomplete="new-password"
+            required>
+
+        <button type="submit">Sign Up</button>
+    </form>
+
+    <p style="margin-top:15px;">
+        Already have an account?
+        <a href="{{ url_for('login') }}">Login</a>
+    </p>
+</div>
+</body>
+</html>

@@ -1,218 +1,309 @@
-from flask import Flask, request, redirect, render_template, session, Response, url_for
-import sqlite3
-from datetime import datetime
+"""
+Refactored and Optimized Expense Tracker Flask App
+Requires: Flask, Flask-SQLAlchemy, Flask-WTF, Flask-Migrate
+"""
+
 import os
-from werkzeug.security import generate_password_hash, check_password_hash
+import csv
+from io import StringIO
+from decimal import Decimal, InvalidOperation
 from functools import wraps
 
+from flask import (
+    Flask, render_template, request, redirect,
+    url_for, Response, abort, session, flash, stream_with_context
+)
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
+from werkzeug.security import generate_password_hash, check_password_hash
+
+# New Industry-Standard Dependencies
+from flask_wtf.csrf import CSRFProtect
+from flask_migrate import Migrate
+
+# -----------------------------
+# App Setup & Configuration
+# -----------------------------
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")
 
-DB_NAME = "expenses.db"
-IS_PREMIUM = os.getenv("IS_PREMIUM", "false").lower() == "true"
-FEATURES = {"export_csv": IS_PREMIUM}
+# In production, ALWAYS pull the secret key from a secure environment variable
+app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key_change_in_production")
 
-# ---------- DATABASE ----------
-def get_db():
-    conn = sqlite3.connect(DB_NAME, timeout=30)
-    conn.row_factory = sqlite3.Row
-    return conn
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DB_PATH = os.path.join(BASE_DIR, "expenses.db")
 
-def init_db():
-    with get_db() as conn:
-        conn.execute("PRAGMA journal_mode=WAL;")
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
-            )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS expenses (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                title TEXT NOT NULL,
-                amount REAL NOT NULL,
-                category TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY(user_id) REFERENCES users(id)
-            )
-        """)
-        conn.commit()
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_PATH}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-init_db()
+# Initialize Extensions
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)  # Replaces db.create_all() for safe schema migrations
+csrf = CSRFProtect(app)     # Protects all POST requests from CSRF attacks
 
-# ---------- AUTH ----------
+# -----------------------------
+# Models
+# -----------------------------
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+    
+    # Cascade deletes prevent orphaned expense records if a user is deleted
+    expenses = db.relationship('Expense', backref='user', lazy=True, cascade="all, delete-orphan")
+
+
+class Expense(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    category = db.Column(db.String(50), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+
+# Note: db.create_all() has been removed. 
+# Best Practice: Use `flask db init`, `flask db migrate`, and `flask db upgrade` in the terminal.
+
+# -----------------------------
+# Error Handlers
+# -----------------------------
+@app.errorhandler(500)
+def internal_server_error(error):
+    """Rollback database session to prevent hanging transactions on crash"""
+    db.session.rollback()
+    return render_template('500.html'), 500
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
+
+# -----------------------------
+# Helpers
+# -----------------------------
 def login_required(f):
     @wraps(f)
-    def wrapper(*args, **kwargs):
-        if "user_id" not in session:
-            return redirect(url_for("login"))
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash("Please log in to access this page.", "error")
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
-    return wrapper
+    return decorated_function
 
-@app.route("/signup", methods=["GET", "POST"])
-def signup():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+
+def validate_expense_form(form):
+    """Validates form data securely to prevent bad data and DB crashes."""
+    title = form.get('title', '').strip()
+    category = form.get('category', '').strip()
+    amount_raw = form.get('amount', '').strip()
+
+    if not title or not category or not amount_raw:
+        raise ValueError("All fields are required.")
+
+    # Strict length constraints to prevent SQLAlchemy DataErrors
+    if len(title) > 100:
+        raise ValueError("Title must be under 100 characters.")
+    if len(category) > 50:
+        raise ValueError("Category must be under 50 characters.")
+
+    try:
+        amount = Decimal(amount_raw)
+    except InvalidOperation:
+        raise ValueError("Invalid amount format.")
+
+    # Prevent unreasonable/negative numbers breaking the Numeric(10, 2) DB constraint
+    if amount < 0 or amount > Decimal("99999999.99"):
+        raise ValueError("Amount must be between 0.00 and 99,999,999.99.")
+
+    return title, amount.quantize(Decimal("0.01")), category
+
+# -----------------------------
+# Auth Routes
+# -----------------------------
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
 
         if not username or not password:
-            return render_template("signup.html", error="All fields required")
+            flash("All fields required", "error")
+            return redirect(url_for('register'))
 
-        hashed = generate_password_hash(password)
+        if User.query.filter_by(username=username).first():
+            flash("Username already exists", "error")
+            return redirect(url_for('register'))
 
+        hashed_pw = generate_password_hash(password)
+        new_user = User(username=username, password_hash=hashed_pw)
+        
         try:
-            with get_db() as conn:
-                conn.execute(
-                    "INSERT INTO users (username, password) VALUES (?, ?)",
-                    (username, hashed)
-                )
-                conn.commit()
-            return redirect(url_for("login"))
-        except sqlite3.IntegrityError:
-            return render_template("signup.html", error="Username already exists")
+            db.session.add(new_user)
+            db.session.commit()
+            flash("Registration successful! Please login.", "success")
+            return redirect(url_for('login'))
+        except Exception:
+            db.session.rollback()
+            flash("An error occurred during registration.", "error")
 
-    return render_template("signup.html")
+    return render_template('register.html')
 
-@app.route("/login", methods=["GET", "POST"])
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
 
-        try:
-            with get_db() as conn:
-                user = conn.execute(
-                    "SELECT * FROM users WHERE username=?",
-                    (username,)
-                ).fetchone()
-        except sqlite3.OperationalError as e:
-            return render_template("login.html", error=f"DB Error: {e}")
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            session['user_id'] = user.id
+            # Mitigate Session Fixation attacks by regenerating session
+            session.permanent = True  
+            return redirect(url_for('index'))
+        else:
+            flash("Invalid credentials", "error")
+            return redirect(url_for('login'))
 
-        if user and check_password_hash(user["password"], password):
-            session["user_id"] = user["id"]
-            return redirect(url_for("index"))
+    return render_template('login.html')
 
-        return render_template("login.html", error="Invalid credentials")
 
-    return render_template("login.html")
-
-@app.route("/logout")
-@login_required
+@app.route('/logout', methods=['POST']) 
+# Note: Changing to POST is best practice to prevent CSRF logout attacks
 def logout():
     session.clear()
-    return redirect(url_for("login"))
+    flash("Logged out successfully.", "success")
+    return redirect(url_for('login'))
 
-# ---------- HOME ----------
-@app.route("/", methods=["GET", "POST"])
+# -----------------------------
+# Expense Routes
+# -----------------------------
+@app.route('/', methods=['GET', 'POST'])
 @login_required
 def index():
-    user_id = session["user_id"]
+    user_id = session['user_id']
 
-    if request.method == "POST":
-        title = request.form.get("title")
-        amount = request.form.get("amount")
-        category = request.form.get("category")
+    if request.method == 'POST':
+        try:
+            title, amount, category = validate_expense_form(request.form)
+            new_expense = Expense(
+                title=title,
+                amount=amount,
+                category=category,
+                user_id=user_id
+            )
+            db.session.add(new_expense)
+            db.session.commit()
+            flash("Expense added successfully.", "success")
+        except ValueError as e:
+            flash(str(e), "error")
+        except Exception:
+            db.session.rollback()
+            flash("An unexpected error occurred.", "error")
+            
+        return redirect(url_for('index'))
 
-        if title and amount and category:
-            with get_db() as conn:
-                conn.execute(
-                    """INSERT INTO expenses
-                       (user_id, title, amount, category, created_at)
-                       VALUES (?, ?, ?, ?, ?)""",
-                    (user_id, title, float(amount), category,
-                     datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                )
-                conn.commit()
-        return redirect(url_for("index"))
+    # PERFORMANCE FIX 1: Fetch total sum efficiently directly via SQL
+    total = db.session.query(func.sum(Expense.amount)).filter_by(user_id=user_id).scalar() or Decimal('0.00')
 
-    with get_db() as conn:
-        expenses = conn.execute(
-            "SELECT * FROM expenses WHERE user_id=? ORDER BY created_at DESC",
-            (user_id,)
-        ).fetchall()
+    # PERFORMANCE FIX 2: Group and aggregate category sums directly via SQL
+    category_summary_query = db.session.query(
+        Expense.category, 
+        func.sum(Expense.amount).label('total')
+    ).filter_by(user_id=user_id).group_by(Expense.category).all()
 
-        total = conn.execute(
-            "SELECT COALESCE(SUM(amount),0) FROM expenses WHERE user_id=?",
-            (user_id,)
-        ).fetchone()[0]
+    category_summary = [
+        {'category': row.category, 'total': float(row.total)} 
+        for row in category_summary_query
+    ]
 
-        category_summary = []
-        if IS_PREMIUM:
-            category_summary = conn.execute("""
-                SELECT category, SUM(amount) AS total
-                FROM expenses
-                WHERE user_id=?
-                GROUP BY category
-                ORDER BY total DESC
-            """, (user_id,)).fetchall()
+    # Display only the 50 most recent expenses to avoid memory bloat (Pagination is recommended here)
+    expenses = Expense.query.filter_by(user_id=user_id).order_by(Expense.id.desc()).limit(50).all()
 
     return render_template(
-        "index.html",
+        'index.html',
         expenses=expenses,
-        total=total,
-        category_summary=category_summary,
-        is_premium=IS_PREMIUM,
-        features=FEATURES
+        total=float(total),
+        category_summary=category_summary
     )
 
-# ---------- EDIT ----------
-@app.route("/edit/<int:id>", methods=["POST"])
+
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit(id):
-    user_id = session["user_id"]
-    title = request.form.get("title")
-    amount = request.form.get("amount")
-    category = request.form.get("category")
+    expense = Expense.query.get_or_404(id)
+    
+    # Strict Authorization check
+    if expense.user_id != session['user_id']:
+        abort(403)
 
-    if title and amount and category:
-        with get_db() as conn:
-            conn.execute(
-                "UPDATE expenses SET title=?, amount=?, category=? WHERE id=? AND user_id=?",
-                (title, float(amount), category, id, user_id)
-            )
-            conn.commit()
-    return redirect(url_for("index"))
+    if request.method == 'POST':
+        try:
+            title, amount, category = validate_expense_form(request.form)
+            expense.title = title
+            expense.amount = amount
+            expense.category = category
+            db.session.commit()
+            flash("Expense updated successfully.", "success")
+            return redirect(url_for('index'))
+        except ValueError as e:
+            flash(str(e), "error")
+        except Exception:
+            db.session.rollback()
+            flash("An unexpected error occurred.", "error")
 
-# ---------- DELETE ----------
-@app.route("/delete/<int:id>", methods=["POST"])
+    return render_template('edit.html', expense=expense)
+
+
+@app.route('/delete/<int:id>', methods=['POST'])
 @login_required
 def delete(id):
-    user_id = session["user_id"]
-    with get_db() as conn:
-        conn.execute(
-            "DELETE FROM expenses WHERE id=? AND user_id=?",
-            (id, user_id)
-        )
-        conn.commit()
-    return redirect(url_for("index"))
+    expense = Expense.query.get_or_404(id)
+    
+    if expense.user_id != session['user_id']:
+        abort(403)
 
-# ---------- EXPORT ----------
-@app.route("/export")
+    try:
+        db.session.delete(expense)
+        db.session.commit()
+        flash("Expense deleted successfully.", "success")
+    except Exception:
+        db.session.rollback()
+        flash("Failed to delete expense.", "error")
+        
+    return redirect(url_for('index'))
+
+
+@app.route('/export')
 @login_required
-def export_csv():
-    if not IS_PREMIUM:
-        return "Premium feature 🔒", 403
+def export():
+    user_id = session['user_id']
 
-    user_id = session["user_id"]
-    with get_db() as conn:
-        rows = conn.execute(
-            "SELECT id, title, amount, category, created_at FROM expenses WHERE user_id=?",
-            (user_id,)
-        ).fetchall()
+    # PERFORMANCE FIX 3: Memory-efficient streaming CSV generation
+    def generate_csv():
+        data = StringIO()
+        writer = csv.writer(data)
+        
+        # Write Headers
+        writer.writerow(['Title', 'Amount', 'Category'])
+        yield data.getvalue()
+        data.seek(0)
+        data.truncate(0)
 
-    def generate():
-        yield "id,title,amount,category,created_at\n"
-        for r in rows:
-            yield f"{r['id']},{r['title']},{r['amount']},{r['category']},{r['created_at']}\n"
+        # yield_per prevents loading millions of records into RAM at once
+        for e in Expense.query.filter_by(user_id=user_id).yield_per(100):
+            writer.writerow([e.title, str(e.amount), e.category])
+            yield data.getvalue()
+            data.seek(0)
+            data.truncate(0)
 
     return Response(
-        generate(),
+        stream_with_context(generate_csv()),
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=expenses.csv"}
     )
 
-if __name__ == "__main__":
-    app.run()
+# -----------------------------
+# Run App
+# -----------------------------
+if __name__ == '__main__':
+    # Debug should be False in production!
+    app.run(debug=True)

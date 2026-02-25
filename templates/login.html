@@ -8,13 +8,29 @@
 <body>
 <div class="container">
     <h1>Login</h1>
-    {% if error %}<p class="error">{{ error }}</p>{% endif %}
-    <form method="POST">
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <!-- This will output class="alert alert-error" or "alert alert-success" matching your app.py -->
+            <p class="alert alert-{{ category }}">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('login') }}" method="POST">
+        <!-- REQUIRED by CSRFProtect(app) in app.py -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
         <input name="username" placeholder="Username" required>
         <input name="password" type="password" placeholder="Password" required>
-        <button>Login</button>
+        <button type="submit">Login</button>
     </form>
-    <p>Don't have an account? <a href="/signup">Sign up</a></p>
+    
+    <!-- FIXED: Changed 'signup' to 'register' to match your app.py route -->
+    <p>Don't have an account? <a href="{{ url_for('register') }}">Sign up</a></p>
 </div>
 </body>
 </html>
