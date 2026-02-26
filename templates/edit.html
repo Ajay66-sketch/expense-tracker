@@ -1,18 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Edit Expense</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Edit Expense - Expense Tracker{% endblock %}
+
+{% block content %}
 <div class="container" style="max-width:400px; margin:auto; text-align:center;">
     <h2>Edit Expense</h2>
 
-    <form method="post"
+    <form method="POST"
           action="{{ url_for('edit', id=expense.id) }}"
           style="display:flex; flex-direction:column; gap:10px; margin-top:20px;"
           autocomplete="off">
+
+        <!-- CRITICAL: Added CSRF Token required by app.py -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
         <input type="text" name="title" value="{{ expense.title }}" required autocomplete="off">
 
@@ -33,5 +33,4 @@
         <a href="{{ url_for('index') }}">Back to Expenses</a>
     </p>
 </div>
-</body>
-</html>
+{% endblock %}

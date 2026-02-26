@@ -1,5 +1,13 @@
+# Virtual Environment
 venv/
-_pycache_/
+env/
+
+# Python Cache
+__pycache__/
 *.pyc
+
+# Database
 expenses.db
+
+# Environment Variables (for future use)
 .env
