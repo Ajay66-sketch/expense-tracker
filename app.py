@@ -21,6 +21,7 @@ from flask_migrate import Migrate
 # App Setup & Configuration
 # -----------------------------
 app = Flask(__name__)
+# In production, ALWAYS pull the secret key from a secure environment variable
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key_change_in_production")
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -42,7 +43,7 @@ class User(db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     
-    # NEW: Store User Level (beginner, intermediate, advanced)
+    # Store User Level (beginner, intermediate, advanced)
     level = db.Column(db.String(20), default='beginner', nullable=False)
 
     expenses = db.relationship('Expense', backref='user', lazy=True, cascade="all, delete-orphan")
@@ -108,7 +109,6 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
-        # NEW: Get the selected level
         level = request.form.get('level', 'beginner')
 
         if not username or not password:
@@ -120,7 +120,6 @@ def register():
             return redirect(url_for('register'))
 
         hashed_pw = generate_password_hash(password)
-        # NEW: Save level to DB
         new_user = User(username=username, password_hash=hashed_pw, level=level)
         
         try:
@@ -164,8 +163,8 @@ def logout():
 @login_required
 def index():
     user_id = session['user_id']
-    # NEW: Fetch current user object to access their 'level'
-    current_user = User.query.get(user_id)
+    # Updated to db.session.get to fix LegacyAPIWarning
+    current_user = db.session.get(User, user_id)
 
     if request.method == 'POST':
         try:
@@ -206,7 +205,7 @@ def index():
         expenses=expenses,
         total=float(total),
         category_summary=category_summary,
-        current_user=current_user # NEW: Pass user to template
+        current_user=current_user
     )
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
@@ -253,8 +252,10 @@ def delete(id):
 @app.route('/export')
 @login_required
 def export():
-    # NEW: Security check - Only Advanced users can export
-    user = User.query.get(session['user_id'])
+    # Updated to db.session.get
+    user = db.session.get(User, session['user_id'])
+    
+    # Security check - Only Advanced users can export
     if user.level != 'advanced':
         flash("Export is an Advanced feature.", "error")
         return redirect(url_for('index'))
@@ -278,6 +279,38 @@ def export():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=expenses.csv"}
     )
+
+# -----------------------------
+# Profile / Settings Route
+# -----------------------------
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    # Updated to db.session.get
+    user = db.session.get(User, session['user_id'])
+
+    if request.method == 'POST':
+        new_username = request.form.get('username').strip()
+        new_level = request.form.get('level')
+
+        if not new_username:
+            flash("Username cannot be empty.", "error")
+        else:
+            # Check if username is taken by someone else
+            existing = User.query.filter_by(username=new_username).first()
+            if existing and existing.id != user.id:
+                flash("Username already exists.", "error")
+            else:
+                user.username = new_username
+                user.level = new_level
+                try:
+                    db.session.commit()
+                    flash("Profile updated successfully!", "success")
+                except Exception:
+                    db.session.rollback()
+                    flash("Error updating profile.", "error")
+
+    return render_template('profile.html', user=user)
 
 if __name__ == '__main__':
     app.run(debug=True)

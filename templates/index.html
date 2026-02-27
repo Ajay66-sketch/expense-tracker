@@ -20,6 +20,11 @@
             </a>
             {% endif %}
             
+            <!-- NEW: Settings Button (Visible to everyone) -->
+            <a href="{{ url_for('profile') }}" style="text-decoration:none;">
+                <button type="button" style="cursor:pointer; background-color:#6c757d;">⚙️ Settings</button>
+            </a>
+
             <!-- Logout Form -->
             <form action="{{ url_for('logout') }}" method="POST" style="margin:0;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -126,7 +131,7 @@
         <!-- Message for Beginners -->
         <div style="margin-top:40px; padding:20px; background:#f0f8ff; border:1px solid #b6d4fe; border-radius:10px; text-align:center;">
             <h3>🎓 Beginner Mode</h3>
-            <p>Simple tracking. Upgrade to <b>Intermediate</b> to unlock Charts!</p>
+            <p>Simple tracking. Go to <b>Settings</b> to upgrade to Intermediate for Charts!</p>
         </div>
 
     {% elif current_user.level == 'advanced' %}

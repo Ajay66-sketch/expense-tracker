@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 500px; margin: 3rem auto;">
+    <h1>⚙️ Settings</h1>
+
+    <form method="POST" action="{{ url_for('profile') }}" style="display:flex; flex-direction:column; gap:15px; margin-top:20px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+        <div style="text-align:left;">
+            <label style="font-weight:bold; color:#555;">Username</label>
+            <input name="username" value="{{ user.username }}" required>
+        </div>
+
+        <div style="text-align:left;">
+            <label style="font-weight:bold; color:#555;">User Mode</label>
+            <select name="level" style="padding:10px; border-radius:8px; border:1px solid #ccc;">
+                <option value="beginner" {% if user.level == 'beginner' %}selected{% endif %}>🟢 Beginner (Simple)</option>
+                <option value="intermediate" {% if user.level == 'intermediate' %}selected{% endif %}>🟡 Intermediate (Charts)</option>
+                <option value="advanced" {% if user.level == 'advanced' %}selected{% endif %}>🔴 Advanced (Export)</option>
+            </select>
+            <p style="font-size:0.8rem; color:#666; margin-top:5px;">
+                Switch modes to see different features on your dashboard.
+            </p>
+        </div>
+
+        <button type="submit" style="background-color:#2196F3;">Save Changes</button>
+    </form>
+
+    <div style="margin-top:20px; text-align:center;">
+        <a href="{{ url_for('index') }}" style="text-decoration:none; color:#666;">← Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}
