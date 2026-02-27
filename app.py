@@ -27,7 +27,15 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key_change_in_producti
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, "expenses.db")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_PATH}"
+# 1. Get the Database URL from the environment (Render sets this automatically)
+database_url = os.environ.get("DATABASE_URL")
+
+# 2. Fix Render's URL (Render uses 'postgres://' but SQLAlchemy needs 'postgresql://')
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+# 3. Choose the database: Use Postgres online, or SQLite locally
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or f"sqlite:///{DB_PATH}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize Extensions
