@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Expense Tracker{% endblock %}</title>
     
-    <!-- Favicon (Make sure you have a favicon.ico in your static folder!) -->
+    <!-- Favicon -->
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     
     <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     
-    <!-- Optional: Move Chart.js here so it's available globally -->
+    <!-- Chart.js (Global Load) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <!-- FIXED: Added with_categories=true to support 'success' and 'error' styling -->
+    <!-- Flash Messages (Handles Success/Error popups) -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="flash-messages" style="max-width: 400px; margin: 10px auto; text-align: center;">
+            <div class="flash-messages" style="max-width: 600px; margin: 10px auto; text-align: center;">
                 {% for category, message in messages %}
-                    <div class="flash {{ category }}" style="padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+                    <div class="flash {{ category }}">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -28,7 +28,7 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Child templates will inject their content here -->
+    <!-- Child content goes here -->
     {% block content %}{% endblock %}
 </body>
 </html>

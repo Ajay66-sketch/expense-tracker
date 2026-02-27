@@ -5,13 +5,13 @@
 {% block content %}
 <div class="container" style="max-width: 400px; text-align: center; margin: 0 auto;">
     <h1>📝 Sign Up</h1>
-    <p>Create your Expense Tracker account</p>
+    <p>Select your experience level</p>
 
     <form method="POST"
           action="{{ url_for('register') }}"
           style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
         
-        <!-- CSRF Token required by CSRFProtect(app) -->
+        <!-- CSRF Token -->
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
         <input 
@@ -28,7 +28,15 @@
             autocomplete="new-password"
             required>
 
-        <button type="submit">Sign Up</button>
+        <!-- NEW: Level Selection Dropdown -->
+        <label style="text-align:left; font-weight:bold; color:#555; margin-top:10px;">Select your mode:</label>
+        <select name="level" required style="padding:10px; border-radius:8px; border:1px solid #ccc;">
+            <option value="beginner">🟢 Beginner (Simple Tracking)</option>
+            <option value="intermediate">🟡 Intermediate (Charts & Analytics)</option>
+            <option value="advanced">🔴 Advanced (Export & Power Tools)</option>
+        </select>
+
+        <button type="submit" style="margin-top:10px;">Sign Up</button>
     </form>
 
     <p style="margin-top:15px;">

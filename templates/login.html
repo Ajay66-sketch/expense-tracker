@@ -3,11 +3,11 @@
 {% block title %}Login - Expense Tracker{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Login</h1>
+<div class="container" style="max-width: 400px; margin: 3rem auto;">
+    <h1>🔐 Login</h1>
 
     <form action="{{ url_for('login') }}" method="POST">
-        <!-- REQUIRED by CSRFProtect(app) in app.py -->
+        <!-- CRITICAL: CSRF Token -->
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
         <input name="username" placeholder="Username" required>
@@ -15,6 +15,8 @@
         <button type="submit">Login</button>
     </form>
     
-    <p>Don't have an account? <a href="{{ url_for('register') }}">Sign up</a></p>
+    <p style="text-align: center; margin-top: 15px;">
+        Don't have an account? <a href="{{ url_for('register') }}">Sign up</a>
+    </p>
 </div>
 {% endblock %}

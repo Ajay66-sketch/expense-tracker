@@ -16,6 +16,7 @@ body {
 
 h1, h2, h3 {
     text-align: center;
+    color: #333;
 }
 
 /* Forms */
@@ -35,24 +36,24 @@ button {
     font-weight: bold;
     cursor: pointer;
     border: none;
+    transition: background 0.3s;
 }
 
 button:hover {
     background: #45a049;
 }
 
-/* NEW: Inline Buttons (Fixes the stretched Edit, Delete, Export, and Logout buttons) */
-button.inline-btn, 
+/* Button utility for flex containers */
 .expense button, 
-.container > div > div > a button, 
-.container > div > div > form button {
-    width: auto;
+.delete-btn {
+    width: auto; /* Prevents small buttons from stretching */
     margin: 0;
 }
 
 /* Specific Delete Button Styling */
 .delete-btn {
     background: #ff4d4d;
+    padding: 5px 10px;
 }
 .delete-btn:hover {
     background: #e60000;
@@ -61,9 +62,11 @@ button.inline-btn,
 /* Expenses List */
 .expense {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
     gap: 0.5rem;
-    border-bottom: 1px solid #ddd;
-    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+    padding: 0.8rem 0;
 }
 
 /* Flash Messages */
@@ -77,26 +80,17 @@ button.inline-btn,
 
 .error {
     background-color: #ffe6e6;
-    color: red;
-    border: 1px solid red;
+    color: #d8000c;
+    border: 1px solid #d8000c;
 }
 
-/* NEW: Added Success class for green flash messages */
 .success {
     background-color: #e6ffe6;
-    color: #008000;
-    border: 1px solid #008000;
+    color: #270;
+    border: 1px solid #270;
 }
 
-/* Miscellaneous */
-.premium.locked {
-    opacity: 0.6;
-    border: 1px dashed #aaa;
-    text-align: center;
-    padding: 1rem;
-    margin: 1rem 0;
-}
-
+/* Links */
 a {
     color: #2196F3;
     text-decoration: none;

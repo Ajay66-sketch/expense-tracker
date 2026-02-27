@@ -2,13 +2,11 @@
 Refactored and Optimized Expense Tracker Flask App
 Requires: Flask, Flask-SQLAlchemy, Flask-WTF, Flask-Migrate
 """
-
 import os
 import csv
 from io import StringIO
 from decimal import Decimal, InvalidOperation
 from functools import wraps
-
 from flask import (
     Flask, render_template, request, redirect,
     url_for, Response, abort, session, flash, stream_with_context
@@ -16,8 +14,6 @@ from flask import (
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
-
-# New Industry-Standard Dependencies
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
 
@@ -25,8 +21,6 @@ from flask_migrate import Migrate
 # App Setup & Configuration
 # -----------------------------
 app = Flask(__name__)
-
-# In production, ALWAYS pull the secret key from a secure environment variable
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key_change_in_production")
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -37,8 +31,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize Extensions
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)  # Replaces db.create_all() for safe schema migrations
-csrf = CSRFProtect(app)     # Protects all POST requests from CSRF attacks
+migrate = Migrate(app, db)
+csrf = CSRFProtect(app)
 
 # -----------------------------
 # Models
@@ -48,9 +42,10 @@ class User(db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     
-    # Cascade deletes prevent orphaned expense records if a user is deleted
-    expenses = db.relationship('Expense', backref='user', lazy=True, cascade="all, delete-orphan")
+    # NEW: Store User Level (beginner, intermediate, advanced)
+    level = db.Column(db.String(20), default='beginner', nullable=False)
 
+    expenses = db.relationship('Expense', backref='user', lazy=True, cascade="all, delete-orphan")
 
 class Expense(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,16 +54,11 @@ class Expense(db.Model):
     category = db.Column(db.String(50), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-
-# Note: db.create_all() has been removed. 
-# Best Practice: Use `flask db init`, `flask db migrate`, and `flask db upgrade` in the terminal.
-
 # -----------------------------
 # Error Handlers
 # -----------------------------
 @app.errorhandler(500)
 def internal_server_error(error):
-    """Rollback database session to prevent hanging transactions on crash"""
     db.session.rollback()
     return render_template('500.html'), 500
 
@@ -88,28 +78,23 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
 def validate_expense_form(form):
-    """Validates form data securely to prevent bad data and DB crashes."""
     title = form.get('title', '').strip()
     category = form.get('category', '').strip()
     amount_raw = form.get('amount', '').strip()
 
     if not title or not category or not amount_raw:
         raise ValueError("All fields are required.")
-
-    # Strict length constraints to prevent SQLAlchemy DataErrors
     if len(title) > 100:
         raise ValueError("Title must be under 100 characters.")
     if len(category) > 50:
         raise ValueError("Category must be under 50 characters.")
-
+    
     try:
         amount = Decimal(amount_raw)
     except InvalidOperation:
         raise ValueError("Invalid amount format.")
-
-    # Prevent unreasonable/negative numbers breaking the Numeric(10, 2) DB constraint
+    
     if amount < 0 or amount > Decimal("99999999.99"):
         raise ValueError("Amount must be between 0.00 and 99,999,999.99.")
 
@@ -123,6 +108,8 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
+        # NEW: Get the selected level
+        level = request.form.get('level', 'beginner')
 
         if not username or not password:
             flash("All fields required", "error")
@@ -133,7 +120,8 @@ def register():
             return redirect(url_for('register'))
 
         hashed_pw = generate_password_hash(password)
-        new_user = User(username=username, password_hash=hashed_pw)
+        # NEW: Save level to DB
+        new_user = User(username=username, password_hash=hashed_pw, level=level)
         
         try:
             db.session.add(new_user)
@@ -146,7 +134,6 @@ def register():
 
     return render_template('register.html')
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -156,7 +143,6 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password_hash, password):
             session['user_id'] = user.id
-            # Mitigate Session Fixation attacks by regenerating session
             session.permanent = True  
             return redirect(url_for('index'))
         else:
@@ -165,9 +151,7 @@ def login():
 
     return render_template('login.html')
 
-
-@app.route('/logout', methods=['POST']) 
-# Note: Changing to POST is best practice to prevent CSRF logout attacks
+@app.route('/logout', methods=['POST'])
 def logout():
     session.clear()
     flash("Logged out successfully.", "success")
@@ -180,6 +164,8 @@ def logout():
 @login_required
 def index():
     user_id = session['user_id']
+    # NEW: Fetch current user object to access their 'level'
+    current_user = User.query.get(user_id)
 
     if request.method == 'POST':
         try:
@@ -198,13 +184,11 @@ def index():
         except Exception:
             db.session.rollback()
             flash("An unexpected error occurred.", "error")
-            
         return redirect(url_for('index'))
 
-    # PERFORMANCE FIX 1: Fetch total sum efficiently directly via SQL
+    # SQL Aggregations
     total = db.session.query(func.sum(Expense.amount)).filter_by(user_id=user_id).scalar() or Decimal('0.00')
 
-    # PERFORMANCE FIX 2: Group and aggregate category sums directly via SQL
     category_summary_query = db.session.query(
         Expense.category, 
         func.sum(Expense.amount).label('total')
@@ -215,23 +199,20 @@ def index():
         for row in category_summary_query
     ]
 
-    # Display only the 50 most recent expenses to avoid memory bloat (Pagination is recommended here)
     expenses = Expense.query.filter_by(user_id=user_id).order_by(Expense.id.desc()).limit(50).all()
 
     return render_template(
         'index.html',
         expenses=expenses,
         total=float(total),
-        category_summary=category_summary
+        category_summary=category_summary,
+        current_user=current_user # NEW: Pass user to template
     )
-
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit(id):
     expense = Expense.query.get_or_404(id)
-    
-    # Strict Authorization check
     if expense.user_id != session['user_id']:
         abort(403)
 
@@ -252,12 +233,10 @@ def edit(id):
 
     return render_template('edit.html', expense=expense)
 
-
 @app.route('/delete/<int:id>', methods=['POST'])
 @login_required
 def delete(id):
     expense = Expense.query.get_or_404(id)
-    
     if expense.user_id != session['user_id']:
         abort(403)
 
@@ -268,28 +247,27 @@ def delete(id):
     except Exception:
         db.session.rollback()
         flash("Failed to delete expense.", "error")
-        
+    
     return redirect(url_for('index'))
-
 
 @app.route('/export')
 @login_required
 def export():
-    user_id = session['user_id']
+    # NEW: Security check - Only Advanced users can export
+    user = User.query.get(session['user_id'])
+    if user.level != 'advanced':
+        flash("Export is an Advanced feature.", "error")
+        return redirect(url_for('index'))
 
-    # PERFORMANCE FIX 3: Memory-efficient streaming CSV generation
     def generate_csv():
         data = StringIO()
         writer = csv.writer(data)
-        
-        # Write Headers
         writer.writerow(['Title', 'Amount', 'Category'])
         yield data.getvalue()
         data.seek(0)
         data.truncate(0)
 
-        # yield_per prevents loading millions of records into RAM at once
-        for e in Expense.query.filter_by(user_id=user_id).yield_per(100):
+        for e in Expense.query.filter_by(user_id=user.id).yield_per(100):
             writer.writerow([e.title, str(e.amount), e.category])
             yield data.getvalue()
             data.seek(0)
@@ -301,9 +279,5 @@ def export():
         headers={"Content-Disposition": "attachment; filename=expenses.csv"}
     )
 
-# -----------------------------
-# Run App
-# -----------------------------
 if __name__ == '__main__':
-    # Debug should be False in production!
     app.run(debug=True)
