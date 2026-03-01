@@ -1,324 +1,198 @@
-"""
-Refactored and Optimized Expense Tracker Flask App
-Requires: Flask, Flask-SQLAlchemy, Flask-WTF, Flask-Migrate
-"""
-import os
-import csv
-from io import StringIO
-from decimal import Decimal, InvalidOperation
-from functools import wraps
-from flask import (
-    Flask, render_template, request, redirect,
-    url_for, Response, abort, session, flash, stream_with_context
-)
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_wtf.csrf import CSRFProtect
-from flask_migrate import Migrate
+from datetime import date, datetime
+import math
 
-# -----------------------------
-# App Setup & Configuration
-# -----------------------------
+# --- 1. APP & DATABASE INITIALIZATION ---
 app = Flask(__name__)
-# In production, ALWAYS pull the secret key from a secure environment variable
-app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key_change_in_production")
-
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DB_PATH = os.path.join(BASE_DIR, "expenses.db")
-
-# 1. Get the Database URL from the environment (Render sets this automatically)
-database_url = os.environ.get("DATABASE_URL")
-
-# 2. Fix Render's URL (Render uses 'postgres://' but SQLAlchemy needs 'postgresql://')
-if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
-
-# 3. Choose the database: Use Postgres online, or SQLite locally
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or f"sqlite:///{DB_PATH}"
+app.config['SECRET_KEY'] = 'your_super_secret_key_change_this_later'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///survival.db' # Using SQLite for easy testing, upgrade to Postgres later
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize Extensions
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-csrf = CSRFProtect(app)
 
-# -----------------------------
-# Models
-# -----------------------------
-class User(db.Model):
+# --- 2. LOGIN MANAGER SETUP ---
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# --- 3. DATABASE MODELS ---
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
-    
-    # Store User Level (beginner, intermediate, advanced)
-    level = db.Column(db.String(20), default='beginner', nullable=False)
+    username = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False)
+    tier = db.Column(db.String(20), default='free') # 'free' or 'premium'
+    cycles = db.relationship('Cycle', backref='user', lazy=True)
 
-    expenses = db.relationship('Expense', backref='user', lazy=True, cascade="all, delete-orphan")
+class Cycle(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    pocket_money = db.Column(db.Float, nullable=False)
+    fixed_expenses = db.Column(db.Float, nullable=False)
+    expenses = db.relationship('Expense', backref='cycle', lazy=True)
 
 class Expense(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    amount = db.Column(db.Numeric(10, 2), nullable=False)
-    category = db.Column(db.String(50), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    cycle_id = db.Column(db.Integer, db.ForeignKey('cycle.id'), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    date = db.Column(db.Date, default=date.today)
+    category = db.Column(db.String(50), default="General")
 
-# -----------------------------
-# Error Handlers
-# -----------------------------
-@app.errorhandler(500)
-def internal_server_error(error):
-    db.session.rollback()
-    return render_template('500.html'), 500
-
-@app.errorhandler(404)
-def not_found_error(error):
-    return render_template('404.html'), 404
-
-# -----------------------------
-# Helpers
-# -----------------------------
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            flash("Please log in to access this page.", "error")
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-def validate_expense_form(form):
-    title = form.get('title', '').strip()
-    category = form.get('category', '').strip()
-    amount_raw = form.get('amount', '').strip()
-
-    if not title or not category or not amount_raw:
-        raise ValueError("All fields are required.")
-    if len(title) > 100:
-        raise ValueError("Title must be under 100 characters.")
-    if len(category) > 50:
-        raise ValueError("Category must be under 50 characters.")
+# --- 4. THE SURVIVAL ENGINE LOGIC ---
+def get_survival_metrics(cycle, user):
+    today = date.today()
+    if not cycle: return None
     
-    try:
-        amount = Decimal(amount_raw)
-    except InvalidOperation:
-        raise ValueError("Invalid amount format.")
-    
-    if amount < 0 or amount > Decimal("99999999.99"):
-        raise ValueError("Amount must be between 0.00 and 99,999,999.99.")
+    total_days = max(1, (cycle.end_date - cycle.start_date).days + 1)
+    days_passed = max(1, (today - cycle.start_date).days)
+    remaining_days = max(1, total_days - days_passed)
 
-    return title, amount.quantize(Decimal("0.01")), category
+    disposable_income = cycle.pocket_money - cycle.fixed_expenses
+    total_spent = sum(e.amount for e in cycle.expenses)
+    spent_today = sum(e.amount for e in cycle.expenses if e.date == today)
+    remaining_money = disposable_income - total_spent
 
-# -----------------------------
-# Auth Routes
-# -----------------------------
+    # Rolling Limit Logic
+    safe_daily_limit = remaining_money / remaining_days if remaining_money > 0 else 0
+
+    # Psychological Feedback
+    if remaining_money <= 0:
+        feedback = {"type": "danger", "msg": "🚨 Broke Mode! You are officially out of safe money."}
+    elif spent_today > safe_daily_limit:
+        feedback = {"type": "warning", "msg": "⚠️ You overspent today. Tomorrow's limit will drop."}
+    elif spent_today == 0:
+        feedback = {"type": "success", "msg": "🧘 Zero spent today! Your limit for tomorrow is growing."}
+    else:
+        feedback = {"type": "info", "msg": "🎯 Excellent control. You are within your survival limit."}
+
+    return {
+        "remaining_money": remaining_money,
+        "remaining_days": remaining_days,
+        "safe_daily_limit": round(safe_daily_limit, 2),
+        "spent_today": spent_today,
+        "feedback": feedback
+    }
+
+# --- 5. ROUTES (AUTH) ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-        level = request.form.get('level', 'beginner')
-
-        if not username or not password:
-            flash("All fields required", "error")
-            return redirect(url_for('register'))
-
-        if User.query.filter_by(username=username).first():
-            flash("Username already exists", "error")
-            return redirect(url_for('register'))
-
-        hashed_pw = generate_password_hash(password)
-        new_user = User(username=username, password_hash=hashed_pw, level=level)
+        username = request.form.get('username')
+        password = request.form.get('password')
         
-        try:
-            db.session.add(new_user)
-            db.session.commit()
-            flash("Registration successful! Please login.", "success")
-            return redirect(url_for('login'))
-        except Exception:
-            db.session.rollback()
-            flash("An error occurred during registration.", "error")
-
+        user_exists = User.query.filter_by(username=username).first()
+        if user_exists:
+            flash('Username already exists. Please login.', 'danger')
+            return redirect(url_for('register'))
+            
+        hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
+        new_user = User(username=username, password=hashed_pw)
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        login_user(new_user)
+        return redirect(url_for('edit')) # Send directly to setup month
+        
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
         user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password_hash, password):
-            session['user_id'] = user.id
-            session.permanent = True  
+        if user and check_password_hash(user.password, password):
+            login_user(user)
             return redirect(url_for('index'))
         else:
-            flash("Invalid credentials", "error")
-            return redirect(url_for('login'))
-
+            flash('Invalid username or password.', 'danger')
+            
     return render_template('login.html')
 
-@app.route('/logout', methods=['POST'])
+@app.route('/logout')
+@login_required
 def logout():
-    session.clear()
-    flash("Logged out successfully.", "success")
+    logout_user()
     return redirect(url_for('login'))
 
-# -----------------------------
-# Expense Routes
-# -----------------------------
-@app.route('/', methods=['GET', 'POST'])
+# --- 6. ROUTES (CORE APP) ---
+@app.route('/')
 @login_required
 def index():
-    user_id = session['user_id']
-    # Updated to db.session.get to fix LegacyAPIWarning
-    current_user = db.session.get(User, user_id)
-
-    if request.method == 'POST':
-        try:
-            title, amount, category = validate_expense_form(request.form)
-            new_expense = Expense(
-                title=title,
-                amount=amount,
-                category=category,
-                user_id=user_id
-            )
-            db.session.add(new_expense)
-            db.session.commit()
-            flash("Expense added successfully.", "success")
-        except ValueError as e:
-            flash(str(e), "error")
-        except Exception:
-            db.session.rollback()
-            flash("An unexpected error occurred.", "error")
-        return redirect(url_for('index'))
-
-    # SQL Aggregations
-    total = db.session.query(func.sum(Expense.amount)).filter_by(user_id=user_id).scalar() or Decimal('0.00')
-
-    category_summary_query = db.session.query(
-        Expense.category, 
-        func.sum(Expense.amount).label('total')
-    ).filter_by(user_id=user_id).group_by(Expense.category).all()
-
-    category_summary = [
-        {'category': row.category, 'total': float(row.total)} 
-        for row in category_summary_query
-    ]
-
-    expenses = Expense.query.filter_by(user_id=user_id).order_by(Expense.id.desc()).limit(50).all()
-
-    return render_template(
-        'index.html',
-        expenses=expenses,
-        total=float(total),
-        category_summary=category_summary,
-        current_user=current_user
-    )
-
-@app.route('/edit/<int:id>', methods=['GET', 'POST'])
-@login_required
-def edit(id):
-    expense = Expense.query.get_or_404(id)
-    if expense.user_id != session['user_id']:
-        abort(403)
-
-    if request.method == 'POST':
-        try:
-            title, amount, category = validate_expense_form(request.form)
-            expense.title = title
-            expense.amount = amount
-            expense.category = category
-            db.session.commit()
-            flash("Expense updated successfully.", "success")
-            return redirect(url_for('index'))
-        except ValueError as e:
-            flash(str(e), "error")
-        except Exception:
-            db.session.rollback()
-            flash("An unexpected error occurred.", "error")
-
-    return render_template('edit.html', expense=expense)
-
-@app.route('/delete/<int:id>', methods=['POST'])
-@login_required
-def delete(id):
-    expense = Expense.query.get_or_404(id)
-    if expense.user_id != session['user_id']:
-        abort(403)
-
-    try:
-        db.session.delete(expense)
-        db.session.commit()
-        flash("Expense deleted successfully.", "success")
-    except Exception:
-        db.session.rollback()
-        flash("Failed to delete expense.", "error")
+    active_cycle = Cycle.query.filter_by(user_id=current_user.id).order_by(Cycle.id.desc()).first()
     
+    if not active_cycle:
+        return redirect(url_for('edit')) # Force setup if no month exists
+        
+    metrics = get_survival_metrics(active_cycle, current_user)
+    return render_template('index.html', metrics=metrics, cycle=active_cycle)
+
+@app.route('/edit', methods=['GET', 'POST'])
+@login_required
+def edit():
+    if request.method == 'POST':
+        try:
+            pocket_money = float(request.form.get('pocket_money'))
+            fixed_expenses = float(request.form.get('fixed_expenses'))
+            
+            start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date()
+            end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date()
+            
+            new_cycle = Cycle(
+                user_id=current_user.id, 
+                pocket_money=pocket_money, 
+                fixed_expenses=fixed_expenses, 
+                start_date=start_date, 
+                end_date=end_date
+            )
+            
+            db.session.add(new_cycle)
+            db.session.commit()
+            
+            flash('Month setup complete! Survive well.', 'success')
+            return redirect(url_for('index'))
+            
+        except Exception as e:
+            flash('Error setting up month. Please check your inputs.', 'danger')
+            return redirect(url_for('edit'))
+            
+    return render_template('edit.html')
+
+@app.route('/log_expense', methods=['POST'])
+@login_required
+def log_expense():
+    amount = float(request.form.get('amount'))
+    active_cycle = Cycle.query.filter_by(user_id=current_user.id).order_by(Cycle.id.desc()).first()
+    
+    if active_cycle:
+        new_expense = Expense(amount=amount, cycle_id=active_cycle.id, date=date.today())
+        db.session.add(new_expense)
+        db.session.commit()
+        flash("Expense logged!", "success")
+        
     return redirect(url_for('index'))
 
-@app.route('/export')
-@login_required
-def export():
-    # Updated to db.session.get
-    user = db.session.get(User, session['user_id'])
-    
-    # Security check - Only Advanced users can export
-    if user.level != 'advanced':
-        flash("Export is an Advanced feature.", "error")
-        return redirect(url_for('index'))
-
-    def generate_csv():
-        data = StringIO()
-        writer = csv.writer(data)
-        writer.writerow(['Title', 'Amount', 'Category'])
-        yield data.getvalue()
-        data.seek(0)
-        data.truncate(0)
-
-        for e in Expense.query.filter_by(user_id=user.id).yield_per(100):
-            writer.writerow([e.title, str(e.amount), e.category])
-            yield data.getvalue()
-            data.seek(0)
-            data.truncate(0)
-
-    return Response(
-        stream_with_context(generate_csv()),
-        mimetype="text/csv",
-        headers={"Content-Disposition": "attachment; filename=expenses.csv"}
-    )
-
-# -----------------------------
-# Profile / Settings Route
-# -----------------------------
-@app.route('/profile', methods=['GET', 'POST'])
+@app.route('/profile')
 @login_required
 def profile():
-    # Updated to db.session.get
-    user = db.session.get(User, session['user_id'])
+    return render_template('profile.html')
 
-    if request.method == 'POST':
-        new_username = request.form.get('username').strip()
-        new_level = request.form.get('level')
-
-        if not new_username:
-            flash("Username cannot be empty.", "error")
-        else:
-            # Check if username is taken by someone else
-            existing = User.query.filter_by(username=new_username).first()
-            if existing and existing.id != user.id:
-                flash("Username already exists.", "error")
-            else:
-                user.username = new_username
-                user.level = new_level
-                try:
-                    db.session.commit()
-                    flash("Profile updated successfully!", "success")
-                except Exception:
-                    db.session.rollback()
-                    flash("Error updating profile.", "error")
-
-    return render_template('profile.html', user=user)
-
+# --- 7. RUN APP ---
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all() # Creates the database tables if they don't exist
     app.run(debug=True)

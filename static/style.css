@@ -1,101 +1,63 @@
+/* --- START OF NEW style.css --- */
+
+/* 1. Base App Settings */
+html {
+    scroll-behavior: smooth;
+}
+
 body {
-    font-family: "Segoe UI", sans-serif;
-    background: #f4f4f9;
-    margin: 0;
-    padding: 0;
+    /* Prevents the annoying blue tap highlight on mobile devices */
+    -webkit-tap-highlight-color: transparent; 
 }
 
-.container {
-    max-width: 600px;
-    margin: 3rem auto;
-    padding: 2rem;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-h1, h2, h3 {
-    text-align: center;
-    color: #333;
-}
-
-/* Forms */
-input, select, button {
-    width: 100%;
-    padding: 0.7rem;
-    margin: 0.3rem 0;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    box-sizing: border-box; /* Ensures padding doesn't push width over 100% */
-}
-
-/* Default Button Styling */
-button {
-    background: #4CAF50;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    border: none;
-    transition: background 0.3s;
-}
-
-button:hover {
-    background: #45a049;
-}
-
-/* Button utility for flex containers */
-.expense button, 
-.delete-btn {
-    width: auto; /* Prevents small buttons from stretching */
+/* 2. Clean Number Inputs (Removes the ugly up/down arrows) */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
     margin: 0;
 }
 
-/* Specific Delete Button Styling */
-.delete-btn {
-    background: #ff4d4d;
-    padding: 5px 10px;
-}
-.delete-btn:hover {
-    background: #e60000;
+input[type="number"] {
+    -moz-appearance: textfield; /* For Firefox */
 }
 
-/* Expenses List */
-.expense {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.5rem;
-    border-bottom: 1px solid #eee;
-    padding: 0.8rem 0;
+/* 3. Custom Modern Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
 }
 
-/* Flash Messages */
-.flash {
-    text-align: center;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 15px;
-    font-weight: bold;
+::-webkit-scrollbar-track {
+    background: transparent;
 }
 
-.error {
-    background-color: #ffe6e6;
-    color: #d8000c;
-    border: 1px solid #d8000c;
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
 }
 
-.success {
-    background-color: #e6ffe6;
-    color: #270;
-    border: 1px solid #270;
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
-/* Links */
-a {
-    color: #2196F3;
-    text-decoration: none;
+/* 4. Custom Psychological Animations */
+/* Use this class for the "Broke Mode" or errors */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
 }
 
-a:hover {
-    text-decoration: underline;
+.animate-shake {
+    animation: shake 0.4s ease-in-out;
+}
+
+/* Soft pulse for the Premium Upsell button */
+@keyframes soft-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+.animate-soft-pulse:hover {
+    animation: soft-pulse 2s infinite;
 }

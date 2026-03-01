@@ -1,147 +1,57 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Expense Tracker{% endblock %}
-
 {% block content %}
-<div class="container">
-    <h1>💰 Expense Tracker</h1>
+<!-- Psychological Feedback Alert -->
+<div class="p-4 mb-6 rounded-lg font-medium text-sm border 
+    {% if metrics.feedback.type == 'danger' %} bg-red-50 text-red-700 border-red-200 
+    {% elif metrics.feedback.type == 'success' %} bg-green-50 text-green-700 border-green-200 
+    {% elif metrics.feedback.type == 'warning' %} bg-yellow-50 text-yellow-700 border-yellow-200 
+    {% else %} bg-blue-50 text-blue-700 border-blue-200 {% endif %}">
+    {{ metrics.feedback.msg }}
+</div>
 
-    <!-- Header: Total & Actions -->
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <p>Total: <strong>₹{{ "%.2f"|format(total) }}</strong></p>
+<!-- The Big Daily Limit -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center mb-6">
+    <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Today's Safe Limit</p>
+    <h2 class="text-6xl font-black tracking-tighter text-gray-800 mb-2">₹{{ metrics.safe_daily_limit }}</h2>
+    <div class="flex justify-between text-sm text-gray-500 mt-6 px-4">
+        <p>Remaining: <span class="font-bold text-gray-700">₹{{ metrics.remaining_money }}</span></p>
+        <p>Days Left: <span class="font-bold text-gray-700">{{ metrics.remaining_days }}</span></p>
+    </div>
+</div>
 
-        <div style="display:flex; gap:10px;">
-            
-            <!-- FEATURE 1: EXPORT CSV -->
-            <!-- STRICT LOGIC: Only for 'advanced' users. -->
-            {% if current_user.level == 'advanced' %}
-            <a href="{{ url_for('export') }}" style="text-decoration:none;">
-                <button type="button" style="cursor:pointer; background-color:#2196F3;">⬇ Export CSV</button>
-            </a>
-            {% endif %}
-            
-            <!-- NEW: Settings Button (Visible to everyone) -->
-            <a href="{{ url_for('profile') }}" style="text-decoration:none;">
-                <button type="button" style="cursor:pointer; background-color:#6c757d;">⚙️ Settings</button>
-            </a>
+<!-- Quick Expense Input -->
+<form action="{{ url_for('log_expense') }}" method="POST" class="flex gap-2 mb-8">
+    <input type="number" step="0.01" name="amount" placeholder="₹ Amount spent..." required 
+           class="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+    <button type="submit" class="bg-blue-600 text-white font-bold px-6 py-3 rounded-xl active:scale-95 transition-transform hover:bg-blue-700 shadow-md">
+        Log
+    </button>
+</form>
 
-            <!-- Logout Form -->
-            <form action="{{ url_for('logout') }}" method="POST" style="margin:0;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <button type="submit" style="background:#ff4d4d; color:white; border:none; padding:10px; cursor:pointer;">Logout</button>
-            </form>
+<!-- Monetization Validation Hook -->
+<div onclick="document.getElementById('premiumModal').classList.remove('hidden')" 
+     class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-5 text-white cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1">
+    <div class="flex justify-between items-center">
+        <div>
+            <h3 class="font-bold flex items-center gap-2">🔮 Run-Out Predictor <span class="bg-yellow-400 text-yellow-900 text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">Pro</span></h3>
+            <p class="text-xs text-gray-300 mt-1">See exactly what date you'll go broke.</p>
+        </div>
+        <span class="text-xl">→</span>
+    </div>
+</div>
+
+<!-- Hidden Modal for ₹49 Validation -->
+<div id="premiumModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full">
+        <h3 class="font-bold text-xl mb-2">Unlock AI Forecasting</h3>
+        <p class="text-gray-600 text-sm mb-6">Would you pay ₹49/month to get the exact projected "go broke" date and advanced charts?</p>
+        <div class="flex gap-3">
+            <button onclick="alert('Interest logged! We will let you know when Premium launches.'); this.closest('#premiumModal').classList.add('hidden');" 
+                    class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl">Yes, I'd pay</button>
+            <button onclick="document.getElementById('premiumModal').classList.add('hidden')" 
+                    class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl">Maybe later</button>
         </div>
     </div>
-
-    <!-- Add Expense Form (Available for Everyone) -->
-    <form method="POST" action="{{ url_for('index') }}" style="margin-top:20px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        
-        <input name="title" placeholder="Title" required>
-        <input name="amount" type="number" step="0.01" placeholder="Amount" required>
-
-        <select name="category" required>
-            <option value="">Category</option>
-            <option>Food</option>
-            <option>Travel</option>
-            <option>Shopping</option>
-            <option>Bills</option>
-            <option>Other</option>
-        </select>
-
-        <button type="submit">Add Expense</button>
-    </form>
-
-    <!-- Expenses List (Available for Everyone) -->
-    <h3 style="margin-top:30px;">Expenses</h3>
-
-    {% if expenses %}
-        {% for e in expenses %}
-        <div class="expense" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid #eee;">
-            <div>
-                <strong>{{ e.title }}</strong> —
-                ₹{{ "%.2f"|format(e.amount) }}
-                ({{ e.category }})
-            </div>
-
-            <div style="display:flex; gap:10px; align-items:center;">
-                <a href="{{ url_for('edit', id=e.id) }}" style="text-decoration:none;">
-                    <button type="button" style="cursor:pointer; padding:5px 10px;">✏️</button>
-                </a>
-
-                <form method="POST" action="{{ url_for('delete', id=e.id) }}" style="margin:0;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" class="delete-btn" style="cursor:pointer; padding:5px 10px;">❌</button>
-                </form>
-            </div>
-        </div>
-        {% endfor %}
-    {% else %}
-        <p>No expenses yet.</p>
-    {% endif %}
-
-    <!-- FEATURE 2: CHARTS -->
-    <!-- STRICT LOGIC: Only for 'intermediate' users. Advanced users will NOT see this. -->
-    {% if current_user.level == 'intermediate' %}
-        
-        <h3 style="margin-top:40px;">📊 Category Insights (Intermediate Feature)</h3>
-
-        {% if category_summary %}
-            <div class="insights" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
-                {% for c in category_summary %}
-                    <div class="insight-card" style="padding:10px; border:1px solid #ccc; border-radius:5px;">
-                        <span>{{ c.category }}:</span>
-                        <strong>₹{{ "%.2f"|format(c.total) }}</strong>
-                    </div>
-                {% endfor %}
-            </div>
-
-            <div style="max-width:400px; margin:0 auto;">
-                <canvas id="categoryChart" style="margin-top:20px;"></canvas>
-            </div>
-
-            <!-- Chart.js Script -->
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-            <script>
-                const labels = {{ category_summary | map(attribute='category') | list | tojson }};
-                const data = {{ category_summary | map(attribute='total') | list | tojson }};
-
-                const ctx = document.getElementById('categoryChart').getContext('2d');
-
-                new Chart(ctx, {
-                    type: 'pie',
-                    data: {
-                        labels: labels,
-                        datasets:[{
-                            data: data,
-                            backgroundColor:[
-                                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
-                            ]
-                        }]
-                    },
-                    options: { responsive: true }
-                });
-            </script>
-        {% else %}
-            <p>No data yet to display insights.</p>
-        {% endif %}
-
-    <!-- MESSAGING SECTION -->
-    {% elif current_user.level == 'beginner' %}
-        <!-- Message for Beginners -->
-        <div style="margin-top:40px; padding:20px; background:#f0f8ff; border:1px solid #b6d4fe; border-radius:10px; text-align:center;">
-            <h3>🎓 Beginner Mode</h3>
-            <p>Simple tracking. Go to <b>Settings</b> to upgrade to Intermediate for Charts!</p>
-        </div>
-
-    {% elif current_user.level == 'advanced' %}
-        <!-- Message for Advanced -->
-        <div style="margin-top:40px; padding:20px; background:#fff3cd; border:1px solid #ffecb5; border-radius:10px; text-align:center;">
-            <h3>🚀 Advanced Mode</h3>
-            <p>You have unlocked the <b>Data Export</b> button (Top Right).</p>
-        </div>
-
-    {% endif %}
-
 </div>
 {% endblock %}

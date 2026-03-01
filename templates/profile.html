@@ -1,36 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Settings - Expense Tracker{% endblock %}
-
 {% block content %}
-<div class="container" style="max-width: 500px; margin: 3rem auto;">
-    <h1>⚙️ Settings</h1>
+<div class="max-w-sm mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mt-10">
+    <div class="text-center mb-8">
+        <h2 class="text-3xl font-black text-gray-800 tracking-tight">Join the Survival</h2>
+        <p class="text-gray-500 text-sm mt-2">Stop going broke by the 20th of the month.</p>
+    </div>
 
-    <form method="POST" action="{{ url_for('profile') }}" style="display:flex; flex-direction:column; gap:15px; margin-top:20px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-
-        <div style="text-align:left;">
-            <label style="font-weight:bold; color:#555;">Username</label>
-            <input name="username" value="{{ user.username }}" required>
+    <form method="POST" action="{{ url_for('register') }}" class="space-y-4">
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1">Username</label>
+            <input type="text" name="username" placeholder="e.g. broke_student_99" required 
+                   class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1">Password</label>
+            <input type="password" name="password" placeholder="••••••••" required 
+                   class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
         </div>
 
-        <div style="text-align:left;">
-            <label style="font-weight:bold; color:#555;">User Mode</label>
-            <select name="level" style="padding:10px; border-radius:8px; border:1px solid #ccc;">
-                <option value="beginner" {% if user.level == 'beginner' %}selected{% endif %}>🟢 Beginner (Simple)</option>
-                <option value="intermediate" {% if user.level == 'intermediate' %}selected{% endif %}>🟡 Intermediate (Charts)</option>
-                <option value="advanced" {% if user.level == 'advanced' %}selected{% endif %}>🔴 Advanced (Export)</option>
-            </select>
-            <p style="font-size:0.8rem; color:#666; margin-top:5px;">
-                Switch modes to see different features on your dashboard.
-            </p>
-        </div>
-
-        <button type="submit" style="background-color:#2196F3;">Save Changes</button>
+        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl mt-2 hover:bg-blue-700 active:scale-95 transition-all shadow-md">
+            Create Account
+        </button>
     </form>
 
-    <div style="margin-top:20px; text-align:center;">
-        <a href="{{ url_for('index') }}" style="text-decoration:none; color:#666;">← Back to Dashboard</a>
-    </div>
+    <p class="text-center mt-6 text-sm text-gray-500">
+        Already surviving? <a href="{{ url_for('login') }}" class="text-blue-600 font-bold hover:underline">Log in</a>
+    </p>
 </div>
 {% endblock %}

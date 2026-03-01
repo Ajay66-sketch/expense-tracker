@@ -1,47 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Sign Up - Expense Tracker{% endblock %}
-
 {% block content %}
-<div class="container" style="max-width: 400px; text-align: center; margin: 0 auto;">
-    <h1>📝 Sign Up</h1>
-    <p>Select your experience level</p>
+<div class="max-w-sm mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mt-10">
+    <div class="text-center mb-8">
+        <h2 class="text-3xl font-black text-gray-800 tracking-tight">Join the Survival</h2>
+        <p class="text-gray-500 text-sm mt-2">Stop going broke by the 20th of the month.</p>
+    </div>
 
-    <form method="POST"
-          action="{{ url_for('register') }}"
-          style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+    <form method="POST" action="{{ url_for('register') }}" class="space-y-4">
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1">Username</label>
+            <input type="text" name="username" placeholder="e.g. broke_student_99" required 
+                   class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+        </div>
         
-        <!-- CSRF Token -->
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1">Password</label>
+            <input type="password" name="password" placeholder="••••••••" required 
+                   class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+        </div>
 
-        <input 
-            name="username"
-            placeholder="Username"
-            autocomplete="username"
-            required>
-
-        <input 
-            name="password"
-            type="password"
-            placeholder="Password"
-            minlength="6"
-            autocomplete="new-password"
-            required>
-
-        <!-- NEW: Level Selection Dropdown -->
-        <label style="text-align:left; font-weight:bold; color:#555; margin-top:10px;">Select your mode:</label>
-        <select name="level" required style="padding:10px; border-radius:8px; border:1px solid #ccc;">
-            <option value="beginner">🟢 Beginner (Simple Tracking)</option>
-            <option value="intermediate">🟡 Intermediate (Charts & Analytics)</option>
-            <option value="advanced">🔴 Advanced (Export & Power Tools)</option>
-        </select>
-
-        <button type="submit" style="margin-top:10px;">Sign Up</button>
+        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl mt-2 hover:bg-blue-700 active:scale-95 transition-all shadow-md">
+            Create Account
+        </button>
     </form>
 
-    <p style="margin-top:15px;">
-        Already have an account?
-        <a href="{{ url_for('login') }}">Login</a>
+    <p class="text-center mt-6 text-sm text-gray-500">
+        Already surviving? <a href="{{ url_for('login') }}" class="text-blue-600 font-bold hover:underline">Log in</a>
     </p>
 </div>
 {% endblock %}

@@ -1,36 +1,36 @@
 {% extends "base.html" %}
 
-{% block title %}Edit Expense - Expense Tracker{% endblock %}
-
 {% block content %}
-<div class="container" style="max-width:400px; margin: 3rem auto; text-align:center;">
-    <h2>✏️ Edit Expense</h2>
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <h2 class="text-2xl font-bold mb-1">Set Up Your Month</h2>
+    <p class="text-gray-500 text-sm mb-6">Tell us what you're working with, and we'll calculate your daily survival limit.</p>
 
-    <form method="POST"
-          action="{{ url_for('edit', id=expense.id) }}"
-          style="display:flex; flex-direction:column; gap:10px; margin-top:20px;"
-          autocomplete="off">
+    <form action="{{ url_for('edit') }}" method="POST" class="space-y-4">
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1">Total Pocket Money</label>
+            <input type="number" name="pocket_money" placeholder="e.g. 5000" class="w-full border border-gray-200 rounded-lg px-4 py-2" required>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-1">Fixed Expenses (Mess, Rent, Wi-Fi)</label>
+            <input type="number" name="fixed_expenses" placeholder="e.g. 2000" class="w-full border border-gray-200 rounded-lg px-4 py-2" required>
+            <p class="text-xs text-gray-400 mt-1">Money you *must* spend this month.</p>
+        </div>
 
-        <!-- CRITICAL: CSRF Token -->
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Start Date</label>
+                <input type="date" name="start_date" class="w-full border border-gray-200 rounded-lg px-4 py-2" required>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">End Date</label>
+                <input type="date" name="end_date" class="w-full border border-gray-200 rounded-lg px-4 py-2" required>
+            </div>
+        </div>
 
-        <input type="text" name="title" value="{{ expense.title }}" required autocomplete="off">
-
-        <select name="category" required>
-            {% for option in ['Food','Travel','Shopping','Bills','Other'] %}
-                <option value="{{ option }}" {% if expense.category == option %}selected{% endif %}>
-                    {{ option }}
-                </option>
-            {% endfor %}
-        </select>
-
-        <input type="number" step="0.01" name="amount" value="{{ '%.2f'|format(expense.amount) }}" required>
-
-        <button type="submit">Update</button>
+        <button type="submit" class="w-full bg-black text-white font-bold py-3 rounded-xl mt-4 hover:bg-gray-800">
+            Start Surviving
+        </button>
     </form>
-
-    <p style="margin-top:15px;">
-        <a href="{{ url_for('index') }}">Back to Expenses</a>
-    </p>
 </div>
 {% endblock %}

@@ -1,13 +1,5 @@
-# Virtual Environment
 venv/
-env/
-
-# Python Cache
 __pycache__/
 *.pyc
-
-# Database
-expenses.db
-
-# Environment Variables (for future use)
-.env
+instance/
+survival.db
