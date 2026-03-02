@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -7,8 +8,15 @@ import math
 
 # --- 1. APP & DATABASE INITIALIZATION ---
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_super_secret_key_change_this_later'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///survival.db' # Using SQLite for easy testing, upgrade to Postgres later
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_super_secret_key_change_this_later')
+
+# CLOUD DATABASE LOGIC
+# This grabs the database URL from Render, or falls back to SQLite locally
+database_url = os.environ.get('DATABASE_URL')
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///survival.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -102,7 +110,7 @@ def register():
         db.session.commit()
         
         login_user(new_user)
-        return redirect(url_for('edit')) # Send directly to setup month
+        return redirect(url_for('edit'))
         
     return render_template('register.html')
 
@@ -136,7 +144,7 @@ def index():
     active_cycle = Cycle.query.filter_by(user_id=current_user.id).order_by(Cycle.id.desc()).first()
     
     if not active_cycle:
-        return redirect(url_for('edit')) # Force setup if no month exists
+        return redirect(url_for('edit'))
         
     metrics = get_survival_metrics(active_cycle, current_user)
     return render_template('index.html', metrics=metrics, cycle=active_cycle)
@@ -191,8 +199,9 @@ def log_expense():
 def profile():
     return render_template('profile.html')
 
-# --- 7. RUN APP ---
+# --- 7. AUTO-CREATE TABLES (For Render) ---
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all() # Creates the database tables if they don't exist
     app.run(debug=True)
