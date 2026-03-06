@@ -1,3 +1,6 @@
+
+Copy
+
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -201,7 +204,11 @@ def profile():
     return render_template('profile.html', total_expenses=total_expenses, expense_count=expense_count, cycle=active_cycle)
 
 # --- 7. AUTO-CREATE TABLES ---
+# RESET_DB env var is used for a one-time schema reset on Render (set to 'true', deploy,
+# then remove it and redeploy to prevent data loss on every restart).
 with app.app_context():
+    if os.environ.get('RESET_DB') == 'true':
+        db.drop_all()
     db.create_all()
 
 if __name__ == '__main__':
