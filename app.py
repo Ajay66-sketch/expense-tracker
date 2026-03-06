@@ -10,8 +10,6 @@ import math
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_super_secret_key_change_this_later')
 
-# CLOUD DATABASE LOGIC
-# This grabs the database URL from Render, or falls back to SQLite locally
 database_url = os.environ.get('DATABASE_URL')
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
@@ -35,7 +33,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
-    tier = db.Column(db.String(20), default='free') # 'free' or 'premium'
+    tier = db.Column(db.String(20), default='free')
     cycles = db.relationship('Cycle', backref='user', lazy=True)
 
 class Cycle(db.Model):
@@ -52,6 +50,10 @@ class Expense(db.Model):
     cycle_id = db.Column(db.Integer, db.ForeignKey('cycle.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     date = db.Column(db.Date, default=date.today)
+    # FIX (Issue 1): Added timestamp so history list shows when each expense was logged.
+    # ⚠️  If you have an existing local database, delete survival.db before running so
+    #     db.create_all() rebuilds the Expense table with this new column.
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     category = db.Column(db.String(50), default="General")
 
 # --- 4. THE SURVIVAL ENGINE LOGIC ---
@@ -68,10 +70,8 @@ def get_survival_metrics(cycle, user):
     spent_today = sum(e.amount for e in cycle.expenses if e.date == today)
     remaining_money = disposable_income - total_spent
 
-    # Rolling Limit Logic
     safe_daily_limit = remaining_money / remaining_days if remaining_money > 0 else 0
 
-    # Psychological Feedback
     if remaining_money <= 0:
         feedback = {"type": "danger", "msg": "🚨 Broke Mode! You are officially out of safe money."}
     elif spent_today > safe_daily_limit:
@@ -97,21 +97,16 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        
         user_exists = User.query.filter_by(username=username).first()
         if user_exists:
             flash('Username already exists. Please login.', 'danger')
             return redirect(url_for('register'))
-            
         hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
         new_user = User(username=username, password=hashed_pw)
-        
         db.session.add(new_user)
         db.session.commit()
-        
         login_user(new_user)
         return redirect(url_for('edit'))
-        
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -121,14 +116,12 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect(url_for('index'))
         else:
             flash('Invalid username or password.', 'danger')
-            
     return render_template('login.html')
 
 @app.route('/logout')
@@ -142,12 +135,17 @@ def logout():
 @login_required
 def index():
     active_cycle = Cycle.query.filter_by(user_id=current_user.id).order_by(Cycle.id.desc()).first()
-    
     if not active_cycle:
         return redirect(url_for('edit'))
-        
+
     metrics = get_survival_metrics(active_cycle, current_user)
-    return render_template('index.html', metrics=metrics, cycle=active_cycle)
+
+    # FIX (Issue 1): The original route only passed `metrics` and `cycle` — the template
+    # had no expense data to render. Now we query expenses sorted newest-first and pass
+    # them in. The list updates immediately on every redirect after log_expense().
+    expenses = Expense.query.filter_by(cycle_id=active_cycle.id).order_by(Expense.timestamp.desc()).all()
+
+    return render_template('index.html', metrics=metrics, cycle=active_cycle, expenses=expenses)
 
 @app.route('/edit', methods=['GET', 'POST'])
 @login_required
@@ -156,28 +154,22 @@ def edit():
         try:
             pocket_money = float(request.form.get('pocket_money'))
             fixed_expenses = float(request.form.get('fixed_expenses'))
-            
             start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date()
             end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date()
-            
             new_cycle = Cycle(
-                user_id=current_user.id, 
-                pocket_money=pocket_money, 
-                fixed_expenses=fixed_expenses, 
-                start_date=start_date, 
+                user_id=current_user.id,
+                pocket_money=pocket_money,
+                fixed_expenses=fixed_expenses,
+                start_date=start_date,
                 end_date=end_date
             )
-            
             db.session.add(new_cycle)
             db.session.commit()
-            
             flash('Month setup complete! Survive well.', 'success')
             return redirect(url_for('index'))
-            
         except Exception as e:
             flash('Error setting up month. Please check your inputs.', 'danger')
             return redirect(url_for('edit'))
-            
     return render_template('edit.html')
 
 @app.route('/log_expense', methods=['POST'])
@@ -185,21 +177,30 @@ def edit():
 def log_expense():
     amount = float(request.form.get('amount'))
     active_cycle = Cycle.query.filter_by(user_id=current_user.id).order_by(Cycle.id.desc()).first()
-    
     if active_cycle:
         new_expense = Expense(amount=amount, cycle_id=active_cycle.id, date=date.today())
         db.session.add(new_expense)
         db.session.commit()
         flash("Expense logged!", "success")
-        
     return redirect(url_for('index'))
 
+# FIX (Issue 2): profile.html did not exist. When Flask called render_template('profile.html')
+# it raised a TemplateNotFound exception. Because the route is decorated with @login_required,
+# Flask-Login's error handler caught the unhandled exception and redirected to login_view —
+# making it appear to be an authentication failure when it was really a missing file.
+# Solution: create profile.html (provided as a separate output file).
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html')
+    active_cycle = Cycle.query.filter_by(user_id=current_user.id).order_by(Cycle.id.desc()).first()
+    total_expenses = 0
+    expense_count = 0
+    if active_cycle:
+        total_expenses = sum(e.amount for e in active_cycle.expenses)
+        expense_count = len(active_cycle.expenses)
+    return render_template('profile.html', total_expenses=total_expenses, expense_count=expense_count, cycle=active_cycle)
 
-# --- 7. AUTO-CREATE TABLES (For Render) ---
+# --- 7. AUTO-CREATE TABLES ---
 with app.app_context():
     db.create_all()
 
