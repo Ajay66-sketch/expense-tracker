@@ -93,7 +93,9 @@ Keep building! 🚀
         msg['From'] = mail_user
         msg['To'] = founder_email
 
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.ehlo()
+            server.starttls()
             server.login(mail_user, mail_pass)
             server.sendmail(mail_user, founder_email, msg.as_string())
 
