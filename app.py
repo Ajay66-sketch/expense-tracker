@@ -1,6 +1,8 @@
 import os
+import smtplib
+from email.mime.text import MIMEText
 from dotenv import load_dotenv
-load_dotenv()  # Loads SECRET_KEY and other vars from .env file locally
+load_dotenv()
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -62,7 +64,43 @@ class PremiumInterest(db.Model):
     email = db.Column(db.String(200), nullable=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-# --- 4. THE SURVIVAL ENGINE LOGIC ---
+# --- 4. EMAIL NOTIFICATION ---
+def send_founder_notification(signup_email, username, total):
+    try:
+        mail_user = os.environ.get('MAIL_USERNAME')
+        mail_pass = os.environ.get('MAIL_PASSWORD')
+        founder_email = os.environ.get('FOUNDER_EMAIL', mail_user)
+
+        if not mail_user or not mail_pass:
+            print("[MAIL] No mail credentials set, skipping notification.")
+            return
+
+        body = f"""
+🎯 New Premium Waitlist Signup!
+
+Username: {username}
+Email: {signup_email or 'not provided'}
+Total signups so far: {total}
+Time: {datetime.utcnow().strftime('%d %b %Y, %I:%M %p')} UTC
+
+Keep building! 🚀
+— SurviveTheMonth Bot
+        """.strip()
+
+        msg = MIMEText(body)
+        msg['Subject'] = f"🔥 New waitlist signup #{total} — SurviveTheMonth"
+        msg['From'] = mail_user
+        msg['To'] = founder_email
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(mail_user, mail_pass)
+            server.sendmail(mail_user, founder_email, msg.as_string())
+
+        print(f"[MAIL] Notification sent to {founder_email}")
+    except Exception as e:
+        print(f"[MAIL] Failed to send notification: {e}")
+
+# --- 5. THE SURVIVAL ENGINE LOGIC ---
 def get_survival_metrics(cycle, user):
     today = date.today()
     if not cycle: return None
@@ -95,7 +133,7 @@ def get_survival_metrics(cycle, user):
         "feedback": feedback
     }
 
-# --- 5. ROUTES (AUTH) ---
+# --- 6. ROUTES (AUTH) ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -136,7 +174,7 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# --- 6. ROUTES (CORE APP) ---
+# --- 7. ROUTES (CORE APP) ---
 @app.route('/')
 @login_required
 def index():
@@ -199,7 +237,7 @@ def profile():
         expense_count = len(active_cycle.expenses)
     return render_template('profile.html', total_expenses=total_expenses, expense_count=expense_count, cycle=active_cycle)
 
-# --- 7. PREMIUM INTEREST ROUTE ---
+# --- 8. PREMIUM INTEREST ROUTE ---
 @app.route('/premium_interest', methods=['POST'])
 @login_required
 def premium_interest():
@@ -210,9 +248,11 @@ def premium_interest():
     db.session.commit()
     total = PremiumInterest.query.count()
     print(f"[PREMIUM] Waitlist signup — email: {email or 'not provided'} | Total: {total}")
+    # Send instant email notification to founder
+    send_founder_notification(email, current_user.username, total)
     return jsonify({"status": "ok", "total": total})
 
-# --- 8. AUTO-CREATE TABLES ---
+# --- 9. AUTO-CREATE TABLES ---
 with app.app_context():
     if os.environ.get('RESET_DB') == 'true':
         db.drop_all()
