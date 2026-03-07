@@ -1,7 +1,6 @@
 import os
-import smtplib
+import resend
 import threading
-from email.mime.text import MIMEText
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -68,13 +67,14 @@ class PremiumInterest(db.Model):
 # --- 4. EMAIL NOTIFICATION ---
 def send_founder_notification(signup_email, username, total):
     try:
-        mail_user = os.environ.get('MAIL_USERNAME')
-        mail_pass = os.environ.get('MAIL_PASSWORD')
-        founder_email = os.environ.get('FOUNDER_EMAIL', mail_user)
+        api_key = os.environ.get('RESEND_API_KEY')
+        founder_email = os.environ.get('FOUNDER_EMAIL', 'alanjoekattakayam@gmail.com')
 
-        if not mail_user or not mail_pass:
-            print("[MAIL] No mail credentials set, skipping notification.")
+        if not api_key:
+            print("[MAIL] No RESEND_API_KEY set, skipping notification.")
             return
+
+        resend.api_key = api_key
 
         body = f"""
 🎯 New Premium Waitlist Signup!
@@ -88,16 +88,12 @@ Keep building! 🚀
 — SurviveTheMonth Bot
         """.strip()
 
-        msg = MIMEText(body)
-        msg['Subject'] = f"🔥 New waitlist signup #{total} — SurviveTheMonth"
-        msg['From'] = mail_user
-        msg['To'] = founder_email
-
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as server:
-            server.ehlo()
-            server.starttls()
-            server.login(mail_user, mail_pass)
-            server.sendmail(mail_user, founder_email, msg.as_string())
+        resend.Emails.send({
+            "from": "SurviveTheMonth <onboarding@resend.dev>",
+            "to": founder_email,
+            "subject": f"🔥 New waitlist signup #{total} — SurviveTheMonth",
+            "text": body
+        })
 
         print(f"[MAIL] Notification sent to {founder_email}")
     except Exception as e:
