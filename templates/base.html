@@ -1,16 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- 1. Encoding and Viewport FIRST -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Survival Tracker</title>
-    
-    <!-- 2. PWA Manifest & Theme Color NEXT -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/svg+xml">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#2563eb">
-    
-    <!-- 3. Styles & Scripts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -18,8 +14,16 @@
     <nav class="bg-white shadow-sm p-4 flex justify-between items-center mb-6">
         <h1 class="font-bold text-xl tracking-tight text-blue-600">SurviveTheMonth</h1>
         <div class="flex gap-4 text-sm font-medium">
-            <a href="{{ url_for('index') }}" class="hover:text-blue-600">Dashboard</a>
-            <a href="{{ url_for('profile') }}" class="hover:text-blue-600">Profile</a>
+            <a href="{{ url_for('index') }}" 
+               class="px-3 py-1.5 rounded-lg transition-all
+               {% if request.path == '/' %} bg-blue-600 text-white {% else %} text-gray-600 hover:text-blue-600 hover:bg-blue-50 {% endif %}">
+               Dashboard
+            </a>
+            <a href="{{ url_for('profile') }}" 
+               class="px-3 py-1.5 rounded-lg transition-all
+               {% if request.path == '/profile' %} bg-blue-600 text-white {% else %} text-gray-600 hover:text-blue-600 hover:bg-blue-50 {% endif %}">
+               Profile
+            </a>
         </div>
     </nav>
     
