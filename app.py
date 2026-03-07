@@ -1,5 +1,6 @@
 import os
 import smtplib
+import threading
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
 load_dotenv()
@@ -248,8 +249,8 @@ def premium_interest():
     db.session.commit()
     total = PremiumInterest.query.count()
     print(f"[PREMIUM] Waitlist signup — email: {email or 'not provided'} | Total: {total}")
-    # Send instant email notification to founder
-    send_founder_notification(email, current_user.username, total)
+    # Send email in background so it doesn't block the request
+    threading.Thread(target=send_founder_notification, args=(email, current_user.username, total), daemon=True).start()
     return jsonify({"status": "ok", "total": total})
 
 # --- 9. AUTO-CREATE TABLES ---
