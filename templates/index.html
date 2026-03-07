@@ -40,13 +40,9 @@
     </div>
 </div>
 
-<!-- FIX (Issue 1): Transaction History List -->
-<!-- The page receives the `expenses` list from the index() route after the fix in app.py.
-     Each time a new expense is logged, Flask redirects back here with the updated list,
-     so the history updates immediately without any client-side JS needed. -->
+<!-- Transaction History List -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
     <h3 class="font-bold text-gray-700 text-sm uppercase tracking-widest mb-4">Transaction History</h3>
-
     {% if expenses %}
         <ul class="divide-y divide-gray-50">
             {% for expense in expenses %}
@@ -66,17 +62,48 @@
     {% endif %}
 </div>
 
-<!-- Hidden Modal for ₹49 Validation -->
+<!-- Premium Modal -->
 <div id="premiumModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl p-6 max-w-sm w-full">
         <h3 class="font-bold text-xl mb-2">Unlock AI Forecasting</h3>
-        <p class="text-gray-600 text-sm mb-6">Would you pay ₹49/month to get the exact projected "go broke" date and advanced charts?</p>
+        <p class="text-gray-600 text-sm mb-2">Would you pay ₹49/month to get the exact projected "go broke" date and advanced charts?</p>
+        
+        <!-- Social proof: show how many others are interested -->
+        {% if premium_count > 0 %}
+        <p class="text-xs text-blue-600 font-medium mb-4">🔥 {{ premium_count }} people are already interested!</p>
+        {% endif %}
+
         <div class="flex gap-3">
-            <button onclick="alert('Interest logged! We will let you know when Premium launches.'); this.closest('#premiumModal').classList.add('hidden');" 
-                    class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl">Yes, I'd pay</button>
+            <button id="yesPayBtn" onclick="logPremiumInterest()" 
+                    class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl">
+                Yes, I'd pay
+            </button>
             <button onclick="document.getElementById('premiumModal').classList.add('hidden')" 
-                    class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl">Maybe later</button>
+                    class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl">
+                Maybe later
+            </button>
         </div>
     </div>
 </div>
+
+<script>
+async function logPremiumInterest() {
+    const btn = document.getElementById('yesPayBtn');
+    btn.textContent = 'Logging...';
+    btn.disabled = true;
+    try {
+        const res = await fetch('/premium_interest', { method: 'POST' });
+        const data = await res.json();
+        btn.textContent = '✅ Interest logged!';
+        setTimeout(() => {
+            document.getElementById('premiumModal').classList.add('hidden');
+            btn.textContent = "Yes, I'd pay";
+            btn.disabled = false;
+        }, 1500);
+    } catch(e) {
+        btn.textContent = "Yes, I'd pay";
+        btn.disabled = false;
+    }
+}
+</script>
 {% endblock %}
