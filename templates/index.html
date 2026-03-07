@@ -41,7 +41,7 @@
 </div>
 
 <!-- Transaction History List -->
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
     <h3 class="font-bold text-gray-700 text-sm uppercase tracking-widest mb-4">Transaction History</h3>
     {% if expenses %}
         <ul class="divide-y divide-gray-50">
@@ -62,48 +62,92 @@
     {% endif %}
 </div>
 
-<!-- Premium Modal -->
+<!-- Premium Modal — Step 1: Interest confirmation -->
 <div id="premiumModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl p-6 max-w-sm w-full">
-        <h3 class="font-bold text-xl mb-2">Unlock AI Forecasting</h3>
-        <p class="text-gray-600 text-sm mb-2">Would you pay ₹49/month to get the exact projected "go broke" date and advanced charts?</p>
-        
-        <!-- Social proof: show how many others are interested -->
-        {% if premium_count > 0 %}
-        <p class="text-xs text-blue-600 font-medium mb-4">🔥 {{ premium_count }} people are already interested!</p>
-        {% endif %}
 
-        <div class="flex gap-3">
-            <button id="yesPayBtn" onclick="logPremiumInterest()" 
-                    class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl">
-                Yes, I'd pay
+        <!-- Step 1: Ask if they'd pay -->
+        <div id="step1">
+            <h3 class="font-bold text-xl mb-2">Unlock AI Forecasting</h3>
+            <p class="text-gray-600 text-sm mb-2">Would you pay ₹49/month to get the exact projected "go broke" date and advanced charts?</p>
+            {% if premium_count > 0 %}
+            <p class="text-xs text-blue-600 font-medium mb-4">🔥 {{ premium_count }} people are already interested!</p>
+            {% endif %}
+            <div class="flex gap-3">
+                <button onclick="showEmailStep()" 
+                        class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all">
+                    Yes, I'd pay
+                </button>
+                <button onclick="document.getElementById('premiumModal').classList.add('hidden')" 
+                        class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl">
+                    Maybe later
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Collect email -->
+        <div id="step2" class="hidden">
+            <h3 class="font-bold text-xl mb-1">You're in! 🎉</h3>
+            <p class="text-gray-600 text-sm mb-4">Drop your email and we'll notify you the moment Premium launches. No spam, ever.</p>
+            <input id="emailInput" type="email" placeholder="your@email.com"
+                   class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all mb-3">
+            <button id="submitBtn" onclick="logPremiumInterest()"
+                    class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all mb-2">
+                Notify Me at Launch 🚀
             </button>
-            <button onclick="document.getElementById('premiumModal').classList.add('hidden')" 
-                    class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl">
-                Maybe later
+            <button onclick="logPremiumInterest(true)"
+                    class="w-full text-gray-400 text-sm py-2">
+                Skip, just count my vote
             </button>
         </div>
+
+        <!-- Step 3: Success confirmation -->
+        <div id="step3" class="hidden text-center py-4">
+            <div class="text-5xl mb-4">🎯</div>
+            <h3 class="font-bold text-xl mb-2">You're on the waitlist!</h3>
+            <p class="text-gray-600 text-sm mb-4">We'll reach out the moment Premium goes live. Thanks for believing in SurviveTheMonth!</p>
+            <button onclick="document.getElementById('premiumModal').classList.add('hidden'); resetModal();"
+                    class="w-full bg-gray-100 text-gray-700 font-bold py-3 rounded-xl">
+                Close
+            </button>
+        </div>
+
     </div>
 </div>
 
 <script>
-async function logPremiumInterest() {
-    const btn = document.getElementById('yesPayBtn');
-    btn.textContent = 'Logging...';
-    btn.disabled = true;
+function showEmailStep() {
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+}
+
+async function logPremiumInterest(skipEmail = false) {
+    const btn = document.getElementById('submitBtn');
+    const email = skipEmail ? '' : document.getElementById('emailInput').value.trim();
+
+    if (btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
+
     try {
-        const res = await fetch('/premium_interest', { method: 'POST' });
-        const data = await res.json();
-        btn.textContent = '✅ Interest logged!';
-        setTimeout(() => {
-            document.getElementById('premiumModal').classList.add('hidden');
-            btn.textContent = "Yes, I'd pay";
-            btn.disabled = false;
-        }, 1500);
+        await fetch('/premium_interest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        });
+        document.getElementById('step2').classList.add('hidden');
+        document.getElementById('step3').classList.remove('hidden');
     } catch(e) {
-        btn.textContent = "Yes, I'd pay";
-        btn.disabled = false;
+        if (btn) { btn.textContent = 'Notify Me at Launch 🚀'; btn.disabled = false; }
     }
+}
+
+function resetModal() {
+    document.getElementById('step1').classList.remove('hidden');
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step3').classList.add('hidden');
+    document.getElementById('emailInput').value = '';
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = 'Notify Me at Launch 🚀';
+    btn.disabled = false;
 }
 </script>
 {% endblock %}
