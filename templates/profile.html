@@ -1,65 +1,64 @@
 {% extends "base.html" %}
 {% block content %}
-<!-- FIX (Issue 2): This file did not exist. Flask threw a TemplateNotFound error when
-     the /profile route tried to render it. Flask-Login intercepted that unhandled error
-     on a @login_required route and redirected to login_view, making it look like an auth
-     bug. The fix is simply to create this file. -->
 <div class="max-w-sm mx-auto space-y-4">
 
-    <!-- User Identity Card -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
-        <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
-            <span class="text-2xl font-black text-blue-600">{{ current_user.username[0].upper() }}</span>
+    <!-- Identity Card -->
+    <div class="survival-card rounded-2xl p-8 text-center">
+        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+             style="background: rgba(34,139,34,0.2); border: 2px solid rgba(124,252,124,0.3);">
+            <span class="text-2xl font-black survival-title">{{ current_user.username[0].upper() }}</span>
         </div>
-        <h2 class="text-2xl font-black text-gray-800 tracking-tight">{{ current_user.username }}</h2>
+        <h2 class="text-2xl font-black tracking-tight survival-title">{{ current_user.username }}</h2>
         <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
-            {% if current_user.tier == 'premium' %} bg-yellow-100 text-yellow-700
-            {% else %} bg-gray-100 text-gray-500 {% endif %}">
-            {{ current_user.tier }} plan
+            {% if current_user.tier == 'premium' %}
+                style='background: rgba(255,193,7,0.15); color: #ffd54f; border: 1px solid rgba(255,193,7,0.3);'
+            {% else %}
+                style='background: rgba(74,160,74,0.1); color: #6b8f6b; border: 1px solid rgba(74,160,74,0.2);'
+            {% endif %}">
+            {% if current_user.tier == 'premium' %}⭐ Premium{% else %}🌿 Free Survivor{% endif %}
         </span>
     </div>
 
-    <!-- This Month's Stats -->
+    <!-- This Cycle Stats -->
     {% if cycle %}
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h3 class="font-bold text-gray-400 text-xs uppercase tracking-widest mb-4">This Cycle</h3>
+    <div class="survival-card rounded-2xl p-6">
+        <h3 class="survival-label text-xs font-bold uppercase tracking-widest mb-4">📊 This Cycle</h3>
         <div class="space-y-3">
             <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-500">Pocket Money</span>
-                <span class="font-bold text-gray-800">₹{{ "%.2f"|format(cycle.pocket_money) }}</span>
+                <span class="text-sm survival-subtitle">Total Rations</span>
+                <span class="font-bold stat-value">₹{{ "%.2f"|format(cycle.pocket_money) }}</span>
             </div>
             <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-500">Fixed Expenses</span>
-                <span class="font-bold text-gray-800">₹{{ "%.2f"|format(cycle.fixed_expenses) }}</span>
+                <span class="text-sm survival-subtitle">Fixed Costs</span>
+                <span class="font-bold stat-value">₹{{ "%.2f"|format(cycle.fixed_expenses) }}</span>
             </div>
-            <div class="flex justify-between items-center border-t border-gray-50 pt-3">
-                <span class="text-sm text-gray-500">Total Spent</span>
-                <span class="font-bold text-red-500">₹{{ "%.2f"|format(total_expenses) }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-500">Transactions</span>
-                <span class="font-bold text-gray-800">{{ expense_count }}</span>
+            <div class="flex justify-between items-center" style="border-top: 1px solid rgba(74,160,74,0.15); padding-top: 0.75rem;">
+                <span class="text-sm survival-subtitle">Total Spent</span>
+                <span class="font-bold text-red-400">₹{{ "%.2f"|format(total_expenses) }}</span>
             </div>
             <div class="flex justify-between items-center">
-                <span class="text-sm text-gray-500">Cycle Period</span>
-                <span class="font-bold text-gray-800 text-xs">{{ cycle.start_date.strftime('%d %b') }} → {{ cycle.end_date.strftime('%d %b') }}</span>
+                <span class="text-sm survival-subtitle">Missions Logged</span>
+                <span class="font-bold stat-value">{{ expense_count }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-sm survival-subtitle">Survival Period</span>
+                <span class="font-bold stat-value text-xs">{{ cycle.start_date.strftime('%d %b') }} → {{ cycle.end_date.strftime('%d %b') }}</span>
             </div>
         </div>
     </div>
     {% endif %}
 
     <!-- Actions -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-3">
-        <h3 class="font-bold text-gray-400 text-xs uppercase tracking-widest mb-4">Actions</h3>
+    <div class="survival-card rounded-2xl p-6 space-y-3">
+        <h3 class="survival-label text-xs font-bold uppercase tracking-widest mb-4">⚙️ Commands</h3>
         <a href="{{ url_for('edit') }}" 
-           class="block w-full text-center bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold py-3 rounded-xl transition-all">
-            ⚙️ Edit Month Setup
+           class="block w-full text-center font-bold py-3 rounded-xl transition-all survival-btn">
+            🗓️ Reconfigure Mission
         </a>
         <a href="{{ url_for('logout') }}" 
-           class="block w-full text-center bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition-all">
-            🚪 Log Out
+           class="block w-full text-center font-bold py-3 rounded-xl transition-all danger-btn">
+            🚪 Abandon Base
         </a>
     </div>
-
 </div>
 {% endblock %}

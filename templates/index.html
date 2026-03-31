@@ -1,117 +1,151 @@
 {% extends "base.html" %}
 {% block content %}
-<!-- Psychological Feedback Alert -->
-<div class="p-4 mb-6 rounded-lg font-medium text-sm border 
-    {% if metrics.feedback.type == 'danger' %} bg-red-50 text-red-700 border-red-200 
-    {% elif metrics.feedback.type == 'success' %} bg-green-50 text-green-700 border-green-200 
-    {% elif metrics.feedback.type == 'warning' %} bg-yellow-50 text-yellow-700 border-yellow-200 
-    {% else %} bg-blue-50 text-blue-700 border-blue-200 {% endif %}">
+
+<!-- Survival Status Alert -->
+<div class="mb-6 p-4 rounded-xl font-medium text-sm
+    {% if metrics.feedback.type == 'danger' %} feedback-danger
+    {% elif metrics.feedback.type == 'success' %} feedback-safe
+    {% elif metrics.feedback.type == 'warning' %} feedback-warning
+    {% else %} feedback-safe {% endif %}">
     {{ metrics.feedback.msg }}
 </div>
 
-<!-- The Big Daily Limit -->
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center mb-6">
-    <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-2">Today's Safe Limit</p>
-    <h2 class="text-6xl font-black tracking-tighter text-gray-800 mb-2">₹{{ metrics.safe_daily_limit }}</h2>
-    <div class="flex justify-between text-sm text-gray-500 mt-6 px-4">
-        <p>Remaining: <span class="font-bold text-gray-700">₹{{ metrics.remaining_money }}</span></p>
-        <p>Days Left: <span class="font-bold text-gray-700">{{ metrics.remaining_days }}</span></p>
+<!-- Survival Meter -->
+{% set pct = [(metrics.remaining_money / (cycle.pocket_money - cycle.fixed_expenses) * 100), 0]|max %}
+{% set pct = [pct, 100]|min %}
+<div class="survival-card rounded-2xl p-6 mb-6">
+    <p class="survival-label text-xs font-bold uppercase tracking-widest mb-3">⚡ Survival Meter</p>
+    <div class="survival-meter-container mb-2">
+        <div class="survival-meter-bar {% if pct > 50 %}meter-safe{% elif pct > 20 %}meter-warning{% else %}meter-danger{% endif %}"
+             style="width: {{ pct }}%"></div>
+    </div>
+    <div class="flex justify-between text-xs survival-subtitle mt-1">
+        <span>₹0</span>
+        <span class="font-bold {% if pct > 50 %}text-green-400{% elif pct > 20 %}text-yellow-400{% else %}text-red-400{% endif %}">
+            {{ pct|int }}% remaining
+        </span>
+        <span>₹{{ cycle.pocket_money - cycle.fixed_expenses }}</span>
+    </div>
+</div>
+
+<!-- Daily Limit Card -->
+<div class="survival-card rounded-2xl p-8 text-center mb-6">
+    <p class="survival-label text-xs font-bold uppercase tracking-widest mb-2">🎯 Today's Safe Limit</p>
+    <h2 class="text-6xl font-black tracking-tighter stat-value mb-2">₹{{ metrics.safe_daily_limit }}</h2>
+    <div class="flex justify-between text-sm survival-subtitle mt-6 px-4">
+        <div class="text-center">
+            <p class="text-xs uppercase tracking-wide mb-1">Rations Left</p>
+            <p class="font-black text-lg stat-value">₹{{ metrics.remaining_money }}</p>
+        </div>
+        <div class="w-px bg-green-900"></div>
+        <div class="text-center">
+            <p class="text-xs uppercase tracking-wide mb-1">Days to Survive</p>
+            <p class="font-black text-lg stat-value">{{ metrics.remaining_days }}</p>
+        </div>
+        <div class="w-px bg-green-900"></div>
+        <div class="text-center">
+            <p class="text-xs uppercase tracking-wide mb-1">Spent Today</p>
+            <p class="font-black text-lg {% if metrics.spent_today > metrics.safe_daily_limit %}text-red-400{% else %}stat-value{% endif %}">
+                ₹{{ metrics.spent_today }}
+            </p>
+        </div>
     </div>
 </div>
 
 <!-- Quick Expense Input -->
-<form action="{{ url_for('log_expense') }}" method="POST" class="flex gap-2 mb-8">
-    <input type="number" step="0.01" name="amount" placeholder="₹ Amount spent..." required 
-           class="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
-    <button type="submit" class="bg-blue-600 text-white font-bold px-6 py-3 rounded-xl active:scale-95 transition-transform hover:bg-blue-700 shadow-md">
+<form action="{{ url_for('log_expense') }}" method="POST" class="flex gap-2 mb-6">
+    <input type="number" step="0.01" name="amount" placeholder="₹ Rations spent..." required 
+           class="expense-input flex-1 text-lg">
+    <button type="submit" class="survival-btn font-black px-6 py-3 rounded-xl transition-all">
         Log
     </button>
 </form>
 
-<!-- Monetization Validation Hook -->
+<!-- Pro Feature Hook -->
 <div onclick="document.getElementById('premiumModal').classList.remove('hidden')" 
-     class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-5 text-white cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1 mb-6">
+     class="survival-card rounded-xl p-5 cursor-pointer hover:border-yellow-500/40 transition-all transform hover:-translate-y-1 mb-6"
+     style="border-color: rgba(255, 193, 7, 0.2);">
     <div class="flex justify-between items-center">
         <div>
-            <h3 class="font-bold flex items-center gap-2">🔮 Run-Out Predictor <span class="bg-yellow-400 text-yellow-900 text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">Pro</span></h3>
-            <p class="text-xs text-gray-300 mt-1">See exactly what date you'll go broke.</p>
+            <h3 class="font-bold flex items-center gap-2" style="color: #ffd54f;">
+                🔮 Run-Out Predictor 
+                <span class="text-[10px] px-2 py-0.5 rounded uppercase tracking-wider font-black"
+                      style="background: rgba(255,193,7,0.2); color: #ffc107; border: 1px solid rgba(255,193,7,0.3);">Pro</span>
+            </h3>
+            <p class="text-xs survival-subtitle mt-1">See exactly what date you'll go broke.</p>
         </div>
-        <span class="text-xl">→</span>
+        <span style="color: #ffd54f;">→</span>
     </div>
 </div>
 
-<!-- Transaction History List -->
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
-    <h3 class="font-bold text-gray-700 text-sm uppercase tracking-widest mb-4">Transaction History</h3>
+<!-- Transaction History -->
+<div class="survival-card rounded-2xl p-5 mb-6">
+    <h3 class="font-bold survival-label text-xs uppercase tracking-widest mb-4">📜 Mission Log</h3>
     {% if expenses %}
-        <ul class="divide-y divide-gray-50">
+        <ul class="space-y-2">
             {% for expense in expenses %}
-            <li class="flex justify-between items-center py-3">
+            <li class="transaction-item flex justify-between items-center">
                 <div>
-                    <p class="font-bold text-gray-800">₹{{ "%.2f"|format(expense.amount) }}</p>
-                    <p class="text-xs text-gray-400 mt-0.5">{{ expense.category }}</p>
+                    <p class="font-black stat-value">₹{{ "%.2f"|format(expense.amount) }}</p>
+                    <p class="text-xs survival-subtitle mt-0.5">{{ expense.category }}</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-xs text-gray-400">{{ expense.timestamp.strftime('%d %b, %I:%M %p') }}</p>
+                    <p class="text-xs survival-subtitle">{{ expense.timestamp.strftime('%d %b, %I:%M %p') }}</p>
                 </div>
             </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p class="text-center text-gray-400 text-sm py-6">No expenses logged yet. Stay strong! 💪</p>
+        <p class="text-center survival-subtitle text-sm py-6">🌿 No expenses logged yet. Stay strong, survivor!</p>
     {% endif %}
 </div>
 
-<!-- Premium Modal — Step 1: Interest confirmation -->
-<div id="premiumModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl p-6 max-w-sm w-full">
+<!-- Premium Modal -->
+<div id="premiumModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="survival-card rounded-2xl p-6 max-w-sm w-full">
 
-        <!-- Step 1: Ask if they'd pay -->
         <div id="step1">
-            <h3 class="font-bold text-xl mb-2">Unlock AI Forecasting</h3>
-            <p class="text-gray-600 text-sm mb-2">Would you pay ₹49/month to get the exact projected "go broke" date and advanced charts?</p>
+            <h3 class="font-black text-xl mb-2 survival-title">Unlock AI Forecasting</h3>
+            <p class="survival-subtitle text-sm mb-2">Would you pay ₹49/month to see the exact date you'll go broke + advanced survival charts?</p>
             {% if premium_count > 0 %}
-            <p class="text-xs text-blue-600 font-medium mb-4">🔥 {{ premium_count }} people are already interested!</p>
+            <p class="text-xs font-medium mb-4" style="color: #ffd54f;">🔥 {{ premium_count }} survivors are already interested!</p>
             {% endif %}
             <div class="flex gap-3">
-                <button onclick="showEmailStep()" 
-                        class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all">
+                <button onclick="showEmailStep()" class="survival-btn flex-1 font-black py-3 rounded-xl transition-all">
                     Yes, I'd pay
                 </button>
                 <button onclick="document.getElementById('premiumModal').classList.add('hidden')" 
-                        class="flex-1 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl">
+                        class="flex-1 font-bold py-3 rounded-xl transition-all"
+                        style="background: rgba(255,255,255,0.05); color: #6b8f6b; border: 1px solid rgba(74,160,74,0.2);">
                     Maybe later
                 </button>
             </div>
         </div>
 
-        <!-- Step 2: Collect email -->
         <div id="step2" class="hidden">
-            <h3 class="font-bold text-xl mb-1">You're in! 🎉</h3>
-            <p class="text-gray-600 text-sm mb-4">Drop your email and we'll notify you the moment Premium launches. No spam, ever.</p>
+            <h3 class="font-black text-xl mb-1 survival-title">You're in! 🎉</h3>
+            <p class="survival-subtitle text-sm mb-4">Drop your email and we'll notify you the moment Premium launches.</p>
             <input id="emailInput" type="email" placeholder="your@email.com"
-                   class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all mb-3">
+                   class="survival-input w-full rounded-xl px-4 py-3 outline-none transition-all mb-3">
             <button id="submitBtn" onclick="logPremiumInterest()"
-                    class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all mb-2">
+                    class="survival-btn w-full font-black py-3 rounded-xl transition-all mb-2">
                 Notify Me at Launch 🚀
             </button>
-            <button onclick="logPremiumInterest(true)"
-                    class="w-full text-gray-400 text-sm py-2">
+            <button onclick="logPremiumInterest(true)" class="w-full survival-subtitle text-sm py-2">
                 Skip, just count my vote
             </button>
         </div>
 
-        <!-- Step 3: Success confirmation -->
         <div id="step3" class="hidden text-center py-4">
             <div class="text-5xl mb-4">🎯</div>
-            <h3 class="font-bold text-xl mb-2">You're on the waitlist!</h3>
-            <p class="text-gray-600 text-sm mb-4">We'll reach out the moment Premium goes live. Thanks for believing in SurviveTheMonth!</p>
+            <h3 class="font-black text-xl mb-2 survival-title">You're on the waitlist!</h3>
+            <p class="survival-subtitle text-sm mb-4">We'll reach out the moment Premium goes live. Thanks for believing in SurviveTheMonth!</p>
             <button onclick="document.getElementById('premiumModal').classList.add('hidden'); resetModal();"
-                    class="w-full bg-gray-100 text-gray-700 font-bold py-3 rounded-xl">
+                    class="w-full font-bold py-3 rounded-xl transition-all"
+                    style="background: rgba(255,255,255,0.05); color: #9dc99d; border: 1px solid rgba(74,160,74,0.2);">
                 Close
             </button>
         </div>
-
     </div>
 </div>
 
@@ -124,9 +158,7 @@ function showEmailStep() {
 async function logPremiumInterest(skipEmail = false) {
     const btn = document.getElementById('submitBtn');
     const email = skipEmail ? '' : document.getElementById('emailInput').value.trim();
-
     if (btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
-
     try {
         await fetch('/premium_interest', {
             method: 'POST',

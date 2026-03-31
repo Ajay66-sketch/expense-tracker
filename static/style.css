@@ -1,63 +1,278 @@
-/* --- START OF NEW style.css --- */
+/* ============================================
+   SURVIVETHE MONTH — Survival Theme CSS
+   ============================================ */
 
-/* 1. Base App Settings */
-html {
-    scroll-behavior: smooth;
-}
-
+/* --- Base --- */
 body {
-    /* Prevents the annoying blue tap highlight on mobile devices */
-    -webkit-tap-highlight-color: transparent; 
+    background-color: #0a0f0a;
+    background-image: 
+        radial-gradient(ellipse at 20% 50%, rgba(34, 85, 34, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(20, 60, 20, 0.2) 0%, transparent 50%);
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #e8f5e8;
 }
 
-/* 2. Clean Number Inputs (Removes the ugly up/down arrows) */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+/* --- Survival Card --- */
+.survival-card {
+    background: rgba(15, 25, 15, 0.85);
+    border: 1px solid rgba(74, 160, 74, 0.25);
+    backdrop-filter: blur(12px);
+    box-shadow: 
+        0 0 40px rgba(34, 85, 34, 0.15),
+        inset 0 1px 0 rgba(74, 160, 74, 0.1);
 }
 
-input[type="number"] {
-    -moz-appearance: textfield; /* For Firefox */
+/* --- Typography --- */
+.survival-title {
+    color: #7cfc7c;
+    text-shadow: 0 0 20px rgba(124, 252, 124, 0.3);
 }
 
-/* 3. Custom Modern Scrollbar */
+.survival-subtitle {
+    color: #6b8f6b;
+}
+
+.survival-label {
+    color: #9dc99d;
+}
+
+.survival-link {
+    color: #7cfc7c;
+}
+
+.survival-link:hover {
+    color: #a8ffa8;
+}
+
+/* --- Inputs --- */
+.survival-input {
+    background: rgba(0, 20, 0, 0.6);
+    border: 1px solid rgba(74, 160, 74, 0.3);
+    color: #e8f5e8;
+}
+
+.survival-input::placeholder {
+    color: #3d6b3d;
+}
+
+.survival-input:focus {
+    border-color: rgba(124, 252, 124, 0.6);
+    box-shadow: 0 0 0 3px rgba(124, 252, 124, 0.1);
+    background: rgba(0, 30, 0, 0.7);
+}
+
+/* --- Survival Button --- */
+.survival-btn {
+    background: linear-gradient(135deg, #1a6b1a, #2d8b2d);
+    color: #c8ffc8;
+    border: 1px solid rgba(124, 252, 124, 0.3);
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(34, 139, 34, 0.3);
+}
+
+.survival-btn:hover {
+    background: linear-gradient(135deg, #2d8b2d, #3aaa3a);
+    box-shadow: 0 6px 20px rgba(34, 139, 34, 0.5);
+    transform: translateY(-1px);
+}
+
+.survival-btn:active {
+    transform: scale(0.97);
+}
+
+/* --- Danger Button --- */
+.danger-btn {
+    background: linear-gradient(135deg, #8b1a1a, #aa2d2d);
+    color: #ffc8c8;
+    border: 1px solid rgba(252, 124, 124, 0.3);
+    box-shadow: 0 4px 15px rgba(139, 34, 34, 0.3);
+}
+
+.danger-btn:hover {
+    background: linear-gradient(135deg, #aa2d2d, #cc3a3a);
+    box-shadow: 0 6px 20px rgba(139, 34, 34, 0.5);
+    transform: translateY(-1px);
+}
+
+/* --- Alert Messages --- */
+.alert-danger {
+    background: rgba(139, 0, 0, 0.2);
+    border: 1px solid rgba(255, 80, 80, 0.3);
+    color: #ff9999;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+}
+
+.alert-success {
+    background: rgba(0, 100, 0, 0.2);
+    border: 1px solid rgba(80, 255, 80, 0.3);
+    color: #99ff99;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+}
+
+/* --- Navbar --- */
+.survival-nav {
+    background: rgba(5, 15, 5, 0.95);
+    border-bottom: 1px solid rgba(74, 160, 74, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.survival-nav-brand {
+    color: #7cfc7c;
+    text-shadow: 0 0 15px rgba(124, 252, 124, 0.4);
+}
+
+.nav-link-active {
+    background: rgba(34, 139, 34, 0.3);
+    color: #7cfc7c !important;
+    border: 1px solid rgba(124, 252, 124, 0.2);
+}
+
+.nav-link-inactive {
+    color: #6b8f6b !important;
+}
+
+.nav-link-inactive:hover {
+    color: #9dc99d !important;
+    background: rgba(34, 139, 34, 0.15);
+}
+
+/* --- Survival Meter (Health Bar) --- */
+.survival-meter-container {
+    background: rgba(0, 20, 0, 0.6);
+    border: 1px solid rgba(74, 160, 74, 0.2);
+    border-radius: 999px;
+    height: 12px;
+    overflow: hidden;
+}
+
+.survival-meter-bar {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.6s ease;
+}
+
+.meter-safe {
+    background: linear-gradient(90deg, #1a6b1a, #7cfc7c);
+    box-shadow: 0 0 10px rgba(124, 252, 124, 0.5);
+}
+
+.meter-warning {
+    background: linear-gradient(90deg, #8b6b00, #ffc107);
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+.meter-danger {
+    background: linear-gradient(90deg, #8b0000, #ff4444);
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+    animation: pulse-danger 1.5s infinite;
+}
+
+@keyframes pulse-danger {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* --- Stat Cards --- */
+.stat-card {
+    background: rgba(10, 25, 10, 0.8);
+    border: 1px solid rgba(74, 160, 74, 0.2);
+    border-radius: 1rem;
+    transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+    border-color: rgba(124, 252, 124, 0.3);
+    box-shadow: 0 4px 20px rgba(34, 139, 34, 0.15);
+    transform: translateY(-2px);
+}
+
+.stat-value {
+    color: #7cfc7c;
+    text-shadow: 0 0 10px rgba(124, 252, 124, 0.3);
+}
+
+.stat-label {
+    color: #6b8f6b;
+}
+
+/* --- Feedback Messages --- */
+.feedback-safe {
+    background: rgba(0, 80, 0, 0.25);
+    border: 1px solid rgba(124, 252, 124, 0.2);
+    color: #99ff99;
+    border-radius: 1rem;
+    padding: 1rem;
+}
+
+.feedback-warning {
+    background: rgba(80, 60, 0, 0.25);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    color: #ffd54f;
+    border-radius: 1rem;
+    padding: 1rem;
+}
+
+.feedback-danger {
+    background: rgba(80, 0, 0, 0.25);
+    border: 1px solid rgba(255, 68, 68, 0.2);
+    color: #ff9999;
+    border-radius: 1rem;
+    padding: 1rem;
+    animation: pulse-danger 2s infinite;
+}
+
+/* --- Transaction History --- */
+.transaction-item {
+    background: rgba(10, 25, 10, 0.6);
+    border: 1px solid rgba(74, 160, 74, 0.15);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.transaction-item:hover {
+    border-color: rgba(124, 252, 124, 0.25);
+    background: rgba(15, 35, 15, 0.8);
+}
+
+/* --- Expense Input --- */
+.expense-input {
+    background: rgba(0, 20, 0, 0.6);
+    border: 1px solid rgba(74, 160, 74, 0.3);
+    color: #e8f5e8;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.expense-input:focus {
+    border-color: rgba(124, 252, 124, 0.6);
+    box-shadow: 0 0 0 3px rgba(124, 252, 124, 0.1);
+}
+
+.expense-input::placeholder {
+    color: #3d6b3d;
+}
+
+/* --- Scrollbar --- */
 ::-webkit-scrollbar {
     width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: transparent;
+    background: #0a0f0a;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 10px;
+    background: #2d5a2d;
+    border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-
-/* 4. Custom Psychological Animations */
-/* Use this class for the "Broke Mode" or errors */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    50% { transform: translateX(5px); }
-    75% { transform: translateX(-5px); }
-}
-
-.animate-shake {
-    animation: shake 0.4s ease-in-out;
-}
-
-/* Soft pulse for the Premium Upsell button */
-@keyframes soft-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-}
-
-.animate-soft-pulse:hover {
-    animation: soft-pulse 2s infinite;
+    background: #3d7a3d;
 }
