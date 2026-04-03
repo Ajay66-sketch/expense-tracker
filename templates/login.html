@@ -1,49 +1,116 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="max-w-sm mx-auto mt-10">
-    <!-- Survival Card -->
-    <div class="survival-card rounded-2xl p-8">
-        
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <div class="text-5xl mb-3">🌿</div>
-            <h2 class="text-3xl font-black tracking-tight survival-title">Welcome Back</h2>
-            <p class="survival-subtitle text-sm mt-2">Log in and check if you're still surviving.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log In — SurviveTheMonth 🌿</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">🌿 SurviveTheMonth</a>
+    <div class="navbar-links">
+      <a href="/register" class="btn-nav-cta">New Survivor? →</a>
+    </div>
+  </nav>
+
+  <!-- ── Flash messages (global, from Flask) ── -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- ── Auth Page ── -->
+  <div class="auth-page">
+    <div class="card auth-card">
+
+      <!-- Brand -->
+      <div class="auth-brand">
+        <span class="brand-icon">🌿</span>
+        <h1>Welcome Back</h1>
+        <p>The jungle missed you. How's your budget holding up?</p>
+      </div>
+
+      <!-- Inline errors (if your view passes an `error` variable) -->
+      {% if error %}
+        <div class="flash flash-error">{{ error }}</div>
+      {% endif %}
+
+      <!-- ── Login Form ── -->
+      {#
+        If your existing view renders a WTForms `form` object, swap the fields below
+        for {{ form.username() }}, {{ form.password() }}, {{ form.hidden_tag() }} etc.
+        The CSS class "form-input" still applies to WTForms fields via render_kw.
+      #}
+      <form method="POST" action="/login" novalidate>
+
+        {# CSRF token — include if you use Flask-WTF #}
+        {% if form is defined and form.hidden_tag is defined %}
+          {{ form.hidden_tag() }}
+        {% endif %}
+
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          {% if form is defined and form.username is defined %}
+            {{ form.username(id="username", class="form-input", placeholder="your_survivor_handle") }}
+          {% else %}
+            <input
+              type="text"
+              id="username"
+              name="username"
+              class="form-input"
+              placeholder="your_survivor_handle"
+              autocomplete="username"
+              required
+            />
+          {% endif %}
         </div>
 
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                <div class="mb-4 p-3 rounded-lg text-sm font-medium
-                    {% if category == 'danger' %} alert-danger
-                    {% else %} alert-success {% endif %}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          {% if form is defined and form.password is defined %}
+            {{ form.password(id="password", class="form-input", placeholder="••••••••") }}
+          {% else %}
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="form-input"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            />
+          {% endif %}
+        </div>
 
-        <!-- Form -->
-        <form method="POST" action="{{ url_for('login') }}" class="space-y-4">
-            <div>
-                <label class="block text-sm font-bold survival-label mb-1">Username</label>
-                <input type="text" name="username" placeholder="your username" required 
-                       class="survival-input w-full rounded-xl px-4 py-3 outline-none transition-all">
-            </div>
-            <div>
-                <label class="block text-sm font-bold survival-label mb-1">Password</label>
-                <input type="password" name="password" placeholder="••••••••" required 
-                       class="survival-input w-full rounded-xl px-4 py-3 outline-none transition-all">
-            </div>
-            <button type="submit" class="survival-btn w-full font-black py-3 rounded-xl mt-2 transition-all">
-                🔥 Enter the Jungle
-            </button>
-        </form>
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem;">
+          🔥 Re-enter the Jungle
+        </button>
 
-        <p class="text-center mt-6 text-sm survival-subtitle">
-            New survivor? <a href="{{ url_for('register') }}" class="survival-link font-bold hover:underline">Start your mission</a>
-        </p>
+      </form>
+
+      <div class="form-divider">or</div>
+
+      <div class="form-footer">
+        New survivor?
+        <a href="/register">Start your mission here →</a>
+      </div>
+
+      <!-- Motivational survival hint -->
+      <div class="survival-hint">
+        <strong>💡 Tip:</strong> Survivors who log expenses daily are 3× more likely to make it to payday.
+      </div>
+
     </div>
-</div>
-{% endblock %}
+  </div>
+
+</body>
+</html>

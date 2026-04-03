@@ -1,64 +1,133 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="max-w-sm mx-auto space-y-4">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Survivor Profile — SurviveTheMonth 🌿</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
 
-    <!-- Identity Card -->
-    <div class="survival-card rounded-2xl p-8 text-center">
-        <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-             style="background: rgba(34,139,34,0.2); border: 2px solid rgba(124,252,124,0.3);">
-            <span class="text-2xl font-black survival-title">{{ current_user.username[0].upper() }}</span>
-        </div>
-        <h2 class="text-2xl font-black tracking-tight survival-title">{{ current_user.username }}</h2>
-        <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
-            {% if current_user.tier == 'premium' %}
-                style='background: rgba(255,193,7,0.15); color: #ffd54f; border: 1px solid rgba(255,193,7,0.3);'
-            {% else %}
-                style='background: rgba(74,160,74,0.1); color: #6b8f6b; border: 1px solid rgba(74,160,74,0.2);'
-            {% endif %}">
-            {% if current_user.tier == 'premium' %}⭐ Premium{% else %}🌿 Free Survivor{% endif %}
-        </span>
+  <!-- ── Navbar ── -->
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">🌿 SurviveTheMonth</a>
+    <div class="navbar-links">
+      <a href="/">← Survival Hub</a>
+      <a href="/logout" class="btn-nav-cta">Bail Out →</a>
     </div>
+  </nav>
 
-    <!-- This Cycle Stats -->
-    {% if cycle %}
-    <div class="survival-card rounded-2xl p-6">
-        <h3 class="survival-label text-xs font-bold uppercase tracking-widest mb-4">📊 This Cycle</h3>
-        <div class="space-y-3">
-            <div class="flex justify-between items-center">
-                <span class="text-sm survival-subtitle">Total Rations</span>
-                <span class="font-bold stat-value">₹{{ "%.2f"|format(cycle.pocket_money) }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-                <span class="text-sm survival-subtitle">Fixed Costs</span>
-                <span class="font-bold stat-value">₹{{ "%.2f"|format(cycle.fixed_expenses) }}</span>
-            </div>
-            <div class="flex justify-between items-center" style="border-top: 1px solid rgba(74,160,74,0.15); padding-top: 0.75rem;">
-                <span class="text-sm survival-subtitle">Total Spent</span>
-                <span class="font-bold text-red-400">₹{{ "%.2f"|format(total_expenses) }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-                <span class="text-sm survival-subtitle">Missions Logged</span>
-                <span class="font-bold stat-value">{{ expense_count }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-                <span class="text-sm survival-subtitle">Survival Period</span>
-                <span class="font-bold stat-value text-xs">{{ cycle.start_date.strftime('%d %b') }} → {{ cycle.end_date.strftime('%d %b') }}</span>
-            </div>
-        </div>
-    </div>
+  <!-- ── Flash Messages ── -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
     {% endif %}
+  {% endwith %}
 
-    <!-- Actions -->
-    <div class="survival-card rounded-2xl p-6 space-y-3">
-        <h3 class="survival-label text-xs font-bold uppercase tracking-widest mb-4">⚙️ Commands</h3>
-        <a href="{{ url_for('edit') }}" 
-           class="block w-full text-center font-bold py-3 rounded-xl transition-all survival-btn">
+  <div class="app-layout">
+    <div class="app-container" style="max-width: 480px;">
+
+      <!-- ── Identity Card ── -->
+      <div class="card" style="padding: 2.5rem 2rem; text-align: center; margin-bottom: 1.5rem;">
+        <div class="profile-avatar">
+          {{ current_user.username[0].upper() }}
+        </div>
+        <h2 style="font-size: 2rem; color: var(--canopy); margin-bottom: 0.5rem;">
+          {{ current_user.username }}
+        </h2>
+        {% if current_user.tier == 'premium' %}
+          <span class="tier-badge tier-premium">⭐ Premium Survivor</span>
+        {% else %}
+          <span class="tier-badge tier-free">🌿 Free Survivor</span>
+        {% endif %}
+      </div>
+
+      <!-- ── Cycle Stats ── -->
+      {% if cycle %}
+        <div class="card" style="padding: 1.8rem 2rem; margin-bottom: 1.5rem;">
+          <h3 style="font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.2rem;">
+            📊 This Cycle
+          </h3>
+
+          <div class="profile-stats">
+
+            <div class="profile-stat-row">
+              <span class="profile-stat-label">Total Rations</span>
+              <span class="profile-stat-value" style="color: var(--canopy);">
+                ₹{{ "{:,.0f}".format(cycle.pocket_money) }}
+              </span>
+            </div>
+
+            <div class="profile-stat-row">
+              <span class="profile-stat-label">Fixed Costs</span>
+              <span class="profile-stat-value" style="color: var(--fire-yellow);">
+                ₹{{ "{:,.0f}".format(cycle.fixed_expenses) }}
+              </span>
+            </div>
+
+            <div class="profile-stat-row">
+              <span class="profile-stat-label">Disposable Budget</span>
+              <span class="profile-stat-value" style="color: var(--leaf-light);">
+                ₹{{ "{:,.0f}".format(cycle.pocket_money - cycle.fixed_expenses) }}
+              </span>
+            </div>
+
+            <div class="profile-stat-row" style="border-top: 1px solid var(--glass-border); padding-top: 0.75rem; margin-top: 0.25rem;">
+              <span class="profile-stat-label">Total Spent</span>
+              <span class="profile-stat-value" style="color: var(--danger-orange);">
+                ₹{{ "{:,.0f}".format(total_expenses) }}
+              </span>
+            </div>
+
+            <div class="profile-stat-row">
+              <span class="profile-stat-label">Expenses Logged</span>
+              <span class="profile-stat-value" style="color: var(--text-primary);">
+                {{ expense_count }}
+              </span>
+            </div>
+
+            <div class="profile-stat-row">
+              <span class="profile-stat-label">Survival Period</span>
+              <span class="profile-stat-value" style="color: var(--text-secondary); font-size: 0.9rem;">
+                {{ cycle.start_date.strftime('%d %b') }} → {{ cycle.end_date.strftime('%d %b %Y') }}
+              </span>
+            </div>
+
+          </div>
+        </div>
+      {% else %}
+        <div class="card" style="padding: 2rem; text-align: center; margin-bottom: 1.5rem;">
+          <p style="color: var(--text-muted); font-size: 0.9rem;">No active cycle. Set one up to see your stats.</p>
+        </div>
+      {% endif %}
+
+      <!-- ── Commands ── -->
+      <div class="card" style="padding: 1.8rem 2rem;">
+        <h3 style="font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.2rem;">
+          ⚙️ Commands
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <a href="{{ url_for('edit') }}" class="btn btn-secondary btn-full">
             🗓️ Reconfigure Mission
-        </a>
-        <a href="{{ url_for('logout') }}" 
-           class="block w-full text-center font-bold py-3 rounded-xl transition-all danger-btn">
+          </a>
+          <a href="{{ url_for('logout') }}" class="btn btn-full" style="
+            background: rgba(229,62,42,0.1);
+            border: 1.5px solid rgba(229,62,42,0.35);
+            color: #ff8080;
+            padding: 0.85rem 2rem;
+          ">
             🚪 Abandon Base
-        </a>
+          </a>
+        </div>
+      </div>
+
     </div>
-</div>
-{% endblock %}
+  </div>
+
+</body>
+</html>

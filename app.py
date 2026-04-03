@@ -4,7 +4,7 @@ import threading
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -103,7 +103,7 @@ Keep building! 🚀
 def get_survival_metrics(cycle, user):
     today = date.today()
     if not cycle: return None
-    
+
     total_days = max(1, (cycle.end_date - cycle.start_date).days + 1)
     days_passed = max(1, (today - cycle.start_date).days)
     remaining_days = max(1, total_days - days_passed)
@@ -133,6 +133,14 @@ def get_survival_metrics(cycle, user):
     }
 
 # --- 6. ROUTES (AUTH) ---
+
+# NEW: Marketing landing page at root for guests
+@app.route('/home')
+def home():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    return render_template('landing.html')
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -149,6 +157,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         login_user(new_user)
+        session['show_welcome'] = True   # trigger welcome banner
         return redirect(url_for('edit'))
     return render_template('register.html')
 
@@ -162,6 +171,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
             login_user(user)
+            session['show_welcome'] = True   # trigger welcome banner
             return redirect(url_for('index'))
         else:
             flash('Invalid username or password.', 'danger')
@@ -171,9 +181,11 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('home'))   # send to landing page after logout
 
 # --- 7. ROUTES (CORE APP) ---
+
+# Root now requires login and shows the dashboard
 @app.route('/')
 @login_required
 def index():
@@ -185,7 +197,17 @@ def index():
     expenses = Expense.query.filter_by(cycle_id=active_cycle.id).order_by(Expense.timestamp.desc()).all()
     premium_count = PremiumInterest.query.count()
 
-    return render_template('index.html', metrics=metrics, cycle=active_cycle, expenses=expenses, premium_count=premium_count)
+    # Pop welcome flag so the banner only shows once
+    show_welcome = session.pop('show_welcome', False)
+
+    return render_template(
+        'index.html',
+        metrics=metrics,
+        cycle=active_cycle,
+        expenses=expenses,
+        premium_count=premium_count,
+        show_welcome=show_welcome
+    )
 
 @app.route('/edit', methods=['GET', 'POST'])
 @login_required
@@ -247,7 +269,6 @@ def premium_interest():
     db.session.commit()
     total = PremiumInterest.query.count()
     print(f"[PREMIUM] Waitlist signup — email: {email or 'not provided'} | Total: {total}")
-    # Send email in background so it doesn't block the request
     threading.Thread(target=send_founder_notification, args=(email, current_user.username, total), daemon=True).start()
     return jsonify({"status": "ok", "total": total})
 

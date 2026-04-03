@@ -1,44 +1,112 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="max-w-sm mx-auto mt-10">
-    <div class="survival-card rounded-2xl p-8">
-        
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <div class="text-5xl mb-3">🪖</div>
-            <h2 class="text-3xl font-black tracking-tight survival-title">Join the Survival</h2>
-            <p class="survival-subtitle text-sm mt-2">Stop going broke by the 20th of the month.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join the Mission — SurviveTheMonth 🌿</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">🌿 SurviveTheMonth</a>
+    <div class="navbar-links">
+      <a href="/login">Already surviving?</a>
+    </div>
+  </nav>
+
+  <!-- ── Flash Messages ── -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- ── Register Page ── -->
+  <div class="auth-page">
+    <div class="card auth-card">
+
+      <div class="auth-brand">
+        <span class="brand-icon">🔥</span>
+        <h1>Join the Mission</h1>
+        <p>Create your survivor profile. It's free, always.</p>
+      </div>
+
+      {% if error %}
+        <div class="flash flash-error">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/register" novalidate>
+
+        {% if form is defined and form.hidden_tag is defined %}
+          {{ form.hidden_tag() }}
+        {% endif %}
+
+        <div class="form-group">
+          <label class="form-label" for="username">Choose a Survivor Name</label>
+          {% if form is defined and form.username is defined %}
+            {{ form.username(id="username", class="form-input", placeholder="e.g. budget_warrior_99") }}
+          {% else %}
+            <input
+              type="text"
+              id="username"
+              name="username"
+              class="form-input"
+              placeholder="e.g. budget_warrior_99"
+              autocomplete="username"
+              required
+            />
+          {% endif %}
         </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                <div class="mb-4 {% if category == 'danger' %} alert-danger {% else %} alert-success {% endif %}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <div class="form-group">
+          <label class="form-label" for="password">Set Your Password</label>
+          {% if form is defined and form.password is defined %}
+            {{ form.password(id="password", class="form-input", placeholder="Make it strong, like you") }}
+          {% else %}
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="form-input"
+              placeholder="Make it strong, like you"
+              autocomplete="new-password"
+              required
+            />
+          {% endif %}
+        </div>
 
-        <form method="POST" action="{{ url_for('register') }}" class="space-y-4">
-            <div>
-                <label class="block text-sm font-bold survival-label mb-1">Username</label>
-                <input type="text" name="username" placeholder="e.g. broke_student_99" required 
-                       class="survival-input w-full rounded-xl px-4 py-3 outline-none transition-all">
-            </div>
-            <div>
-                <label class="block text-sm font-bold survival-label mb-1">Password</label>
-                <input type="password" name="password" placeholder="••••••••" required 
-                       class="survival-input w-full rounded-xl px-4 py-3 outline-none transition-all">
-            </div>
-            <button type="submit" class="survival-btn w-full font-black py-3 rounded-xl mt-2 transition-all">
-                🪖 Begin My Mission
-            </button>
-        </form>
+        {% if form is defined and form.confirm_password is defined %}
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirm Password</label>
+          {{ form.confirm_password(id="confirm_password", class="form-input", placeholder="••••••••") }}
+        </div>
+        {% endif %}
 
-        <p class="text-center mt-6 text-sm survival-subtitle">
-            Already surviving? <a href="{{ url_for('login') }}" class="survival-link font-bold hover:underline">Log in</a>
-        </p>
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem;">
+          🌿 Enter the Jungle
+        </button>
+
+      </form>
+
+      <div class="form-divider">already a survivor?</div>
+
+      <div class="form-footer">
+        <a href="/login">← Log back in</a>
+      </div>
+
+      <div class="survival-hint">
+        <strong>🌿 Free forever.</strong> No credit card. Your data stays private.
+      </div>
+
     </div>
-</div>
-{% endblock %}
+  </div>
+
+</body>
+</html>

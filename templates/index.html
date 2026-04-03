@@ -1,185 +1,195 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Control — SurviveTheMonth 🌿</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
 
-<!-- Survival Status Alert -->
-<div class="mb-6 p-4 rounded-xl font-medium text-sm
-    {% if metrics.feedback.type == 'danger' %} feedback-danger
-    {% elif metrics.feedback.type == 'success' %} feedback-safe
-    {% elif metrics.feedback.type == 'warning' %} feedback-warning
-    {% else %} feedback-safe {% endif %}">
-    {{ metrics.feedback.msg }}
-</div>
-
-<!-- Survival Meter -->
-{% set pct = [(metrics.remaining_money / (cycle.pocket_money - cycle.fixed_expenses) * 100), 0]|max %}
-{% set pct = [pct, 100]|min %}
-<div class="survival-card rounded-2xl p-6 mb-6">
-    <p class="survival-label text-xs font-bold uppercase tracking-widest mb-3">⚡ Survival Meter</p>
-    <div class="survival-meter-container mb-2">
-        <div class="survival-meter-bar {% if pct > 50 %}meter-safe{% elif pct > 20 %}meter-warning{% else %}meter-danger{% endif %}"
-             style="width: {{ pct }}%"></div>
+  <!-- ── Navbar ── -->
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">🌿 SurviveTheMonth</a>
+    <div class="navbar-links">
+      <a href="/profile">👤 {{ current_user.username }}</a>
+      <a href="/edit">⚙️ Edit Month</a>
+      <a href="/logout" class="btn-nav-cta">Bail Out →</a>
     </div>
-    <div class="flex justify-between text-xs survival-subtitle mt-1">
-        <span>₹0</span>
-        <span class="font-bold {% if pct > 50 %}text-green-400{% elif pct > 20 %}text-yellow-400{% else %}text-red-400{% endif %}">
-            {{ pct|int }}% remaining
-        </span>
-        <span>₹{{ cycle.pocket_money - cycle.fixed_expenses }}</span>
-    </div>
-</div>
+  </nav>
 
-<!-- Daily Limit Card -->
-<div class="survival-card rounded-2xl p-8 text-center mb-6">
-    <p class="survival-label text-xs font-bold uppercase tracking-widest mb-2">🎯 Today's Safe Limit</p>
-    <h2 class="text-6xl font-black tracking-tighter stat-value mb-2">₹{{ metrics.safe_daily_limit }}</h2>
-    <div class="flex justify-between text-sm survival-subtitle mt-6 px-4">
-        <div class="text-center">
-            <p class="text-xs uppercase tracking-wide mb-1">Rations Left</p>
-            <p class="font-black text-lg stat-value">₹{{ metrics.remaining_money }}</p>
-        </div>
-        <div class="w-px bg-green-900"></div>
-        <div class="text-center">
-            <p class="text-xs uppercase tracking-wide mb-1">Days to Survive</p>
-            <p class="font-black text-lg stat-value">{{ metrics.remaining_days }}</p>
-        </div>
-        <div class="w-px bg-green-900"></div>
-        <div class="text-center">
-            <p class="text-xs uppercase tracking-wide mb-1">Spent Today</p>
-            <p class="font-black text-lg {% if metrics.spent_today > metrics.safe_daily_limit %}text-red-400{% else %}stat-value{% endif %}">
-                ₹{{ metrics.spent_today }}
-            </p>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Expense Input -->
-<form action="{{ url_for('log_expense') }}" method="POST" class="flex gap-2 mb-6">
-    <input type="number" step="0.01" name="amount" placeholder="₹ Rations spent..." required 
-           class="expense-input flex-1 text-lg">
-    <button type="submit" class="survival-btn font-black px-6 py-3 rounded-xl transition-all">
-        Log
-    </button>
-</form>
-
-<!-- Pro Feature Hook -->
-<div onclick="document.getElementById('premiumModal').classList.remove('hidden')" 
-     class="survival-card rounded-xl p-5 cursor-pointer hover:border-yellow-500/40 transition-all transform hover:-translate-y-1 mb-6"
-     style="border-color: rgba(255, 193, 7, 0.2);">
-    <div class="flex justify-between items-center">
-        <div>
-            <h3 class="font-bold flex items-center gap-2" style="color: #ffd54f;">
-                🔮 Run-Out Predictor 
-                <span class="text-[10px] px-2 py-0.5 rounded uppercase tracking-wider font-black"
-                      style="background: rgba(255,193,7,0.2); color: #ffc107; border: 1px solid rgba(255,193,7,0.3);">Pro</span>
-            </h3>
-            <p class="text-xs survival-subtitle mt-1">See exactly what date you'll go broke.</p>
-        </div>
-        <span style="color: #ffd54f;">→</span>
-    </div>
-</div>
-
-<!-- Transaction History -->
-<div class="survival-card rounded-2xl p-5 mb-6">
-    <h3 class="font-bold survival-label text-xs uppercase tracking-widest mb-4">📜 Mission Log</h3>
-    {% if expenses %}
-        <ul class="space-y-2">
-            {% for expense in expenses %}
-            <li class="transaction-item flex justify-between items-center">
-                <div>
-                    <p class="font-black stat-value">₹{{ "%.2f"|format(expense.amount) }}</p>
-                    <p class="text-xs survival-subtitle mt-0.5">{{ expense.category }}</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-xs survival-subtitle">{{ expense.timestamp.strftime('%d %b, %I:%M %p') }}</p>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p class="text-center survival-subtitle text-sm py-6">🌿 No expenses logged yet. Stay strong, survivor!</p>
+  <!-- ── Flash Messages ── -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
     {% endif %}
-</div>
+  {% endwith %}
 
-<!-- Premium Modal -->
-<div id="premiumModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="survival-card rounded-2xl p-6 max-w-sm w-full">
+  <div class="app-layout">
+    <div class="app-container">
 
-        <div id="step1">
-            <h3 class="font-black text-xl mb-2 survival-title">Unlock AI Forecasting</h3>
-            <p class="survival-subtitle text-sm mb-2">Would you pay ₹49/month to see the exact date you'll go broke + advanced survival charts?</p>
-            {% if premium_count > 0 %}
-            <p class="text-xs font-medium mb-4" style="color: #ffd54f;">🔥 {{ premium_count }} survivors are already interested!</p>
+      <!-- ── Welcome Banner (shows once after login) ── -->
+      {% if show_welcome %}
+        <div class="welcome-banner">
+          <span class="welcome-icon">🌿</span>
+          <div>
+            <h2>Welcome back, {{ current_user.username }}!</h2>
+            <p>The jungle is waiting. Stay sharp — check your survival status below.</p>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if metrics %}
+
+        <!-- ── Survival Meter ── -->
+        <div class="card meter-card" style="margin-bottom: 1.5rem;">
+
+          <div class="meter-header">
+            <span class="meter-title">☠️ Survival Status — {{ cycle.start_date.strftime('%B %Y') }}</span>
+            {% set pct = ((metrics.remaining_money / (cycle.pocket_money - cycle.fixed_expenses)) * 100) | round | int if (cycle.pocket_money - cycle.fixed_expenses) > 0 else 0 %}
+            {% if pct <= 15 %}
+              <span class="meter-status pulse" style="color: var(--danger-red);">🚨 DANGER ZONE</span>
+            {% elif pct <= 35 %}
+              <span class="meter-status pulse" style="color: var(--fire-yellow);">⚠ CRITICAL ZONE</span>
+            {% else %}
+              <span class="meter-status" style="color: var(--leaf-light);">✅ SURVIVING</span>
             {% endif %}
-            <div class="flex gap-3">
-                <button onclick="showEmailStep()" class="survival-btn flex-1 font-black py-3 rounded-xl transition-all">
-                    Yes, I'd pay
-                </button>
-                <button onclick="document.getElementById('premiumModal').classList.add('hidden')" 
-                        class="flex-1 font-bold py-3 rounded-xl transition-all"
-                        style="background: rgba(255,255,255,0.05); color: #6b8f6b; border: 1px solid rgba(74,160,74,0.2);">
-                    Maybe later
-                </button>
+          </div>
+
+          <!-- Bar -->
+          <div class="meter-bar-track" style="margin-bottom: 1rem;">
+            {% set bar_pct = [pct, 100] | min %}
+            <div class="meter-bar-fill" style="
+              width: {{ bar_pct }}%;
+              animation: none;
+              {% if pct <= 15 %}
+                background: var(--danger-red);
+                box-shadow: 0 0 12px rgba(229,62,42,0.5);
+              {% elif pct <= 35 %}
+                background: linear-gradient(90deg, var(--danger-red), var(--fire-yellow));
+                box-shadow: 0 0 12px rgba(247,194,62,0.4);
+              {% else %}
+                background: linear-gradient(90deg, var(--danger-orange), var(--fire-yellow), var(--leaf-green));
+                box-shadow: 0 0 12px rgba(141,214,160,0.3);
+              {% endif %}
+            "></div>
+          </div>
+
+          <!-- Stats Row -->
+          <div class="meter-info" style="margin-bottom: 1rem;">
+            <div>
+              <div class="meter-amount">
+                ₹{{ "{:,.0f}".format(metrics.remaining_money) }}
+              </div>
+              <div class="meter-label">remaining budget</div>
             </div>
+            <div class="meter-days">
+              <strong>{{ metrics.remaining_days }} days</strong>
+              <span>left to survive</span>
+            </div>
+          </div>
+
+          <!-- Feedback Banner -->
+          <div class="flash flash-{{ metrics.feedback.type }}" style="margin-bottom: 1rem;">
+            {{ metrics.feedback.msg }}
+          </div>
+
+          <!-- Daily Limit & Spent Today -->
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <div class="stat-pill">
+              <span class="stat-pill-label">Today's Spend</span>
+              <span class="stat-pill-value" style="color: var(--danger-orange);">
+                ₹{{ "{:,.0f}".format(metrics.spent_today) }}
+              </span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-pill-label">Safe Daily Limit</span>
+              <span class="stat-pill-value" style="color: var(--leaf-light);">
+                ₹{{ "{:,.0f}".format(metrics.safe_daily_limit) }}
+              </span>
+            </div>
+            <div class="stat-pill">
+              <span class="stat-pill-label">Disposable Budget</span>
+              <span class="stat-pill-value" style="color: var(--canopy);">
+                ₹{{ "{:,.0f}".format(cycle.pocket_money - cycle.fixed_expenses) }}
+              </span>
+            </div>
+          </div>
+
         </div>
 
-        <div id="step2" class="hidden">
-            <h3 class="font-black text-xl mb-1 survival-title">You're in! 🎉</h3>
-            <p class="survival-subtitle text-sm mb-4">Drop your email and we'll notify you the moment Premium launches.</p>
-            <input id="emailInput" type="email" placeholder="your@email.com"
-                   class="survival-input w-full rounded-xl px-4 py-3 outline-none transition-all mb-3">
-            <button id="submitBtn" onclick="logPremiumInterest()"
-                    class="survival-btn w-full font-black py-3 rounded-xl transition-all mb-2">
-                Notify Me at Launch 🚀
+        <!-- ── Log Expense Form ── -->
+        <div class="card" style="padding: 1.6rem 2rem; margin-bottom: 1.5rem;">
+          <h3 style="font-size: 1.3rem; color: var(--canopy); margin-bottom: 1.2rem;">
+            ⚡ Log an Expense
+          </h3>
+          <form method="POST" action="/log_expense" style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end;">
+            <div class="form-group" style="flex: 1; min-width: 140px; margin-bottom: 0;">
+              <label class="form-label" for="amount">Amount (₹)</label>
+              <input
+                type="number"
+                id="amount"
+                name="amount"
+                class="form-input"
+                placeholder="e.g. 250"
+                min="1"
+                step="any"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.8rem; margin-bottom: 0;">
+              🔥 Log It
             </button>
-            <button onclick="logPremiumInterest(true)" class="w-full survival-subtitle text-sm py-2">
-                Skip, just count my vote
-            </button>
+          </form>
         </div>
 
-        <div id="step3" class="hidden text-center py-4">
-            <div class="text-5xl mb-4">🎯</div>
-            <h3 class="font-black text-xl mb-2 survival-title">You're on the waitlist!</h3>
-            <p class="survival-subtitle text-sm mb-4">We'll reach out the moment Premium goes live. Thanks for believing in SurviveTheMonth!</p>
-            <button onclick="document.getElementById('premiumModal').classList.add('hidden'); resetModal();"
-                    class="w-full font-bold py-3 rounded-xl transition-all"
-                    style="background: rgba(255,255,255,0.05); color: #9dc99d; border: 1px solid rgba(74,160,74,0.2);">
-                Close
-            </button>
+        <!-- ── Expense History ── -->
+        <div class="card" style="padding: 1.6rem 2rem;">
+          <h3 style="font-size: 1.3rem; color: var(--canopy); margin-bottom: 1.2rem;">
+            📋 Expense History
+          </h3>
+
+          {% if expenses %}
+            <div class="meter-expenses">
+              {% for expense in expenses %}
+                <div class="expense-row">
+                  <span class="expense-name">
+                    <span class="expense-dot" style="background: var(--danger-orange);"></span>
+                    {{ expense.category }}
+                  </span>
+                  <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); margin-right: auto; padding-left: 1rem;">
+                    {{ expense.date.strftime('%d %b') }}
+                  </span>
+                  <span class="expense-amt">−₹{{ "{:,.0f}".format(expense.amount) }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 1.5rem 0;">
+              🌿 No expenses logged yet. Stay frugal, survivor.
+            </p>
+          {% endif %}
         </div>
+
+      {% else %}
+        <!-- No cycle set up yet -->
+        <div class="card" style="padding: 3rem 2rem; text-align: center;">
+          <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">🌿</span>
+          <h2 style="color: var(--canopy); margin-bottom: 0.6rem;">No Mission Active</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 1.8rem;">
+            Set up this month's budget to start your survival mission.
+          </p>
+          <a href="/edit" class="btn btn-primary">⚙️ Set Up This Month</a>
+        </div>
+      {% endif %}
+
     </div>
-</div>
+  </div>
 
-<script>
-function showEmailStep() {
-    document.getElementById('step1').classList.add('hidden');
-    document.getElementById('step2').classList.remove('hidden');
-}
-
-async function logPremiumInterest(skipEmail = false) {
-    const btn = document.getElementById('submitBtn');
-    const email = skipEmail ? '' : document.getElementById('emailInput').value.trim();
-    if (btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
-    try {
-        await fetch('/premium_interest', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email })
-        });
-        document.getElementById('step2').classList.add('hidden');
-        document.getElementById('step3').classList.remove('hidden');
-    } catch(e) {
-        if (btn) { btn.textContent = 'Notify Me at Launch 🚀'; btn.disabled = false; }
-    }
-}
-
-function resetModal() {
-    document.getElementById('step1').classList.remove('hidden');
-    document.getElementById('step2').classList.add('hidden');
-    document.getElementById('step3').classList.add('hidden');
-    document.getElementById('emailInput').value = '';
-    const btn = document.getElementById('submitBtn');
-    btn.textContent = 'Notify Me at Launch 🚀';
-    btn.disabled = false;
-}
-</script>
-{% endblock %}
+</body>
+</html>

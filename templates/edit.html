@@ -1,46 +1,121 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="survival-card rounded-2xl p-6">
-    <div class="text-center mb-6">
-        <div class="text-4xl mb-2">🗓️</div>
-        <h2 class="text-2xl font-black survival-title mb-1">Mission Briefing</h2>
-        <p class="survival-subtitle text-sm">Set your rations and we'll calculate your daily survival limit.</p>
-    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mission Briefing — SurviveTheMonth 🌿</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
 
-    <form action="{{ url_for('edit') }}" method="POST" class="space-y-4">
-        <div>
-            <label class="block text-sm font-bold survival-label mb-1">Total Rations (Pocket Money)</label>
-            <input type="number" name="pocket_money" placeholder="e.g. 5000" required
-                   class="survival-input w-full rounded-xl px-4 py-3 outline-none transition-all">
+  <!-- ── Navbar ── -->
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">🌿 SurviveTheMonth</a>
+    <div class="navbar-links">
+      <a href="/profile">👤 {{ current_user.username }}</a>
+      {% if has_cycle %}
+        <a href="/" class="btn-nav-cta">← Back to Hub</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- ── Flash Messages ── -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="auth-page">
+    <div class="card auth-card" style="max-width: 500px;">
+
+      <!-- Header -->
+      <div class="auth-brand">
+        <span class="brand-icon">🗓️</span>
+        <h1>Mission Briefing</h1>
+        <p>Set your rations and we'll calculate your daily survival limit.</p>
+      </div>
+
+      <!-- Form -->
+      <form action="{{ url_for('edit') }}" method="POST" novalidate>
+
+        <div class="form-group">
+          <label class="form-label" for="pocket_money">
+            Total Rations (Pocket Money)
+          </label>
+          <input
+            type="number"
+            id="pocket_money"
+            name="pocket_money"
+            class="form-input"
+            placeholder="e.g. 15000"
+            min="1"
+            step="any"
+            required
+          />
         </div>
-        <div>
-            <label class="block text-sm font-bold survival-label mb-1">Fixed Costs (Mess, Rent, Wi-Fi)</label>
-            <input type="number" name="fixed_expenses" placeholder="e.g. 2000" required
-                   class="survival-input w-full rounded-xl px-4 py-3 outline-none transition-all">
-            <p class="text-xs survival-subtitle mt-1">⚠️ Money already committed — can't be avoided.</p>
+
+        <div class="form-group">
+          <label class="form-label" for="fixed_expenses">
+            Fixed Costs (Rent, Mess, Wi-Fi)
+          </label>
+          <input
+            type="number"
+            id="fixed_expenses"
+            name="fixed_expenses"
+            class="form-input"
+            placeholder="e.g. 8000"
+            min="0"
+            step="any"
+            required
+          />
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem; font-family: var(--font-mono);">
+            ⚠️ Money already committed — will be deducted from your rations.
+          </p>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-bold survival-label mb-1">Mission Start</label>
-                <input type="date" name="start_date" required
-                       class="survival-input w-full rounded-xl px-4 py-3 outline-none transition-all">
-            </div>
-            <div>
-                <label class="block text-sm font-bold survival-label mb-1">Mission End</label>
-                <input type="date" name="end_date" required
-                       class="survival-input w-full rounded-xl px-4 py-3 outline-none transition-all">
-            </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="start_date">Mission Start</label>
+            <input
+              type="date"
+              id="start_date"
+              name="start_date"
+              class="form-input"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="end_date">Mission End</label>
+            <input
+              type="date"
+              id="end_date"
+              name="end_date"
+              class="form-input"
+              required
+            />
+          </div>
         </div>
-        <button type="submit" class="survival-btn w-full font-black py-3 rounded-xl mt-4 transition-all">
-            🚀 Start Surviving
+
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top: 0.5rem;">
+          🚀 Start Surviving
         </button>
+
         {% if has_cycle %}
-        <a href="{{ url_for('index') }}" 
-           class="block w-full text-center font-bold py-3 rounded-xl transition-all survival-subtitle"
-           style="background: rgba(255,255,255,0.04); border: 1px solid rgba(74,160,74,0.15);">
+          <a href="{{ url_for('index') }}" class="btn btn-secondary btn-full" style="margin-top: 0.75rem;">
             ← Back to Survival Hub
-        </a>
+          </a>
         {% endif %}
-    </form>
-</div>
-{% endblock %}
+
+      </form>
+
+    </div>
+  </div>
+
+</body>
+</html>
