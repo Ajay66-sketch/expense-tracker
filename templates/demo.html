@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SurviveTheMonth — Live Demo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+</head>
+<body class="demo-body">
+
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <!-- Demo Banner -->
+  <div class="demo-banner">
+    <span>⚡ DEMO MODE — Playing as <strong>Alex Jungle</strong></span>
+    <a href="/login" class="demo-banner-cta">Start Your Real Camp →</a>
+  </div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <span class="logo-icon">🌿</span>
+        <span class="logo-text">SurviveTheMonth</span>
+      </a>
+      <nav class="header-nav">
+        <a href="/login" class="btn btn-primary btn-sm">Start Surviving Free</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="demo-main">
+    <div class="demo-layout">
+
+      <!-- ═══════════ LEFT: SURVIVAL METER PANEL ═══════════ -->
+      <aside class="meter-panel">
+        <div class="panel-header">
+          <span class="panel-label">SURVIVAL STATUS</span>
+          <span class="panel-day" id="dayCounter">DAY 18 / 30</span>
+        </div>
+
+        <div class="survivor-name">Alex's Jungle Camp 🏕️</div>
+
+        <!-- Main Survival Meter -->
+        <div class="big-meter">
+          <div class="big-meter-header">
+            <span class="big-meter-label">HEALTH POINTS</span>
+            <span class="big-meter-pct" id="bigPct">68%</span>
+          </div>
+          <div class="big-meter-track">
+            <div class="big-meter-fill" id="bigFill" style="width: 68%"></div>
+          </div>
+          <div class="big-meter-status" id="bigStatus">🟡 Hanging In There</div>
+        </div>
+
+        <!-- Budget Stats -->
+        <div class="budget-grid">
+          <div class="budget-card">
+            <span class="bc-label">TOTAL BUDGET</span>
+            <span class="bc-val">₹30,000</span>
+          </div>
+          <div class="budget-card spent">
+            <span class="bc-label">SPENT</span>
+            <span class="bc-val" id="spentDisplay">₹9,600</span>
+          </div>
+          <div class="budget-card safe">
+            <span class="bc-label">REMAINING</span>
+            <span class="bc-val" id="remainDisplay">₹20,400</span>
+          </div>
+          <div class="budget-card">
+            <span class="bc-label">DAYS LEFT</span>
+            <span class="bc-val" id="daysLeft">12</span>
+          </div>
+        </div>
+
+        <!-- Daily burn rate -->
+        <div class="burn-rate-card">
+          <span class="br-icon">🔥</span>
+          <div>
+            <div class="br-label">DAILY BURN RATE</div>
+            <div class="br-val" id="burnRate">₹533/day</div>
+          </div>
+          <div class="br-verdict" id="burnVerdict">✅ Safe</div>
+        </div>
+
+        <!-- Month progress -->
+        <div class="month-progress">
+          <div class="mp-label">
+            <span>Month Progress</span>
+            <span>60%</span>
+          </div>
+          <div class="mp-track">
+            <div class="mp-fill" style="width: 60%"></div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ═══════════ RIGHT: EXPENSE LOG + ADD ═══════════ -->
+      <div class="expense-panel">
+
+        <!-- Add Expense Form -->
+        <div class="add-expense-card">
+          <h2 class="ae-title">
+            <span>⚔️</span> Log an Expense
+          </h2>
+
+          <div class="ae-form">
+            <div class="ae-row">
+              <div class="ae-field">
+                <label class="ae-label">Category</label>
+                <select class="ae-select" id="demoCategory">
+                  <option value="Rations" data-icon="🍖">🍖 Rations (Food)</option>
+                  <option value="Shelter" data-icon="🏠">🏠 Shelter (Rent)</option>
+                  <option value="Tools" data-icon="⚒️">⚒️ Tools (Utilities)</option>
+                  <option value="Scouting" data-icon="🚗">🚗 Scouting (Transport)</option>
+                  <option value="Potions" data-icon="💊">💊 Potions (Health)</option>
+                  <option value="Luxury Loot" data-icon="✨">✨ Luxury Loot</option>
+                  <option value="Allies" data-icon="🤝">🤝 Allies (Social)</option>
+                </select>
+              </div>
+
+              <div class="ae-field">
+                <label class="ae-label">Amount (₹)</label>
+                <input type="number" class="ae-input" id="demoAmount" placeholder="500" min="1" />
+              </div>
+            </div>
+
+            <div class="ae-field">
+              <label class="ae-label">Description (optional)</label>
+              <input type="text" class="ae-input" id="demoDesc" placeholder="e.g. Jungle feast at Swiggy" />
+            </div>
+
+            <button class="btn btn-primary btn-full" onclick="logExpense()">
+              <span>⚡ Strike the Budget</span>
+            </button>
+          </div>
+
+          <!-- Feedback toast -->
+          <div class="expense-toast" id="expenseToast">
+            <span id="toastIcon">🔥</span>
+            <span id="toastMsg">Meter updated! You survived another day 🔥</span>
+          </div>
+        </div>
+
+        <!-- Expense List -->
+        <div class="expense-list-card">
+          <div class="el-header">
+            <h2 class="el-title">📋 Expense Log</h2>
+            <span class="el-count" id="expenseCount">7 entries</span>
+          </div>
+
+          <div class="expense-list" id="expenseList">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════ BOTTOM CTA ═══════════ -->
+    <div class="demo-signup-nudge">
+      <div class="nudge-content">
+        <div class="nudge-icon">🏆</div>
+        <div>
+          <h3>You're in Demo Mode</h3>
+          <p>This data resets when you leave. <strong>Create your real camp</strong> to track your actual month.</p>
+        </div>
+        <a href="/login" class="btn btn-primary">Start Surviving Free →</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ── Initial state ──────────────────────────────────────────────
+    let state = {
+      budget: 30000,
+      spent: 9600,
+      expenses: [
+        { id: 1, cat: 'Shelter',    icon: '🏠', desc: 'Monthly rent',       amount: 4500,  date: 'Apr 1' },
+        { id: 2, cat: 'Rations',    icon: '🍖', desc: 'Weekly groceries',   amount: 1200,  date: 'Apr 3' },
+        { id: 3, cat: 'Scouting',   icon: '🚗', desc: 'Ola to office',      amount: 340,   date: 'Apr 5' },
+        { id: 4, cat: 'Tools',      icon: '⚒️', desc: 'Electricity bill',   amount: 890,   date: 'Apr 7' },
+        { id: 5, cat: 'Rations',    icon: '🍖', desc: 'Swiggy weekend feast',amount: 680,   date: 'Apr 10' },
+        { id: 6, cat: 'Potions',    icon: '💊', desc: 'Pharmacy run',       amount: 560,   date: 'Apr 14' },
+        { id: 7, cat: 'Luxury Loot',icon: '✨', desc: 'Netflix + Spotify',  amount: 1430,  date: 'Apr 17' },
+      ]
+    };
+
+    function getStatus(pct) {
+      if (pct >= 70) return { label: '🟢 Thriving — You\'re Killing It', color: 'var(--meter-green)', class: 'status-green' };
+      if (pct >= 40) return { label: '🟡 Hanging In There',               color: 'var(--meter-yellow)', class: 'status-yellow' };
+      if (pct >= 15) return { label: '🔴 CRITICAL — Danger Zone!',        color: 'var(--meter-red)', class: 'status-red' };
+      return           { label: '💀 ELIMINATED — Budget Blown',            color: '#ff0040', class: 'status-dead' };
+    }
+
+    function updateUI() {
+      const remaining = state.budget - state.spent;
+      const pct = Math.max(0, Math.round((remaining / state.budget) * 100));
+      const status = getStatus(pct);
+      const daysLeft = 30 - 18; // demo fixed
+
+      // Meter
+      const fill = document.getElementById('bigFill');
+      fill.style.width = pct + '%';
+      fill.style.background = status.color;
+      fill.style.boxShadow = `0 0 20px ${status.color}99`;
+      document.getElementById('bigPct').textContent = pct + '%';
+      document.getElementById('bigStatus').textContent = status.label;
+      document.getElementById('bigStatus').className = 'big-meter-status ' + status.class;
+
+      // Numbers
+      document.getElementById('spentDisplay').textContent  = '₹' + state.spent.toLocaleString('en-IN');
+      document.getElementById('remainDisplay').textContent = '₹' + Math.max(0, remaining).toLocaleString('en-IN');
+      document.getElementById('daysLeft').textContent = daysLeft;
+
+      // Burn rate
+      const burn = Math.round(state.spent / 18);
+      const projectedBurn = burn * 30;
+      document.getElementById('burnRate').textContent = '₹' + burn.toLocaleString('en-IN') + '/day';
+      document.getElementById('burnVerdict').textContent = projectedBurn <= state.budget ? '✅ Safe' : '⚠️ Overpace';
+      document.getElementById('burnVerdict').className = 'br-verdict ' + (projectedBurn <= state.budget ? 'verdict-safe' : 'verdict-warn');
+
+      // List
+      renderList();
+    }
+
+    function renderList() {
+      const list = document.getElementById('expenseList');
+      list.innerHTML = [...state.expenses].reverse().map(e => `
+        <div class="expense-item">
+          <div class="ei-icon">${e.icon}</div>
+          <div class="ei-info">
+            <div class="ei-name">${e.desc || e.cat}</div>
+            <div class="ei-meta"><span class="ei-cat">${e.cat}</span> · ${e.date}</div>
+          </div>
+          <div class="ei-amount">−₹${e.amount.toLocaleString('en-IN')}</div>
+        </div>
+      `).join('');
+      document.getElementById('expenseCount').textContent = state.expenses.length + ' entries';
+    }
+
+    function showToast(msg, icon = '🔥') {
+      const toast = document.getElementById('expenseToast');
+      document.getElementById('toastIcon').textContent = icon;
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.add('toast-visible');
+      setTimeout(() => toast.classList.remove('toast-visible'), 3200);
+    }
+
+    function logExpense() {
+      const amt  = parseFloat(document.getElementById('demoAmount').value);
+      const cat  = document.getElementById('demoCategory').value;
+      const desc = document.getElementById('demoDesc').value || cat;
+      const sel  = document.getElementById('demoCategory');
+      const icon = sel.options[sel.selectedIndex].dataset.icon;
+
+      if (!amt || amt <= 0) {
+        showToast('Enter a valid amount, Survivor!', '⚠️');
+        return;
+      }
+
+      state.spent += amt;
+      state.expenses.push({
+        id: Date.now(), cat, icon,
+        desc: desc || cat,
+        amount: amt,
+        date: 'Today'
+      });
+
+      const remaining = state.budget - state.spent;
+      const pct = Math.max(0, Math.round((remaining / state.budget) * 100));
+
+      let toastMsg, toastIcon;
+      if (pct >= 70)      { toastMsg = 'Logged! Meter healthy. You\'re surviving! 🟢'; toastIcon = '✅'; }
+      else if (pct >= 40) { toastMsg = 'Ouch! Meter took a hit. Stay sharp 🟡'; toastIcon = '🔥'; }
+      else if (pct >= 15) { toastMsg = '⚠️ DANGER! Meter critical. Stop spending!'; toastIcon = '🚨'; }
+      else                { toastMsg = '💀 Budget blown. Better luck next month.'; toastIcon = '💀'; }
+
+      updateUI();
+      showToast(toastMsg, toastIcon);
+
+      // Reset form
+      document.getElementById('demoAmount').value = '';
+      document.getElementById('demoDesc').value = '';
+    }
+
+    // Init
+    updateUI();
+  </script>
+</body>
+</html>

@@ -3,117 +3,192 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SurviveTheMonth 🌿 — Budget Like Your Life Depends On It</title>
+  <title>SurviveTheMonth 🌿 — Budget or Die</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 </head>
 <body class="landing-body">
 
-  <!-- ── NAV ── -->
-  <nav class="nav">
-    <span class="nav-logo">🌿 SurviveTheMonth</span>
-    <a href="/login" class="nav-link">Log In</a>
-  </nav>
+  <!-- Ambient jungle particles -->
+  <div class="particle-field" aria-hidden="true">
+    <span class="particle"></span><span class="particle"></span>
+    <span class="particle"></span><span class="particle"></span>
+    <span class="particle"></span><span class="particle"></span>
+    <span class="particle"></span><span class="particle"></span>
+    <span class="particle"></span><span class="particle"></span>
+  </div>
 
-  <!-- ── HERO ── -->
-  <header class="hero">
-    <div class="hero-bg-grid"></div>
-    <div class="hero-content">
-      <div class="hero-badge">🔥 Free • No credit card needed</div>
-      <h1 class="hero-title">
-        Stop Running Out of<br />
-        <span class="hero-accent">Money Mid-Month.</span>
-      </h1>
-      <p class="hero-sub">
-        SurviveTheMonth turns boring budgeting into a <strong>jungle survival mission</strong>.
-        Track expenses, protect your Survival Meter, and make it to payday — alive.
-      </p>
-      <div class="hero-cta-row">
-        <a href="/register" class="btn btn-primary btn-lg">
-          🌿 Start Your Mission — Free
-        </a>
-        <span class="hero-cta-note">Takes 30 seconds. No jungle experience required.</span>
-      </div>
-    </div>
+  <!-- Scanline overlay -->
+  <div class="scanlines" aria-hidden="true"></div>
 
-    <!-- Survival Meter teaser -->
-    <div class="meter-card">
-      <div class="meter-card-label">YOUR SURVIVAL METER</div>
-      <div class="meter-track">
-        <div class="meter-fill" style="width: 62%"></div>
-      </div>
-      <div class="meter-row">
-        <span class="meter-stat">💸 ₹8,400 spent</span>
-        <span class="meter-pct">62% survived</span>
-        <span class="meter-stat">₹5,100 left 🌿</span>
-      </div>
-      <p class="meter-tip">⚡ 18 days to go — spend wisely, survivor.</p>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <span class="logo-icon">🌿</span>
+        <span class="logo-text">SurviveTheMonth</span>
+      </a>
+      <nav class="header-nav">
+        <a href="/login" class="nav-link">Login</a>
+        <a href="/demo" class="btn btn-outline btn-sm">Try Demo</a>
+      </nav>
     </div>
   </header>
 
-  <!-- ── WHY ── -->
-  <section class="why-section">
-    <h2 class="section-title">Why the jungle?</h2>
-    <p class="section-sub">Because spreadsheets are boring and guilt trips don't work.</p>
-    <div class="cards-grid">
-      <div class="card">
-        <div class="card-icon">📊</div>
-        <h3>See your budget as a life bar</h3>
-        <p>Your monthly budget becomes a survival meter. Every spend drains it. Watch it in real time and feel the stakes.</p>
+  <main>
+    <!-- ═══════════ HERO ═══════════ -->
+    <section class="hero">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-dot"></span>
+        <span>Monthly budget tracker</span>
+        <span class="eyebrow-dot"></span>
       </div>
-      <div class="card">
-        <div class="card-icon">🎯</div>
-        <h3>Built for normal people</h3>
-        <p>Salaried workers, students, freelancers — anyone tired of hitting Day 20 with no money. No finance degree needed.</p>
-      </div>
-      <div class="card">
-        <div class="card-icon">🔥</div>
-        <h3>Log, don't stress</h3>
-        <p>Add an expense in under 5 seconds. The jungle keeps score. You just keep surviving.</p>
-      </div>
-    </div>
-  </section>
 
-  <!-- ── HOW ── -->
-  <section class="how-section">
-    <h2 class="section-title">Your mission, step by step</h2>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">01</div>
-        <h3>Set your monthly budget</h3>
-        <p>Tell us your income or spending limit. That's your starting HP.</p>
-      </div>
-      <div class="step-arrow">→</div>
-      <div class="step">
-        <div class="step-num">02</div>
-        <h3>Log every expense</h3>
-        <p>Coffee, rent, impulse buys — every entry chips away at your meter.</p>
-      </div>
-      <div class="step-arrow">→</div>
-      <div class="step">
-        <div class="step-num">03</div>
-        <h3>Survive the month</h3>
-        <p>Keep the meter green. Reach the end of the month with money left. Win.</p>
-      </div>
-    </div>
-  </section>
+      <h1 class="hero-headline">
+        <span class="headline-line">Your budget.</span>
+        <span class="headline-line accent-text">Your survival.</span>
+      </h1>
 
-  <!-- ── FINAL CTA ── -->
-  <section class="final-cta">
-    <h2>The jungle is waiting. 🌿</h2>
-    <p>Your next month starts now. Will you survive it?</p>
-    <a href="/register" class="btn btn-primary btn-lg">Enter the Jungle — Free</a>
-  </section>
+      <p class="hero-sub">
+        Every rupee spent is a hit to your health bar. Track expenses,<br />
+        protect your meter, and make it to the 30th alive.
+      </p>
 
-  <!-- ── FOOTER ── -->
-  <footer class="footer">
-    <span>🌿 SurviveTheMonth</span>
-    <span>·</span>
-    <a href="/login">Log In</a>
-    <span>·</span>
-    <a href="/register">Register</a>
+      <div class="hero-cta-group">
+        <a href="/demo" class="btn btn-primary btn-lg">
+          <span class="btn-icon">⚡</span>
+          Try Demo — No Signup
+        </a>
+        <a href="/login" class="btn btn-ghost btn-lg">
+          I'm ready to survive →
+        </a>
+      </div>
+
+      <div class="hero-proof">
+        <div class="proof-item">
+          <span class="proof-num">2.4k</span>
+          <span class="proof-label">Survivors this month</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-item">
+          <span class="proof-num">₹0</span>
+          <span class="proof-label">Cost to start</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-item">
+          <span class="proof-num">30</span>
+          <span class="proof-label">Days to beat</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ SURVIVAL METER TEASER ═══════════ -->
+    <section class="meter-teaser">
+      <div class="teaser-card">
+        <div class="teaser-card-header">
+          <span class="teaser-label">SURVIVAL STATUS</span>
+          <span class="teaser-day">DAY 18 / 30</span>
+        </div>
+
+        <div class="teaser-name">Alex's Jungle Camp</div>
+
+        <div class="meter-container">
+          <div class="meter-labels">
+            <span>HP</span>
+            <span class="meter-pct" id="meterPct">68%</span>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill" id="meterFill" style="width: 68%"></div>
+            <div class="meter-glow"></div>
+          </div>
+          <div class="meter-status" id="meterStatus">🟡 Hanging In There</div>
+        </div>
+
+        <div class="teaser-budget-row">
+          <div class="budget-stat">
+            <span class="stat-label">BUDGET</span>
+            <span class="stat-val">₹30,000</span>
+          </div>
+          <div class="budget-stat">
+            <span class="stat-label">SPENT</span>
+            <span class="stat-val danger">₹9,600</span>
+          </div>
+          <div class="budget-stat">
+            <span class="stat-label">REMAINING</span>
+            <span class="stat-val safe">₹20,400</span>
+          </div>
+        </div>
+
+        <div class="teaser-cta">
+          <a href="/demo" class="btn btn-primary">
+            See Your Meter Live →
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ HOW IT WORKS ═══════════ -->
+    <section class="how-section">
+      <h2 class="section-title">How You Survive</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <div class="step-icon">🎯</div>
+          <h3>Set Your Budget</h3>
+          <p>Enter your monthly rations limit. This is your max HP — guard it with your life.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <div class="step-icon">📝</div>
+          <h3>Log Expenses</h3>
+          <p>Every coffee, every Swiggy order, every impulse buy — log it and watch the meter drop.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <div class="step-icon">🏆</div>
+          <h3>Reach Day 30</h3>
+          <p>Keep your meter in the green. Make it to month end without going critical. You win.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ FINAL CTA ═══════════ -->
+    <section class="final-cta-section">
+      <div class="final-cta-card">
+        <div class="fca-glyph">🌿</div>
+        <h2>Will you survive this month?</h2>
+        <p>Most people don't even know how much they spend. Be the exception.</p>
+        <div class="fca-btns">
+          <a href="/demo" class="btn btn-primary btn-lg">Experience the Demo</a>
+          <a href="/login" class="btn btn-outline btn-lg">Start Surviving</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span class="logo-text">🌿 SurviveTheMonth</span>
+    <span class="footer-tagline">Budget or die trying.</span>
   </footer>
 
+  <script>
+    // Animate meter on load for wow effect
+    const fill = document.getElementById('meterFill');
+    const pct  = document.getElementById('meterPct');
+    const statuses = [
+      { v: 68, label: '🟡 Hanging In There', color: 'var(--meter-yellow)' },
+      { v: 42, label: '🔴 CRITICAL — Danger Zone', color: 'var(--meter-red)' },
+      { v: 85, label: '🟢 Thriving, Survivor!', color: 'var(--meter-green)' },
+      { v: 68, label: '🟡 Hanging In There', color: 'var(--meter-yellow)' },
+    ];
+    let i = 0;
+    setInterval(() => {
+      i = (i + 1) % statuses.length;
+      const s = statuses[i];
+      fill.style.width = s.v + '%';
+      fill.style.background = s.color;
+      pct.textContent = s.v + '%';
+      document.getElementById('meterStatus').textContent = s.label;
+    }, 2400);
+  </script>
 </body>
 </html>

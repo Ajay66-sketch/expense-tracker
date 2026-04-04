@@ -27,7 +27,7 @@ db = SQLAlchemy(app)
 # --- 2. LOGIN MANAGER SETUP ---
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'home'  # ← CHANGED: guests redirected to landing page, not /login
+login_manager.login_view = 'home'  # guests redirected to landing page
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -140,6 +140,11 @@ def home():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     return render_template('landing.html')
+
+# NEW: Public demo — no login required
+@app.route('/demo')
+def demo():
+    return render_template('demo.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
