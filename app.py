@@ -27,7 +27,7 @@ db = SQLAlchemy(app)
 # --- 2. LOGIN MANAGER SETUP ---
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'home'  # ← CHANGED: guests redirected to landing page, not /login
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -134,7 +134,7 @@ def get_survival_metrics(cycle, user):
 
 # --- 6. ROUTES (AUTH) ---
 
-# NEW: Marketing landing page at root for guests
+# Marketing landing page for guests
 @app.route('/home')
 def home():
     if current_user.is_authenticated:
@@ -157,7 +157,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         login_user(new_user)
-        session['show_welcome'] = True   # trigger welcome banner
+        session['show_welcome'] = True
         return redirect(url_for('edit'))
     return render_template('register.html')
 
@@ -171,7 +171,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
             login_user(user)
-            session['show_welcome'] = True   # trigger welcome banner
+            session['show_welcome'] = True
             return redirect(url_for('index'))
         else:
             flash('Invalid username or password.', 'danger')
@@ -181,11 +181,11 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('home'))   # send to landing page after logout
+    return redirect(url_for('home'))
 
 # --- 7. ROUTES (CORE APP) ---
 
-# Root now requires login and shows the dashboard
+# Root requires login and shows the dashboard
 @app.route('/')
 @login_required
 def index():
@@ -197,7 +197,6 @@ def index():
     expenses = Expense.query.filter_by(cycle_id=active_cycle.id).order_by(Expense.timestamp.desc()).all()
     premium_count = PremiumInterest.query.count()
 
-    # Pop welcome flag so the banner only shows once
     show_welcome = session.pop('show_welcome', False)
 
     return render_template(

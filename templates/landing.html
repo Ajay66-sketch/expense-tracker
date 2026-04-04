@@ -3,200 +3,116 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="SurviveTheMonth — the gamified expense tracker that turns budgeting into a jungle survival mission. Track spending, watch your survival meter, don't run out of money." />
-  <title>SurviveTheMonth 🌿 — Stop Running Out of Money Mid-Month</title>
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+  <title>SurviveTheMonth 🌿 — Budget Like Your Life Depends On It</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
 </head>
-<body>
+<body class="landing-body">
 
-  <!-- ══════════════════════════════════════════════
-       NAVBAR
-  ══════════════════════════════════════════════ -->
-  <nav class="navbar">
-    <a href="/" class="navbar-brand">🌿 SurviveTheMonth</a>
-    <div class="navbar-links">
-      <a href="/login">Log In</a>
-      <a href="/register" class="btn-nav-cta">Start Free →</a>
-    </div>
+  <!-- ── NAV ── -->
+  <nav class="nav">
+    <span class="nav-logo">🌿 SurviveTheMonth</span>
+    <a href="/login" class="nav-link">Log In</a>
   </nav>
 
-  <!-- ══════════════════════════════════════════════
-       HERO
-  ══════════════════════════════════════════════ -->
-  <section class="hero">
-    <span class="hero-eyebrow">🌿 The Survival Budget Tracker</span>
-
-    <h1 class="hero-headline">
-      Stop Running Out<br>
-      of Money<br>
-      <span class="accent-orange">Mid-Month.</span>
-    </h1>
-
-    <p class="hero-sub">
-      SurviveTheMonth turns your budget into a survival mission.
-      Watch your health meter drain with every expense &mdash;
-      and fight to make it to payday alive.
-    </p>
-
-    <div class="hero-cta-group">
-      <a href="/register" class="btn btn-primary btn-lg">
-        🔥 Start Your Mission — Free
-      </a>
-      <a href="/login" class="btn btn-secondary btn-lg">
-        Already surviving? Log In
-      </a>
+  <!-- ── HERO ── -->
+  <header class="hero">
+    <div class="hero-bg-grid"></div>
+    <div class="hero-content">
+      <div class="hero-badge">🔥 Free • No credit card needed</div>
+      <h1 class="hero-title">
+        Stop Running Out of<br />
+        <span class="hero-accent">Money Mid-Month.</span>
+      </h1>
+      <p class="hero-sub">
+        SurviveTheMonth turns boring budgeting into a <strong>jungle survival mission</strong>.
+        Track expenses, protect your Survival Meter, and make it to payday — alive.
+      </p>
+      <div class="hero-cta-row">
+        <a href="/register" class="btn btn-primary btn-lg">
+          🌿 Start Your Mission — Free
+        </a>
+        <span class="hero-cta-note">Takes 30 seconds. No jungle experience required.</span>
+      </div>
     </div>
 
-    <p class="hero-trust">
-      <span>🔒</span> No credit card. Your data is private &amp; secure.
-    </p>
+    <!-- Survival Meter teaser -->
+    <div class="meter-card">
+      <div class="meter-card-label">YOUR SURVIVAL METER</div>
+      <div class="meter-track">
+        <div class="meter-fill" style="width: 62%"></div>
+      </div>
+      <div class="meter-row">
+        <span class="meter-stat">💸 ₹8,400 spent</span>
+        <span class="meter-pct">62% survived</span>
+        <span class="meter-stat">₹5,100 left 🌿</span>
+      </div>
+      <p class="meter-tip">⚡ 18 days to go — spend wisely, survivor.</p>
+    </div>
+  </header>
 
-    <!-- ── Survival Meter Demo ── -->
-    <div class="meter-demo">
-      <div class="card meter-card">
-        <div class="meter-header">
-          <span class="meter-title">☠️ Survival Status — March</span>
-          <span class="meter-status pulse">⚠ CRITICAL ZONE</span>
-        </div>
-
-        <div class="meter-bar-track">
-          <div class="meter-bar-fill"></div>
-        </div>
-
-        <div class="meter-info">
-          <div>
-            <div class="meter-amount">₹4,820</div>
-            <div class="meter-label">remaining budget</div>
-          </div>
-          <div class="meter-days">
-            <strong>9 days</strong>
-            <span>left to survive</span>
-          </div>
-        </div>
-
-        <div class="meter-expenses">
-          <div class="expense-row">
-            <span class="expense-name">
-              <span class="expense-dot dot-red"></span>Rent
-            </span>
-            <span class="expense-amt">−₹12,000</span>
-          </div>
-          <div class="expense-row">
-            <span class="expense-name">
-              <span class="expense-dot dot-orange"></span>Groceries
-            </span>
-            <span class="expense-amt">−₹2,340</span>
-          </div>
-          <div class="expense-row">
-            <span class="expense-name">
-              <span class="expense-dot dot-yellow"></span>Zomato (oops)
-            </span>
-            <span class="expense-amt">−₹840</span>
-          </div>
-        </div>
+  <!-- ── WHY ── -->
+  <section class="why-section">
+    <h2 class="section-title">Why the jungle?</h2>
+    <p class="section-sub">Because spreadsheets are boring and guilt trips don't work.</p>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <h3>See your budget as a life bar</h3>
+        <p>Your monthly budget becomes a survival meter. Every spend drains it. Watch it in real time and feel the stakes.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🎯</div>
+        <h3>Built for normal people</h3>
+        <p>Salaried workers, students, freelancers — anyone tired of hitting Day 20 with no money. No finance degree needed.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔥</div>
+        <h3>Log, don't stress</h3>
+        <p>Add an expense in under 5 seconds. The jungle keeps score. You just keep surviving.</p>
       </div>
     </div>
   </section>
 
-  <!-- ══════════════════════════════════════════════
-       FEATURES
-  ══════════════════════════════════════════════ -->
-  <section class="features">
-    <p class="section-label">Why it works</p>
-    <h2 class="section-title">Budgeting. <span class="accent-green">Evolved.</span></h2>
-
-    <div class="features-grid">
-      <div class="feature-card">
-        <span class="feature-icon">🩺</span>
-        <h3>Survival Health Meter</h3>
-        <p>
-          Your remaining budget becomes your HP. Watch it tick down in real time.
-          The closer you get to zero, the more the jungle closes in around you.
-        </p>
+  <!-- ── HOW ── -->
+  <section class="how-section">
+    <h2 class="section-title">Your mission, step by step</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Set your monthly budget</h3>
+        <p>Tell us your income or spending limit. That's your starting HP.</p>
       </div>
-      <div class="feature-card">
-        <span class="feature-icon">📋</span>
-        <h3>Instant Expense Logging</h3>
-        <p>
-          Add expenses in seconds — name it, tag it, log it.
-          No spreadsheets. No mental math. Just survival intelligence at a glance.
-        </p>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Log every expense</h3>
+        <p>Coffee, rent, impulse buys — every entry chips away at your meter.</p>
       </div>
-      <div class="feature-card">
-        <span class="feature-icon">🗓️</span>
-        <h3>Monthly Mission View</h3>
-        <p>
-          Each month is a new mission. Set your starting budget, track the hits,
-          and see exactly how many days you have left before the jungle wins.
-        </p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">⚡</span>
-        <h3>Zero Complexity</h3>
-        <p>
-          No dashboards with 40 tabs. No "insights" you never read.
-          One screen. One meter. One mission: survive the month.
-        </p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">🏆</span>
-        <h3>Beat Your Best</h3>
-        <p>
-          Made it to the end with budget left over? You win that month.
-          Start building a streak and prove you can tame the jungle, every time.
-        </p>
-      </div>
-      <div class="feature-card">
-        <span class="feature-icon">🔒</span>
-        <h3>Private by Default</h3>
-        <p>
-          Your financial data is yours alone. No ads, no selling your habits,
-          no creepy personalization. Just you vs. your budget.
-        </p>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Survive the month</h3>
+        <p>Keep the meter green. Reach the end of the month with money left. Win.</p>
       </div>
     </div>
   </section>
 
-  <!-- ══════════════════════════════════════════════
-       WHO IT'S FOR
-  ══════════════════════════════════════════════ -->
-  <section class="audience">
-    <p class="section-label">Who survives with us</p>
-    <h2 class="section-title">Made for Everyone<br><span class="accent-orange">Who's Ever Panicked</span><br>at Their Bank Balance</h2>
-    <div class="audience-tags">
-      <span class="tag">💼 Salaried employees</span>
-      <span class="tag">🎓 College students</span>
-      <span class="tag">🛍️ Impulse spenders</span>
-      <span class="tag">📱 Freelancers</span>
-      <span class="tag">🏠 First-time renters</span>
-      <span class="tag">✈️ Travelers on a budget</span>
-      <span class="tag">👨‍👩‍👧 Young families</span>
-      <span class="tag">😬 Anyone 10 days from payday</span>
-    </div>
-  </section>
-
-  <!-- ══════════════════════════════════════════════
-       FINAL CTA
-  ══════════════════════════════════════════════ -->
+  <!-- ── FINAL CTA ── -->
   <section class="final-cta">
-    <h2>Ready to<br><span class="accent-green">Enter the Jungle?</span></h2>
-    <p>It's free. It takes 60 seconds. Your budget won't know what hit it.</p>
-    <a href="/register" class="btn btn-primary btn-lg">
-      🌿 Start Your Mission — Free
-    </a>
+    <h2>The jungle is waiting. 🌿</h2>
+    <p>Your next month starts now. Will you survive it?</p>
+    <a href="/register" class="btn btn-primary btn-lg">Enter the Jungle — Free</a>
   </section>
 
-  <!-- ══════════════════════════════════════════════
-       FOOTER
-  ══════════════════════════════════════════════ -->
-  <footer>
-    <p>🌿 SurviveTheMonth &mdash; Built for survivors, by survivors.</p>
-    <p style="margin-top:0.4rem;">
-      <a href="/login">Log In</a> &nbsp;·&nbsp;
-      <a href="/register">Register</a> &nbsp;·&nbsp;
-      <span>Your data is private &amp; never sold.</span>
-    </p>
+  <!-- ── FOOTER ── -->
+  <footer class="footer">
+    <span>🌿 SurviveTheMonth</span>
+    <span>·</span>
+    <a href="/login">Log In</a>
+    <span>·</span>
+    <a href="/register">Register</a>
   </footer>
 
 </body>
