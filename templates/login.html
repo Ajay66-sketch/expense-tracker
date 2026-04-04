@@ -3,131 +3,157 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SurviveTheMonth — Login</title>
+  <title>Login — SurviveTheMonth</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
 </head>
-<body class="auth-body">
+<body class="auth-page">
 
-  <div class="scanlines" aria-hidden="true"></div>
-  <div class="auth-bg-glow" aria-hidden="true"></div>
+  <!-- Subtle background texture — no heavy effects -->
+  <div class="auth-bg" aria-hidden="true">
+    <div class="auth-bg-pattern"></div>
+  </div>
 
-  <div class="auth-wrapper">
+  <!-- Back link -->
+  <a href="/" class="auth-back">← Back to camp</a>
 
-    <!-- Back link -->
-    <a href="/" class="auth-back">← Back to Base Camp</a>
+  <!-- Auth container — always centered, always visible -->
+  <main class="auth-main">
 
     <div class="auth-card">
-      <!-- Card Header -->
-      <div class="auth-card-header">
-        <div class="auth-logo">🌿</div>
-        <h1 class="auth-title">Welcome Back, Survivor</h1>
-        <p class="auth-subtitle">Your jungle awaits. Enter your credentials to resume the mission.</p>
+
+      <!-- Brand -->
+      <div class="auth-brand">
+        <span class="auth-brand-icon">🌿</span>
+        <h1 class="auth-brand-name">SurviveTheMonth</h1>
       </div>
 
-      <!-- Flash messages (Jinja) -->
+      <h2 class="auth-title">Return to Base Camp</h2>
+      <p class="auth-sub">Your survival meter is waiting.</p>
+
+      <!-- Flash messages from Flask -->
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           <div class="flash-messages">
             {% for category, message in messages %}
-              <div class="flash flash-{{ category }}">
-                <span class="flash-icon">
-                  {% if category == 'danger' or category == 'error' %}⚠️
-                  {% elif category == 'success' %}✅
-                  {% else %}ℹ️{% endif %}
-                </span>
-                <span>{{ message }}</span>
-              </div>
+              <div class="flash flash--{{ category }}">{{ message }}</div>
             {% endfor %}
           </div>
         {% endif %}
       {% endwith %}
 
-      <!-- Login Form -->
-      <form method="POST" action="/login" class="auth-form" novalidate>
-        <div class="form-group">
-          <label for="username" class="form-label">
-            <span class="label-icon">👤</span> Survivor ID
-          </label>
+      <!-- LOGIN FORM — guaranteed visible, no tricks -->
+      <form
+        class="auth-form"
+        method="POST"
+        action="/login"
+        autocomplete="on"
+        novalidate
+      >
+        <!-- CSRF token: uncomment this line ONLY if you install Flask-WTF -->
+        {# <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" /> #}
+
+        <div class="field-group">
+          <label class="field-label" for="email">Email</label>
           <input
-            type="text"
-            id="username"
-            name="username"
-            class="form-input"
-            placeholder="Enter your username"
-            autocomplete="username"
+            class="field-input"
+            type="email"
+            id="email"
+            name="email"
+            placeholder="survivor@example.com"
+            autocomplete="email"
             required
-            autofocus
+            value="{{ request.form.get('email', '') }}"
           />
         </div>
 
-        <div class="form-group">
-          <label for="password" class="form-label">
-            <span class="label-icon">🔒</span> Secret Code
+        <div class="field-group">
+          <label class="field-label" for="password">
+            Password
+            <a href="{{ url_for('forgot_password') }}" class="field-label-link" tabindex="-1">Forgot?</a>
           </label>
-          <div class="input-wrapper">
+          <div class="password-wrap">
             <input
+              class="field-input"
               type="password"
               id="password"
               name="password"
-              class="form-input"
-              placeholder="Enter your password"
+              placeholder="••••••••"
               autocomplete="current-password"
               required
             />
-            <button type="button" class="toggle-password" aria-label="Toggle password visibility" onclick="togglePwd()">
-              <span id="eyeIcon">👁</span>
-            </button>
+            <button
+              type="button"
+              class="password-toggle"
+              aria-label="Show password"
+              onclick="togglePassword()"
+            >👁</button>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-full">
-          <span>Enter the Jungle</span>
-          <span class="btn-arrow">→</span>
+        <button type="submit" class="btn btn-primary btn-full btn-lg">
+          Enter the Jungle →
         </button>
+
       </form>
 
-      <!-- Footer links -->
-      <div class="auth-card-footer">
-        <p class="auth-footer-text">
-          No account yet?
-          <a href="/register" class="auth-link">Create your camp</a>
-        </p>
-        <p class="auth-footer-text">
-          Not ready?
-          <a href="/demo" class="auth-link">Try the demo first →</a>
-        </p>
+      <div class="auth-divider">
+        <span>New here?</span>
       </div>
 
-      <!-- Survival tip -->
-      <div class="survival-tip">
-        <span class="tip-icon">💡</span>
-        <span id="tipText">Tip: Survivors who log daily expenses overspend 43% less.</span>
-      </div>
+      <a href="/register" class="btn btn-outline btn-full">
+        Create Survival Account
+      </a>
+
+      <p class="auth-demo-nudge">
+        Not ready? <a href="/demo">Try the demo first →</a>
+      </p>
+
     </div>
+
+  </main>
+
+  <!-- Decorative meter strip at bottom -->
+  <div class="auth-meter-strip" aria-hidden="true">
+    <div class="auth-meter-fill"></div>
   </div>
 
   <script>
-    function togglePwd() {
-      const inp = document.getElementById('password');
-      const icon = document.getElementById('eyeIcon');
-      if (inp.type === 'password') {
-        inp.type = 'text';
-        icon.textContent = '🙈';
+    // Simple, reliable password toggle — no deps
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const btn = document.querySelector('.password-toggle');
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+        btn.setAttribute('aria-label', 'Hide password');
       } else {
-        inp.type = 'password';
-        icon.textContent = '👁';
+        input.type = 'password';
+        btn.textContent = '👁';
+        btn.setAttribute('aria-label', 'Show password');
       }
     }
 
-    const tips = [
-      "Tip: Survivors who log daily expenses overspend 43% less.",
-      "Tip: The jungle is unforgiving. So is your credit card.",
-      "Tip: Every ₹100 saved is +1 HP. Protect the meter.",
-      "Tip: Most survivors fall in Week 3. Don't be a statistic.",
-      "Tip: Your budget is your shield. Keep it full.",
-    ];
-    document.getElementById('tipText').textContent = tips[Math.floor(Math.random() * tips.length)];
+    // Auto-focus email field unless already filled
+    document.addEventListener('DOMContentLoaded', function() {
+      const emailInput = document.getElementById('email');
+      if (emailInput && !emailInput.value) {
+        emailInput.focus();
+      }
+    });
+
+    // Animate the bottom meter strip
+    (function() {
+      const fill = document.querySelector('.auth-meter-fill');
+      if (!fill) return;
+      let w = 0;
+      const interval = setInterval(() => {
+        w = Math.min(w + 0.5, 75);
+        fill.style.width = w + '%';
+        if (w >= 75) clearInterval(interval);
+      }, 12);
+    })();
   </script>
 </body>
 </html>

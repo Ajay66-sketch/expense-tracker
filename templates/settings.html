@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings — SurviveTheMonth</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+</head>
+<body class="auth-page settings-page">
+
+  <div class="auth-bg" aria-hidden="true"><div class="auth-bg-pattern"></div></div>
+
+  <nav class="nav nav--dark">
+    <div class="nav-brand">
+      <span class="brand-icon">🌿</span>
+      <span class="brand-text">SurviveTheMonth</span>
+    </div>
+    <div class="nav-links">
+      <a href="{{ url_for('dashboard') }}" class="nav-link">← Dashboard</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-sm btn-ghost">Log Out</a>
+    </div>
+  </nav>
+
+  <main class="settings-main">
+
+    <div class="settings-header">
+      <h1 class="settings-title">⚙️ Base Camp Settings</h1>
+      <p class="settings-sub">Adjust your survival parameters.</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages settings-flash">
+          {% for category, message in messages %}
+            <div class="flash flash--{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="settings-grid">
+
+      <!-- Budget -->
+      <div class="settings-card">
+        <h2 class="settings-card-title">🎯 Monthly Budget</h2>
+        <p class="settings-card-sub">This is your survival target for every month.</p>
+        <form method="POST" action="{{ url_for('settings') }}" class="auth-form">
+          <input type="hidden" name="action" value="update_budget" />
+          <div class="field-group">
+            <label class="field-label" for="budget">Budget (₹)</label>
+            <div class="budget-input-wrap">
+              <span class="budget-currency">₹</span>
+              <input class="field-input budget-input" type="number" id="budget" name="budget"
+                value="{{ user.budget | int }}" min="1" step="500" required />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Update Budget</button>
+        </form>
+      </div>
+
+      <!-- Username -->
+      <div class="settings-card">
+        <h2 class="settings-card-title">🪖 Survivor Name</h2>
+        <p class="settings-card-sub">What you'll be called in the jungle.</p>
+        <form method="POST" action="{{ url_for('settings') }}" class="auth-form">
+          <input type="hidden" name="action" value="update_username" />
+          <div class="field-group">
+            <label class="field-label" for="username">Username</label>
+            <input class="field-input" type="text" id="username" name="username"
+              value="{{ user.username }}" minlength="2" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Update Name</button>
+        </form>
+      </div>
+
+      <!-- Password -->
+      <div class="settings-card">
+        <h2 class="settings-card-title">🔒 Change Password</h2>
+        <p class="settings-card-sub">Keep your base camp secure.</p>
+        <form method="POST" action="{{ url_for('settings') }}" class="auth-form">
+          <input type="hidden" name="action" value="change_password" />
+          <div class="field-group">
+            <label class="field-label" for="current_password">Current Password</label>
+            <input class="field-input" type="password" id="current_password"
+              name="current_password" placeholder="••••••••" required />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="new_password">New Password</label>
+            <input class="field-input" type="password" id="new_password"
+              name="new_password" placeholder="Min. 6 characters" required />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="confirm_password">Confirm New Password</label>
+            <input class="field-input" type="password" id="confirm_password"
+              name="confirm_password" placeholder="Same again" required />
+          </div>
+          <button type="submit" class="btn btn-primary">Change Password</button>
+        </form>
+      </div>
+
+      <!-- Account info -->
+      <div class="settings-card settings-card--info">
+        <h2 class="settings-card-title">📋 Account Info</h2>
+        <div class="info-rows">
+          <div class="info-row">
+            <span class="info-label">Email</span>
+            <span class="info-val">{{ user.email }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Member since</span>
+            <span class="info-val">{{ user.created_at[:10] }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Survivor name</span>
+            <span class="info-val">{{ user.username }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</body>
+</html>

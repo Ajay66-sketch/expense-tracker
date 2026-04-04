@@ -3,110 +3,159 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Join the Mission — SurviveTheMonth 🌿</title>
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+  <title>Join the Jungle — SurviveTheMonth</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
 </head>
-<body>
+<body class="auth-page">
 
-  <!-- ── Navbar ── -->
-  <nav class="navbar">
-    <a href="/" class="navbar-brand">🌿 SurviveTheMonth</a>
-    <div class="navbar-links">
-      <a href="/login">Already surviving?</a>
-    </div>
-  </nav>
+  <div class="auth-bg" aria-hidden="true">
+    <div class="auth-bg-pattern"></div>
+  </div>
 
-  <!-- ── Flash Messages ── -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div class="flash-container">
-        {% for category, message in messages %}
-          <div class="flash flash-{{ category }}">{{ message }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
+  <a href="/" class="auth-back">← Back to camp</a>
 
-  <!-- ── Register Page ── -->
-  <div class="auth-page">
-    <div class="card auth-card">
+  <main class="auth-main">
+    <div class="auth-card auth-card--wide">
 
       <div class="auth-brand">
-        <span class="brand-icon">🔥</span>
-        <h1>Join the Mission</h1>
-        <p>Create your survivor profile. It's free, always.</p>
+        <span class="auth-brand-icon">🌿</span>
+        <h1 class="auth-brand-name">SurviveTheMonth</h1>
       </div>
 
-      {% if error %}
-        <div class="flash flash-error">{{ error }}</div>
-      {% endif %}
+      <h2 class="auth-title">Enter the Jungle</h2>
+      <p class="auth-sub">Free forever. No credit card. Just your budget and your wits.</p>
 
-      <form method="POST" action="/register" novalidate>
-
-        {% if form is defined and form.hidden_tag is defined %}
-          {{ form.hidden_tag() }}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="flash flash--{{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
         {% endif %}
+      {% endwith %}
 
-        <div class="form-group">
-          <label class="form-label" for="username">Choose a Survivor Name</label>
-          {% if form is defined and form.username is defined %}
-            {{ form.username(id="username", class="form-input", placeholder="e.g. budget_warrior_99") }}
-          {% else %}
-            <input
-              type="text"
-              id="username"
-              name="username"
-              class="form-input"
-              placeholder="e.g. budget_warrior_99"
-              autocomplete="username"
-              required
-            />
-          {% endif %}
+      <form class="auth-form" method="POST" action="/register" autocomplete="on" novalidate>
+
+        <div class="form-row">
+          <div class="field-group">
+            <label class="field-label" for="username">Survivor Name</label>
+            <input class="field-input" type="text" id="username" name="username"
+              placeholder="e.g. BudgetBear" autocomplete="username" required
+              value="{{ form.get('username', '') }}" />
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="email">Email</label>
+            <input class="field-input" type="email" id="email" name="email"
+              placeholder="you@example.com" autocomplete="email" required
+              value="{{ form.get('email', '') }}" />
+          </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="password">Set Your Password</label>
-          {% if form is defined and form.password is defined %}
-            {{ form.password(id="password", class="form-input", placeholder="Make it strong, like you") }}
-          {% else %}
-            <input
-              type="password"
-              id="password"
-              name="password"
-              class="form-input"
-              placeholder="Make it strong, like you"
-              autocomplete="new-password"
-              required
-            />
-          {% endif %}
+        <div class="form-row">
+          <div class="field-group">
+            <label class="field-label" for="password">Password</label>
+            <div class="password-wrap">
+              <input class="field-input" type="password" id="password" name="password"
+                placeholder="Min. 6 characters" autocomplete="new-password" required />
+              <button type="button" class="password-toggle" onclick="togglePw('password', this)">👁</button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="confirm">Confirm Password</label>
+            <div class="password-wrap">
+              <input class="field-input" type="password" id="confirm" name="confirm"
+                placeholder="Same again" autocomplete="new-password" required />
+              <button type="button" class="password-toggle" onclick="togglePw('confirm', this)">👁</button>
+            </div>
+          </div>
         </div>
 
-        {% if form is defined and form.confirm_password is defined %}
-        <div class="form-group">
-          <label class="form-label" for="confirm_password">Confirm Password</label>
-          {{ form.confirm_password(id="confirm_password", class="form-input", placeholder="••••••••") }}
+        <!-- Budget setup -->
+        <div class="budget-setup">
+          <label class="field-label" for="budget">
+            Monthly Budget
+            <span class="field-hint">How much can you spend this month?</span>
+          </label>
+          <div class="budget-input-wrap">
+            <span class="budget-currency">₹</span>
+            <input class="field-input budget-input" type="number" id="budget" name="budget"
+              placeholder="25000" min="1" step="500"
+              value="{{ budget or '25000' }}" required />
+          </div>
+          <!-- Preset budget buttons -->
+          <div class="budget-presets">
+            <button type="button" class="preset-btn" onclick="setBudget(10000)">₹10k</button>
+            <button type="button" class="preset-btn" onclick="setBudget(25000)">₹25k</button>
+            <button type="button" class="preset-btn" onclick="setBudget(50000)">₹50k</button>
+            <button type="button" class="preset-btn" onclick="setBudget(100000)">₹1L</button>
+          </div>
         </div>
-        {% endif %}
 
-        <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem;">
-          🌿 Enter the Jungle
+        <button type="submit" class="btn btn-primary btn-full btn-lg">
+          🌿 Start Surviving
         </button>
 
       </form>
 
-      <div class="form-divider">already a survivor?</div>
+      <div class="auth-divider"><span>Already surviving?</span></div>
 
-      <div class="form-footer">
-        <a href="/login">← Log back in</a>
-      </div>
+      <a href="/login" class="btn btn-outline btn-full">Log In Instead</a>
 
-      <div class="survival-hint">
-        <strong>🌿 Free forever.</strong> No credit card. Your data stays private.
-      </div>
+      <p class="auth-demo-nudge">
+        Not sure? <a href="/demo">Try the demo first →</a>
+      </p>
 
     </div>
+  </main>
+
+  <div class="auth-meter-strip" aria-hidden="true">
+    <div class="auth-meter-fill" id="regMeterFill"></div>
   </div>
 
+  <script>
+    function togglePw(id, btn) {
+      const input = document.getElementById(id);
+      if (!input) return;
+      input.type = input.type === 'password' ? 'text' : 'password';
+      btn.textContent = input.type === 'password' ? '👁' : '🙈';
+    }
+
+    function setBudget(val) {
+      document.getElementById('budget').value = val;
+      // Animate presets active state
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-btn--active'));
+      event.target.classList.add('preset-btn--active');
+    }
+
+    // Password match indicator
+    const pw  = document.getElementById('password');
+    const cfm = document.getElementById('confirm');
+    cfm.addEventListener('input', () => {
+      if (cfm.value.length === 0) { cfm.style.borderColor = ''; return; }
+      cfm.style.borderColor = cfm.value === pw.value
+        ? 'var(--meter-green)' : 'var(--meter-red)';
+    });
+
+    // Animate meter strip
+    (function() {
+      const fill = document.getElementById('regMeterFill');
+      if (!fill) return;
+      let w = 0;
+      const iv = setInterval(() => {
+        w = Math.min(w + 0.6, 55);
+        fill.style.width = w + '%';
+        if (w >= 55) clearInterval(iv);
+      }, 12);
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const u = document.getElementById('username');
+      if (u && !u.value) u.focus();
+    });
+  </script>
 </body>
 </html>

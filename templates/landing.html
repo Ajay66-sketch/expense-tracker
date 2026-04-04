@@ -3,192 +3,181 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SurviveTheMonth 🌿 — Budget or Die</title>
+  <title>SurviveTheMonth 🌿 — Budget Like Your Life Depends On It</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
 </head>
-<body class="landing-body">
+<body class="landing-page">
 
-  <!-- Ambient jungle particles -->
-  <div class="particle-field" aria-hidden="true">
-    <span class="particle"></span><span class="particle"></span>
-    <span class="particle"></span><span class="particle"></span>
-    <span class="particle"></span><span class="particle"></span>
-    <span class="particle"></span><span class="particle"></span>
-    <span class="particle"></span><span class="particle"></span>
+  <!-- Jungle atmosphere layer -->
+  <div class="jungle-bg" aria-hidden="true">
+    <div class="vine vine-1"></div>
+    <div class="vine vine-2"></div>
+    <div class="vine vine-3"></div>
+    <div class="leaf-drift leaf-1">🍃</div>
+    <div class="leaf-drift leaf-2">🌿</div>
+    <div class="leaf-drift leaf-3">🍃</div>
   </div>
 
-  <!-- Scanline overlay -->
-  <div class="scanlines" aria-hidden="true"></div>
-
-  <header class="site-header">
-    <div class="header-inner">
-      <a href="/" class="logo">
-        <span class="logo-icon">🌿</span>
-        <span class="logo-text">SurviveTheMonth</span>
-      </a>
-      <nav class="header-nav">
-        <a href="/login" class="nav-link">Login</a>
-        <a href="/demo" class="btn btn-outline btn-sm">Try Demo</a>
-      </nav>
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <span class="brand-icon">🌿</span>
+      <span class="brand-text">SurviveTheMonth</span>
     </div>
-  </header>
+    <div class="nav-links">
+      <a href="/demo" class="nav-link">Try Demo</a>
+      <a href="/login" class="btn btn-sm">Log In</a>
+    </div>
+  </nav>
 
-  <main>
-    <!-- ═══════════ HERO ═══════════ -->
-    <section class="hero">
-      <div class="hero-eyebrow">
-        <span class="eyebrow-dot"></span>
-        <span>Monthly budget tracker</span>
-        <span class="eyebrow-dot"></span>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">
+      <span class="eyebrow-dot"></span>
+      <span>Your money. Your survival.</span>
+    </div>
+
+    <h1 class="hero-title">
+      <span class="title-line-1">Budget Like</span>
+      <span class="title-line-2">Your Life<br><em>Depends On It.</em></span>
+    </h1>
+
+    <p class="hero-sub">
+      Most budgeting apps are spreadsheets in disguise.<br>
+      SurviveTheMonth is a game — and your bank account is the scoreboard.
+    </p>
+
+    <div class="hero-actions">
+      <a href="/demo" class="btn btn-primary btn-lg">
+        <span>⚡</span> Try Demo — No Signup
+      </a>
+      <a href="/login" class="btn btn-outline btn-lg">Create Account →</a>
+    </div>
+
+    <!-- METER TEASER -->
+    <div class="meter-teaser" aria-label="Survival Meter preview">
+      <div class="meter-teaser-label">
+        <span>YOUR SURVIVAL METER</span>
+        <span class="meter-day-badge">DAY 14</span>
+      </div>
+      <div class="meter-track">
+        <div class="meter-fill" id="demoMeter"></div>
+        <div class="meter-glow"></div>
+      </div>
+      <div class="meter-teaser-footer">
+        <span class="meter-pct" id="demoPct">68%</span>
+        <span class="meter-status" id="demoStatus">⚠️ Watch your spending</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="features-grid">
+
+      <div class="feature-card feature-card--highlighted">
+        <div class="feature-icon">🎯</div>
+        <h3>Daily Survival Score</h3>
+        <p>Your budget health rendered as a living meter. Green = thriving. Red = evacuate your wallet immediately.</p>
       </div>
 
-      <h1 class="hero-headline">
-        <span class="headline-line">Your budget.</span>
-        <span class="headline-line accent-text">Your survival.</span>
-      </h1>
-
-      <p class="hero-sub">
-        Every rupee spent is a hit to your health bar. Track expenses,<br />
-        protect your meter, and make it to the 30th alive.
-      </p>
-
-      <div class="hero-cta-group">
-        <a href="/demo" class="btn btn-primary btn-lg">
-          <span class="btn-icon">⚡</span>
-          Try Demo — No Signup
-        </a>
-        <a href="/login" class="btn btn-ghost btn-lg">
-          I'm ready to survive →
-        </a>
+      <div class="feature-card">
+        <div class="feature-icon">🗺️</div>
+        <h3>Jungle Categories</h3>
+        <p>Groceries become <em>Base Camp Supplies</em>. Rent is <em>Shelter</em>. Every purchase fits the narrative.</p>
       </div>
 
-      <div class="hero-proof">
-        <div class="proof-item">
-          <span class="proof-num">2.4k</span>
-          <span class="proof-label">Survivors this month</span>
-        </div>
-        <div class="proof-divider"></div>
-        <div class="proof-item">
-          <span class="proof-num">₹0</span>
-          <span class="proof-label">Cost to start</span>
-        </div>
-        <div class="proof-divider"></div>
-        <div class="proof-item">
-          <span class="proof-num">30</span>
-          <span class="proof-label">Days to beat</span>
-        </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔥</div>
+        <h3>Streak System</h3>
+        <p>Log expenses daily and build a survival streak. Miss a day? The jungle reclaims your savings.</p>
       </div>
-    </section>
 
-    <!-- ═══════════ SURVIVAL METER TEASER ═══════════ -->
-    <section class="meter-teaser">
-      <div class="teaser-card">
-        <div class="teaser-card-header">
-          <span class="teaser-label">SURVIVAL STATUS</span>
-          <span class="teaser-day">DAY 18 / 30</span>
-        </div>
-
-        <div class="teaser-name">Alex's Jungle Camp</div>
-
-        <div class="meter-container">
-          <div class="meter-labels">
-            <span>HP</span>
-            <span class="meter-pct" id="meterPct">68%</span>
-          </div>
-          <div class="meter-track">
-            <div class="meter-fill" id="meterFill" style="width: 68%"></div>
-            <div class="meter-glow"></div>
-          </div>
-          <div class="meter-status" id="meterStatus">🟡 Hanging In There</div>
-        </div>
-
-        <div class="teaser-budget-row">
-          <div class="budget-stat">
-            <span class="stat-label">BUDGET</span>
-            <span class="stat-val">₹30,000</span>
-          </div>
-          <div class="budget-stat">
-            <span class="stat-label">SPENT</span>
-            <span class="stat-val danger">₹9,600</span>
-          </div>
-          <div class="budget-stat">
-            <span class="stat-label">REMAINING</span>
-            <span class="stat-val safe">₹20,400</span>
-          </div>
-        </div>
-
-        <div class="teaser-cta">
-          <a href="/demo" class="btn btn-primary">
-            See Your Meter Live →
-          </a>
-        </div>
+      <div class="feature-card">
+        <div class="feature-icon">📡</div>
+        <h3>Month-End Intel</h3>
+        <p>End-of-month reports that actually feel like mission debriefs — not tax documents.</p>
       </div>
-    </section>
 
-    <!-- ═══════════ HOW IT WORKS ═══════════ -->
-    <section class="how-section">
-      <h2 class="section-title">How You Survive</h2>
-      <div class="steps-grid">
-        <div class="step-card">
-          <div class="step-num">01</div>
-          <div class="step-icon">🎯</div>
-          <h3>Set Your Budget</h3>
-          <p>Enter your monthly rations limit. This is your max HP — guard it with your life.</p>
-        </div>
-        <div class="step-card">
-          <div class="step-num">02</div>
-          <div class="step-icon">📝</div>
-          <h3>Log Expenses</h3>
-          <p>Every coffee, every Swiggy order, every impulse buy — log it and watch the meter drop.</p>
-        </div>
-        <div class="step-card">
-          <div class="step-num">03</div>
-          <div class="step-icon">🏆</div>
-          <h3>Reach Day 30</h3>
-          <p>Keep your meter in the green. Make it to month end without going critical. You win.</p>
-        </div>
+    </div>
+  </section>
+
+  <!-- SOCIAL PROOF -->
+  <section class="social-proof">
+    <p class="proof-label">SURVIVORS SPEAK</p>
+    <div class="testimonials">
+      <div class="testimonial">
+        <p>"I paid off ₹40,000 in debt and felt like Bear Grylls the entire time."</p>
+        <cite>— Priya, Bangalore</cite>
       </div>
-    </section>
-
-    <!-- ═══════════ FINAL CTA ═══════════ -->
-    <section class="final-cta-section">
-      <div class="final-cta-card">
-        <div class="fca-glyph">🌿</div>
-        <h2>Will you survive this month?</h2>
-        <p>Most people don't even know how much they spend. Be the exception.</p>
-        <div class="fca-btns">
-          <a href="/demo" class="btn btn-primary btn-lg">Experience the Demo</a>
-          <a href="/login" class="btn btn-outline btn-lg">Start Surviving</a>
-        </div>
+      <div class="testimonial">
+        <p>"First budgeting app I've actually opened more than twice."</p>
+        <cite>— Marcus, Lagos</cite>
       </div>
-    </section>
-  </main>
+      <div class="testimonial">
+        <p>"The red meter scared me straight. I haven't eaten out in 18 days."</p>
+        <cite>— Jules, Toronto</cite>
+      </div>
+    </div>
+  </section>
 
-  <footer class="site-footer">
-    <span class="logo-text">🌿 SurviveTheMonth</span>
-    <span class="footer-tagline">Budget or die trying.</span>
+  <!-- FINAL CTA -->
+  <section class="cta-section">
+    <h2 class="cta-title">Ready to Survive?</h2>
+    <p class="cta-sub">Free forever. No credit card. Just your budget and the jungle.</p>
+    <div class="cta-actions">
+      <a href="/demo" class="btn btn-primary btn-lg">
+        <span>🌿</span> See It In Action
+      </a>
+      <a href="/login" class="btn btn-outline btn-lg">Start Surviving →</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span class="footer-brand">🌿 SurviveTheMonth</span>
+    <span class="footer-sep">·</span>
+    <a href="/demo">Demo</a>
+    <span class="footer-sep">·</span>
+    <a href="/login">Login</a>
+    <span class="footer-sep">·</span>
+    <span class="footer-tagline">Budget or be budgeted.</span>
   </footer>
 
   <script>
-    // Animate meter on load for wow effect
-    const fill = document.getElementById('meterFill');
-    const pct  = document.getElementById('meterPct');
-    const statuses = [
-      { v: 68, label: '🟡 Hanging In There', color: 'var(--meter-yellow)' },
-      { v: 42, label: '🔴 CRITICAL — Danger Zone', color: 'var(--meter-red)' },
-      { v: 85, label: '🟢 Thriving, Survivor!', color: 'var(--meter-green)' },
-      { v: 68, label: '🟡 Hanging In There', color: 'var(--meter-yellow)' },
-    ];
-    let i = 0;
-    setInterval(() => {
-      i = (i + 1) % statuses.length;
-      const s = statuses[i];
-      fill.style.width = s.v + '%';
-      fill.style.background = s.color;
-      pct.textContent = s.v + '%';
-      document.getElementById('meterStatus').textContent = s.label;
-    }, 2400);
+    // Animate demo meter on landing
+    (function() {
+      const fill = document.getElementById('demoMeter');
+      const pct = document.getElementById('demoPct');
+      const status = document.getElementById('demoStatus');
+      if (!fill) return;
+
+      let current = 0; // FIX #7: start from 0 for clean animation
+      const target = 68;
+      const step = () => {
+        if (current < target) {
+          current = Math.min(current + 1.2, target);
+          fill.style.width = current + '%';
+          pct.textContent = Math.round(current) + '%';
+
+          if (current < 30) {
+            fill.style.background = 'var(--meter-red)';
+            status.textContent = '🚨 Critical — take cover!';
+          } else if (current < 60) {
+            fill.style.background = 'var(--meter-yellow)';
+            status.textContent = '⚠️ Watch your spending';
+          } else {
+            fill.style.background = 'var(--meter-green)';
+            status.textContent = '✅ Surviving well';
+          }
+          requestAnimationFrame(step);
+        }
+      };
+
+      // Start after short delay for drama
+      setTimeout(() => requestAnimationFrame(step), 600);
+    })();
   </script>
 </body>
 </html>

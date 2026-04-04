@@ -1,286 +1,464 @@
+"""
+SurviveTheMonth — app.py
+Full implementation: SQLite database, real auth, registration,
+expense logging, dashboard with live data.
+"""
+
 import os
-import resend
-import threading
-from dotenv import load_dotenv
-load_dotenv()
+import sqlite3
+from datetime import datetime, date
+from functools import wraps
 
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask import (
+    Flask, render_template, request, redirect,
+    url_for, flash, session, g, jsonify
+)
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date, datetime
-import math
 
-# --- 1. APP & DATABASE INITIALIZATION ---
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback_key_change_this')
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
 
-database_url = os.environ.get('DATABASE_URL')
-if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+# ── Database path ─────────────────────────────────────────────
+DATABASE = os.path.join(os.path.dirname(__file__), "survive.db")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///survival.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# ── Jungle expense categories ─────────────────────────────────
+CATEGORIES = [
+    {"id": "shelter",    "label": "Shelter",             "icon": "🏕️",  "tag": "fixed"},
+    {"id": "supplies",   "label": "Base Camp Supplies",  "icon": "🥫",  "tag": "essential"},
+    {"id": "transport",  "label": "Jungle Transit",      "icon": "🛻",  "tag": "essential"},
+    {"id": "signals",    "label": "Signal Tower",        "icon": "📡",  "tag": "fixed"},
+    {"id": "medic",      "label": "Field Medic Kit",     "icon": "🧴",  "tag": "essential"},
+    {"id": "intel",      "label": "Survival Intel",      "icon": "📖",  "tag": "optional"},
+    {"id": "morale",     "label": "Morale Booster",      "icon": "🎬",  "tag": "optional"},
+    {"id": "luxury",     "label": "Luxury Rations",      "icon": "🍜",  "tag": "luxury"},
+    {"id": "fuel",       "label": "Fuel Depot",          "icon": "⛽",  "tag": "essential"},
+    {"id": "other",      "label": "Other",               "icon": "🎒",  "tag": "optional"},
+]
 
-db = SQLAlchemy(app)
+TAG_CLASSES = {
+    "fixed":     "tag--fixed",
+    "essential": "tag--essential",
+    "luxury":    "tag--luxury",
+    "optional":  "tag--optional",
+}
 
-# --- 2. LOGIN MANAGER SETUP ---
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'home'  # guests redirected to landing page
+# ═══════════════════════════════════════════════════════════════
+# DATABASE
+# ═══════════════════════════════════════════════════════════════
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+def get_db():
+    if "db" not in g:
+        g.db = sqlite3.connect(DATABASE, detect_types=sqlite3.PARSE_DECLTYPES)
+        g.db.row_factory = sqlite3.Row
+        g.db.execute("PRAGMA journal_mode=WAL")
+        g.db.execute("PRAGMA foreign_keys=ON")
+    return g.db
 
-# --- 3. DATABASE MODELS ---
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(150), nullable=False)
-    tier = db.Column(db.String(20), default='free')
-    cycles = db.relationship('Cycle', backref='user', lazy=True)
 
-class Cycle(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    start_date = db.Column(db.Date, nullable=False)
-    end_date = db.Column(db.Date, nullable=False)
-    pocket_money = db.Column(db.Float, nullable=False)
-    fixed_expenses = db.Column(db.Float, nullable=False)
-    expenses = db.relationship('Expense', backref='cycle', lazy=True)
+@app.teardown_appcontext
+def close_db(exc=None):
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
 
-class Expense(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    cycle_id = db.Column(db.Integer, db.ForeignKey('cycle.id'), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
-    date = db.Column(db.Date, default=date.today)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    category = db.Column(db.String(50), default="General")
 
-class PremiumInterest(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    email = db.Column(db.String(200), nullable=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+def init_db():
+    db = get_db()
+    db.executescript("""
+        CREATE TABLE IF NOT EXISTS users (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            email       TEXT    NOT NULL UNIQUE,
+            username    TEXT    NOT NULL,
+            password    TEXT    NOT NULL,
+            budget      REAL    NOT NULL DEFAULT 25000,
+            created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+        );
 
-# --- 4. EMAIL NOTIFICATION ---
-def send_founder_notification(signup_email, username, total):
-    try:
-        api_key = os.environ.get('RESEND_API_KEY')
-        founder_email = os.environ.get('FOUNDER_EMAIL', 'alanjoekattakayam@gmail.com')
+        CREATE TABLE IF NOT EXISTS expenses (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            amount      REAL    NOT NULL,
+            note        TEXT    NOT NULL DEFAULT '',
+            category    TEXT    NOT NULL DEFAULT 'other',
+            logged_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+        );
+    """)
+    db.commit()
 
-        if not api_key:
-            print("[MAIL] No RESEND_API_KEY set, skipping notification.")
-            return
 
-        resend.api_key = api_key
+with app.app_context():
+    init_db()
 
-        body = f"""
-🎯 New Premium Waitlist Signup!
 
-Username: {username}
-Email: {signup_email or 'not provided'}
-Total signups so far: {total}
-Time: {datetime.utcnow().strftime('%d %b %Y, %I:%M %p')} UTC
+# ═══════════════════════════════════════════════════════════════
+# HELPERS
+# ═══════════════════════════════════════════════════════════════
 
-Keep building! 🚀
-— SurviveTheMonth Bot
-        """.strip()
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("user_id"):
+            flash("Log in to access your dashboard.", "info")
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
 
-        resend.Emails.send({
-            "from": "SurviveTheMonth <onboarding@resend.dev>",
-            "to": founder_email,
-            "subject": f"🔥 New waitlist signup #{total} — SurviveTheMonth",
-            "text": body
+
+def get_current_user():
+    uid = session.get("user_id")
+    if not uid:
+        return None
+    return get_db().execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
+
+
+def get_month_stats(user_id, year, month):
+    db = get_db()
+    user = db.execute("SELECT budget FROM users WHERE id = ?", (user_id,)).fetchone()
+    budget = user["budget"] if user else 25000
+
+    rows = db.execute("""
+        SELECT e.*
+        FROM expenses e
+        WHERE e.user_id = ?
+          AND strftime('%Y', e.logged_at) = ?
+          AND strftime('%m', e.logged_at) = ?
+        ORDER BY e.logged_at DESC
+    """, (user_id, str(year), f"{month:02d}")).fetchall()
+
+    total_spent = sum(r["amount"] for r in rows)
+    remaining   = max(0.0, budget - total_spent)
+    meter_pct   = max(0, min(100, round((remaining / budget) * 100))) if budget > 0 else 0
+
+    cat_map = {c["id"]: c for c in CATEGORIES}
+    expenses = []
+    for r in rows:
+        cat = cat_map.get(r["category"], cat_map["other"])
+        expenses.append({
+            "id":        r["id"],
+            "amount":    r["amount"],
+            "note":      r["note"],
+            "category":  r["category"],
+            "label":     cat["label"],
+            "icon":      cat["icon"],
+            "tag":       cat["tag"],
+            "tag_class": TAG_CLASSES.get(cat["tag"], "tag--optional"),
+            "logged_at": r["logged_at"],
         })
 
-        print(f"[MAIL] Notification sent to {founder_email}")
-    except Exception as e:
-        print(f"[MAIL] Failed to send notification: {e}")
-
-# --- 5. THE SURVIVAL ENGINE LOGIC ---
-def get_survival_metrics(cycle, user):
-    today = date.today()
-    if not cycle: return None
-
-    total_days = max(1, (cycle.end_date - cycle.start_date).days + 1)
-    days_passed = max(1, (today - cycle.start_date).days)
-    remaining_days = max(1, total_days - days_passed)
-
-    disposable_income = cycle.pocket_money - cycle.fixed_expenses
-    total_spent = sum(e.amount for e in cycle.expenses)
-    spent_today = sum(e.amount for e in cycle.expenses if e.date == today)
-    remaining_money = disposable_income - total_spent
-
-    safe_daily_limit = remaining_money / remaining_days if remaining_money > 0 else 0
-
-    if remaining_money <= 0:
-        feedback = {"type": "danger", "msg": "🚨 Broke Mode! You are officially out of safe money."}
-    elif spent_today > safe_daily_limit:
-        feedback = {"type": "warning", "msg": "⚠️ You overspent today. Tomorrow's limit will drop."}
-    elif spent_today == 0:
-        feedback = {"type": "success", "msg": "🧘 Zero spent today! Your limit for tomorrow is growing."}
-    else:
-        feedback = {"type": "info", "msg": "🎯 Excellent control. You are within your survival limit."}
-
     return {
-        "remaining_money": remaining_money,
-        "remaining_days": remaining_days,
-        "safe_daily_limit": round(safe_daily_limit, 2),
-        "spent_today": spent_today,
-        "feedback": feedback
+        "budget":        budget,
+        "total_spent":   total_spent,
+        "remaining":     remaining,
+        "meter_pct":     meter_pct,
+        "expenses":      expenses,
+        "expense_count": len(expenses),
     }
 
-# --- 6. ROUTES (AUTH) ---
 
-# Marketing landing page for guests
-@app.route('/home')
-def home():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-    return render_template('landing.html')
+def get_streak(user_id):
+    db = get_db()
+    rows = db.execute("""
+        SELECT DISTINCT date(logged_at) as day
+        FROM expenses
+        WHERE user_id = ?
+        ORDER BY day DESC
+    """, (user_id,)).fetchall()
 
-# NEW: Public demo — no login required
-@app.route('/demo')
+    if not rows:
+        return 0
+
+    streak = 0
+    check = date.today()
+    for row in rows:
+        day = date.fromisoformat(row["day"])
+        if day == check:
+            streak += 1
+            check = date.fromordinal(check.toordinal() - 1)
+        elif day < check:
+            break
+    return streak
+
+
+# ═══════════════════════════════════════════════════════════════
+# ROUTES — PUBLIC
+# ═══════════════════════════════════════════════════════════════
+
+@app.route("/")
+def landing():
+    return render_template("landing.html")
+
+
+@app.route("/demo")
 def demo():
-    return render_template('demo.html')
+    return render_template("demo.html")
 
-@app.route('/register', methods=['GET', 'POST'])
+
+@app.route("/register", methods=["GET", "POST"])
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user_exists = User.query.filter_by(username=username).first()
-        if user_exists:
-            flash('Username already exists. Please login.', 'danger')
-            return redirect(url_for('register'))
-        hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
-        new_user = User(username=username, password=hashed_pw)
-        db.session.add(new_user)
-        db.session.commit()
-        login_user(new_user)
-        session['show_welcome'] = True
-        return redirect(url_for('edit'))
-    return render_template('register.html')
+    if session.get("user_id"):
+        return redirect(url_for("dashboard"))
 
-@app.route('/login', methods=['GET', 'POST'])
+    if request.method == "POST":
+        email    = request.form.get("email", "").strip().lower()
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        confirm  = request.form.get("confirm", "")
+        budget   = request.form.get("budget", "25000").strip()
+
+        errors = []
+        if not email or "@" not in email:
+            errors.append("A valid email is required.")
+        if not username or len(username) < 2:
+            errors.append("Username must be at least 2 characters.")
+        if len(password) < 6:
+            errors.append("Password must be at least 6 characters.")
+        if password != confirm:
+            errors.append("Passwords do not match.")
+        try:
+            budget_val = float(budget)
+            if budget_val <= 0:
+                raise ValueError
+        except ValueError:
+            errors.append("Enter a valid monthly budget (e.g. 25000).")
+            budget_val = 25000.0
+
+        if errors:
+            for e in errors:
+                flash(e, "error")
+            return render_template("register.html", form=request.form, budget=budget)
+
+        db = get_db()
+        existing = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        if existing:
+            flash("That email is already registered. Log in instead?", "error")
+            return render_template("register.html", form=request.form, budget=budget)
+
+        pw_hash = generate_password_hash(password)
+        cur = db.execute(
+            "INSERT INTO users (email, username, password, budget) VALUES (?, ?, ?, ?)",
+            (email, username, pw_hash, budget_val)
+        )
+        db.commit()
+
+        session["user_id"]    = cur.lastrowid
+        session["user_email"] = email
+        session["username"]   = username
+        flash(f"Welcome to the jungle, {username}! 🌿 Your survival starts now.", "success")
+        return redirect(url_for("dashboard"))
+
+    return render_template("register.html", form={}, budget="25000")
+
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
-            login_user(user)
-            session['show_welcome'] = True
-            return redirect(url_for('index'))
-        else:
-            flash('Invalid username or password.', 'danger')
-    return render_template('login.html')
+    if session.get("user_id"):
+        return redirect(url_for("dashboard"))
 
-@app.route('/logout')
-@login_required
+    if request.method == "POST":
+        email    = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        if not email or not password:
+            flash("Please enter your email and password.", "error")
+            return render_template("login.html")
+
+        db   = get_db()
+        user = db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+
+        if not user or not check_password_hash(user["password"], password):
+            flash("Invalid email or password.", "error")
+            return render_template("login.html")
+
+        session["user_id"]    = user["id"]
+        session["user_email"] = user["email"]
+        session["username"]   = user["username"]
+        flash(f"Welcome back, {user['username']}! 🌿", "success")
+        return redirect(url_for("dashboard"))
+
+    return render_template("login.html")
+
+
+@app.route("/logout")
 def logout():
-    logout_user()
-    return redirect(url_for('home'))
+    session.clear()
+    flash("You've left the jungle. Come back soon. 🌿", "info")
+    return redirect(url_for("landing"))
 
-# --- 7. ROUTES (CORE APP) ---
 
-# Root requires login and shows the dashboard
-@app.route('/')
+@app.route("/forgot-password")
+def forgot_password():
+    flash("Password reset coming soon.", "info")
+    return redirect(url_for("login"))
+
+
+# ═══════════════════════════════════════════════════════════════
+# ROUTES — PROTECTED
+# ═══════════════════════════════════════════════════════════════
+
+@app.route("/dashboard")
 @login_required
-def index():
-    active_cycle = Cycle.query.filter_by(user_id=current_user.id).order_by(Cycle.id.desc()).first()
-    if not active_cycle:
-        return redirect(url_for('edit'))
-
-    metrics = get_survival_metrics(active_cycle, current_user)
-    expenses = Expense.query.filter_by(cycle_id=active_cycle.id).order_by(Expense.timestamp.desc()).all()
-    premium_count = PremiumInterest.query.count()
-
-    show_welcome = session.pop('show_welcome', False)
+def dashboard():
+    user   = get_current_user()
+    now    = datetime.now()
+    stats  = get_month_stats(user["id"], now.year, now.month)
+    streak = get_streak(user["id"])
 
     return render_template(
-        'index.html',
-        metrics=metrics,
-        cycle=active_cycle,
-        expenses=expenses,
-        premium_count=premium_count,
-        show_welcome=show_welcome
+        "dashboard.html",
+        user       = user,
+        stats      = stats,
+        streak     = streak,
+        categories = CATEGORIES,
+        now        = now,
+        tag_classes = TAG_CLASSES,
     )
 
-@app.route('/edit', methods=['GET', 'POST'])
+
+@app.route("/expenses/add", methods=["POST"])
 @login_required
-def edit():
-    if request.method == 'POST':
-        try:
-            pocket_money = float(request.form.get('pocket_money'))
-            fixed_expenses = float(request.form.get('fixed_expenses'))
-            start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date()
-            end_date = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date()
-            new_cycle = Cycle(
-                user_id=current_user.id,
-                pocket_money=pocket_money,
-                fixed_expenses=fixed_expenses,
-                start_date=start_date,
-                end_date=end_date
-            )
-            db.session.add(new_cycle)
-            db.session.commit()
-            flash('Month setup complete! Survive well.', 'success')
-            return redirect(url_for('index'))
-        except Exception as e:
-            flash('Error setting up month. Please check your inputs.', 'danger')
-            return redirect(url_for('edit'))
-    active_cycle = Cycle.query.filter_by(user_id=current_user.id).order_by(Cycle.id.desc()).first()
-    return render_template('edit.html', has_cycle=active_cycle is not None)
+def add_expense():
+    user     = get_current_user()
+    amount   = request.form.get("amount", "").strip()
+    note     = request.form.get("note", "").strip()
+    category = request.form.get("category", "other").strip()
+    is_ajax  = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
-@app.route('/log_expense', methods=['POST'])
+    try:
+        amount_val = float(amount)
+        if amount_val <= 0:
+            raise ValueError
+    except ValueError:
+        if is_ajax:
+            return jsonify({"ok": False, "error": "Enter a valid amount."}), 400
+        flash("Enter a valid amount.", "error")
+        return redirect(url_for("dashboard"))
+
+    if not note:
+        note = next((c["label"] for c in CATEGORIES if c["id"] == category), "Expense")
+
+    db = get_db()
+    db.execute(
+        "INSERT INTO expenses (user_id, amount, note, category) VALUES (?, ?, ?, ?)",
+        (user["id"], amount_val, note, category)
+    )
+    db.commit()
+
+    if is_ajax:
+        now    = datetime.now()
+        stats  = get_month_stats(user["id"], now.year, now.month)
+        streak = get_streak(user["id"])
+        cat    = next((c for c in CATEGORIES if c["id"] == category), CATEGORIES[-1])
+        new_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+        return jsonify({
+            "ok":          True,
+            "meter_pct":   stats["meter_pct"],
+            "total_spent": stats["total_spent"],
+            "remaining":   stats["remaining"],
+            "budget":      stats["budget"],
+            "streak":      streak,
+            "expense": {
+                "id":       new_id,
+                "amount":   amount_val,
+                "note":     note,
+                "label":    cat["label"],
+                "icon":     cat["icon"],
+                "tag":      cat["tag"],
+                "tag_class": TAG_CLASSES.get(cat["tag"], "tag--optional"),
+                "logged_at": now.strftime("%d %b, %H:%M"),
+            }
+        })
+
+    flash("Expense logged! Meter updated. 🔥", "success")
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/expenses/<int:expense_id>/delete", methods=["POST"])
 @login_required
-def log_expense():
-    amount = float(request.form.get('amount'))
-    active_cycle = Cycle.query.filter_by(user_id=current_user.id).order_by(Cycle.id.desc()).first()
-    if active_cycle:
-        new_expense = Expense(amount=amount, cycle_id=active_cycle.id, date=date.today())
-        db.session.add(new_expense)
-        db.session.commit()
-        flash("Expense logged!", "success")
-    return redirect(url_for('index'))
+def delete_expense(expense_id):
+    user = get_current_user()
+    db   = get_db()
+    db.execute("DELETE FROM expenses WHERE id = ? AND user_id = ?", (expense_id, user["id"]))
+    db.commit()
 
-@app.route('/profile')
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        now   = datetime.now()
+        stats = get_month_stats(user["id"], now.year, now.month)
+        return jsonify({
+            "ok":          True,
+            "meter_pct":   stats["meter_pct"],
+            "total_spent": stats["total_spent"],
+            "remaining":   stats["remaining"],
+        })
+
+    flash("Expense removed.", "info")
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/settings", methods=["GET", "POST"])
 @login_required
-def profile():
-    active_cycle = Cycle.query.filter_by(user_id=current_user.id).order_by(Cycle.id.desc()).first()
-    total_expenses = 0
-    expense_count = 0
-    if active_cycle:
-        total_expenses = sum(e.amount for e in active_cycle.expenses)
-        expense_count = len(active_cycle.expenses)
-    return render_template('profile.html', total_expenses=total_expenses, expense_count=expense_count, cycle=active_cycle)
+def settings():
+    user = get_current_user()
 
-# --- 8. PREMIUM INTEREST ROUTE ---
-@app.route('/premium_interest', methods=['POST'])
-@login_required
-def premium_interest():
-    data = request.get_json()
-    email = data.get('email', '').strip() if data else ''
-    interest = PremiumInterest(user_id=current_user.id, email=email or None)
-    db.session.add(interest)
-    db.session.commit()
-    total = PremiumInterest.query.count()
-    print(f"[PREMIUM] Waitlist signup — email: {email or 'not provided'} | Total: {total}")
-    threading.Thread(target=send_founder_notification, args=(email, current_user.username, total), daemon=True).start()
-    return jsonify({"status": "ok", "total": total})
+    if request.method == "POST":
+        action = request.form.get("action")
+        db = get_db()
 
-# --- 9. AUTO-CREATE TABLES ---
-with app.app_context():
-    if os.environ.get('RESET_DB') == 'true':
-        db.drop_all()
-    db.create_all()
+        if action == "update_budget":
+            try:
+                budget = float(request.form.get("budget", 0))
+                if budget <= 0:
+                    raise ValueError
+                db.execute("UPDATE users SET budget = ? WHERE id = ?", (budget, user["id"]))
+                db.commit()
+                flash("Monthly budget updated! 🎯", "success")
+            except ValueError:
+                flash("Enter a valid budget amount.", "error")
 
-if __name__ == '__main__':
-    app.run(debug=True)
+        elif action == "update_username":
+            username = request.form.get("username", "").strip()
+            if len(username) >= 2:
+                db.execute("UPDATE users SET username = ? WHERE id = ?", (username, user["id"]))
+                db.commit()
+                session["username"] = username
+                flash("Username updated!", "success")
+            else:
+                flash("Username must be at least 2 characters.", "error")
+
+        elif action == "change_password":
+            current = request.form.get("current_password", "")
+            new_pw  = request.form.get("new_password", "")
+            confirm = request.form.get("confirm_password", "")
+            if not check_password_hash(user["password"], current):
+                flash("Current password is incorrect.", "error")
+            elif len(new_pw) < 6:
+                flash("New password must be at least 6 characters.", "error")
+            elif new_pw != confirm:
+                flash("Passwords do not match.", "error")
+            else:
+                db.execute("UPDATE users SET password = ? WHERE id = ?",
+                           (generate_password_hash(new_pw), user["id"]))
+                db.commit()
+                flash("Password changed successfully! 🔒", "success")
+
+        return redirect(url_for("settings"))
+
+    return render_template("settings.html", user=user)
+
+
+# ── Error handlers ────────────────────────────────────────────
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("landing.html"), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template("landing.html"), 500
+
+
+# ── Run ───────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    app.run(debug=debug, host="0.0.0.0", port=5000)

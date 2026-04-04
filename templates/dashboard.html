@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — SurviveTheMonth</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+</head>
+<body class="demo-page">
+
+  <!-- NAV -->
+  <nav class="nav nav--dark">
+    <div class="nav-brand">
+      <span class="brand-icon">🌿</span>
+      <span class="brand-text">SurviveTheMonth</span>
+    </div>
+    <div class="nav-links">
+      <span class="nav-username">{{ user.username }}</span>
+      <a href="{{ url_for('settings') }}" class="nav-link" title="Settings">⚙️</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-sm btn-ghost">Log Out</a>
+    </div>
+  </nav>
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-bar">
+        {% for category, message in messages %}
+          <div class="flash flash--{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="demo-main">
+
+    <!-- LEFT COLUMN: Meter + stats -->
+    <aside class="demo-sidebar">
+
+      <!-- SURVIVAL METER -->
+      <div class="meter-card {% if stats.meter_pct < 30 %}meter--red{% elif stats.meter_pct < 60 %}meter--yellow{% else %}meter--green{% endif %}" id="meterCard">
+        <div class="meter-header">
+          <div>
+            <p class="meter-label">SURVIVAL METER</p>
+            <p class="meter-month">{{ now.strftime('%B %Y') }}</p>
+          </div>
+          <div class="meter-day-badge large">DAY {{ now.day }}</div>
+        </div>
+
+        <div class="meter-ring-wrap">
+          <svg class="meter-ring" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"
+               aria-label="Survival meter at {{ stats.meter_pct }}%">
+            <circle class="ring-track" cx="100" cy="100" r="80" />
+            <circle class="ring-fill" id="ringFill"
+              cx="100" cy="100" r="80"
+              stroke-dasharray="503"
+              stroke-dashoffset="503"
+              style="stroke: {% if stats.meter_pct < 30 %}var(--meter-red){% elif stats.meter_pct < 60 %}var(--meter-yellow){% else %}var(--meter-green){% endif %}"
+            />
+          </svg>
+          <div class="meter-ring-center">
+            <div class="meter-pct-large" id="meterPct">0%</div>
+            <div class="meter-status-label" id="meterStatus">Loading…</div>
+          </div>
+        </div>
+
+        <div class="meter-legend">
+          <div class="legend-item legend--red"><span class="legend-dot"></span> Critical (&lt;30%)</div>
+          <div class="legend-item legend--yellow"><span class="legend-dot"></span> Cautious (30–60%)</div>
+          <div class="legend-item legend--green"><span class="legend-dot"></span> Surviving (60–100%)</div>
+        </div>
+      </div>
+
+      <!-- STREAK -->
+      <div class="streak-card">
+        <div class="streak-icon">🔥</div>
+        <div>
+          <p class="streak-number" id="streakNum">{{ streak }}</p>
+          <p class="streak-label">Day Survival Streak</p>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-card">
+        <div class="stat-row">
+          <span class="stat-label">Budget</span>
+          <span class="stat-val">₹{{ "{:,.0f}".format(stats.budget) }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Spent</span>
+          <span class="stat-val stat-val--spent" id="statSpent">₹{{ "{:,.0f}".format(stats.total_spent) }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Remaining</span>
+          <span class="stat-val stat-val--safe" id="statRemaining">₹{{ "{:,.0f}".format(stats.remaining) }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Expenses</span>
+          <span class="stat-val" id="statCount">{{ stats.expense_count }} logged</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- RIGHT COLUMN: Log expense + list -->
+    <section class="demo-content">
+
+      <!-- LOG EXPENSE FORM -->
+      <div class="log-form-card" id="logFormCard">
+        <div class="log-form-header">
+          <h2 class="section-title">Log Expense</h2>
+          <button class="log-form-toggle" id="formToggle" onclick="toggleForm()" aria-expanded="true">▲ Hide</button>
+        </div>
+
+        <form class="log-form" id="expenseForm" method="POST"
+              action="{{ url_for('add_expense') }}" autocomplete="off" novalidate>
+
+          <div class="log-form-row">
+            <!-- Amount -->
+            <div class="field-group field-group--sm">
+              <label class="field-label" for="amount">Amount (₹)</label>
+              <input class="field-input" type="number" id="amount" name="amount"
+                placeholder="0.00" min="1" step="0.01" required />
+            </div>
+
+            <!-- Category -->
+            <div class="field-group field-group--md">
+              <label class="field-label" for="category">Category</label>
+              <select class="field-input field-select" id="category" name="category">
+                {% for cat in categories %}
+                  <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Note -->
+          <div class="field-group">
+            <label class="field-label" for="note">Note <span class="field-hint">(optional)</span></label>
+            <input class="field-input" type="text" id="note" name="note"
+              placeholder="e.g. Big Bazaar — weekly groceries" maxlength="120" />
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full" id="submitBtn">
+            ⚡ Log Expense
+          </button>
+
+        </form>
+      </div>
+
+      <!-- MISSION LOG -->
+      <div class="log-expense-bar">
+        <h2 class="section-title">Mission Log</h2>
+        <span class="expense-count-badge" id="expenseCountBadge">
+          {{ stats.expense_count }} this month
+        </span>
+      </div>
+
+      <div class="expenses-list" id="expensesList">
+        {% if stats.expenses %}
+          {% for exp in stats.expenses %}
+            <div class="expense-item" id="exp-{{ exp.id }}">
+              <div class="expense-icon-wrap">
+                <span class="expense-icon">{{ exp.icon }}</span>
+              </div>
+              <div class="expense-details">
+                <p class="expense-name">{{ exp.label }}</p>
+                <p class="expense-note">{{ exp.note }}</p>
+              </div>
+              <div class="expense-right">
+                <span class="expense-amount">₹{{ "{:,.0f}".format(exp.amount) }}</span>
+                <span class="expense-tag {{ exp.tag_class }}">{{ exp.tag.upper() }}</span>
+              </div>
+              <button class="expense-delete" title="Remove expense"
+                      onclick="deleteExpense({{ exp.id }}, this)">✕</button>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">🎒</div>
+            <p class="empty-title">No expenses logged yet</p>
+            <p class="empty-sub">Log your first expense above to start tracking your survival.</p>
+          </div>
+        {% endif %}
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast" aria-live="polite" role="status"></div>
+
+  <script>
+    // ── Initial values from server ─────────────────────────
+    const INIT_PCT    = {{ stats.meter_pct }};
+    const INIT_BUDGET = {{ stats.budget }};
+    const CIRCUMFERENCE = 2 * Math.PI * 80;
+
+    // ── Meter animation ─────────────────────────────────────
+    let rafId = null;
+    let currentPct = 0;
+
+    function animateMeter(to) {
+      if (rafId) cancelAnimationFrame(rafId);
+      const ringFill   = document.getElementById('ringFill');
+      const pctLabel   = document.getElementById('meterPct');
+      const statusLabel = document.getElementById('meterStatus');
+      const meterCard  = document.getElementById('meterCard');
+      let from = currentPct;
+
+      const step = () => {
+        if (from < to)       from = Math.min(from + 1.5, to);
+        else if (from > to)  from = Math.max(from - 1.5, to);
+
+        const offset = CIRCUMFERENCE - (from / 100) * CIRCUMFERENCE;
+        ringFill.style.strokeDashoffset = offset;
+        pctLabel.textContent = Math.round(from) + '%';
+
+        meterCard.classList.remove('meter--red', 'meter--yellow', 'meter--green');
+        if (from < 30) {
+          meterCard.classList.add('meter--red');
+          ringFill.style.stroke = 'var(--meter-red)';
+          statusLabel.textContent = '🚨 CRITICAL — Evacuate funds!';
+        } else if (from < 60) {
+          meterCard.classList.add('meter--yellow');
+          ringFill.style.stroke = 'var(--meter-yellow)';
+          statusLabel.textContent = '⚠️ CAUTIOUS — Ration carefully';
+        } else {
+          meterCard.classList.add('meter--green');
+          ringFill.style.stroke = 'var(--meter-green)';
+          statusLabel.textContent = '✅ SURVIVING — Keep it up!';
+        }
+
+        if (Math.round(from) !== Math.round(to)) {
+          rafId = requestAnimationFrame(step);
+        } else {
+          currentPct = to;
+          rafId = null;
+        }
+      };
+      rafId = requestAnimationFrame(step);
+    }
+
+    // Kick off on load
+    animateMeter(INIT_PCT);
+
+    // ── AJAX expense form ────────────────────────────────────
+    document.getElementById('expenseForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Logging…';
+
+      const data = new FormData(this);
+      try {
+        const res = await fetch(this.action, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          body: data,
+        });
+        const json = await res.json();
+
+        if (!json.ok) {
+          showToast('⚠️ ' + (json.error || 'Something went wrong.'));
+          return;
+        }
+
+        // Update meter
+        animateMeter(json.meter_pct);
+
+        // Update stats
+        document.getElementById('statSpent').textContent     = '₹' + json.total_spent.toLocaleString('en-IN');
+        document.getElementById('statRemaining').textContent = '₹' + json.remaining.toLocaleString('en-IN');
+        document.getElementById('streakNum').textContent     = json.streak;
+
+        // Update expense count
+        const countEl = document.getElementById('expenseCountBadge');
+        const countText = countEl.textContent.match(/\d+/);
+        const newCount = countText ? parseInt(countText[0]) + 1 : 1;
+        countEl.textContent = newCount + ' this month';
+        document.getElementById('statCount').textContent = newCount + ' logged';
+
+        // Add expense to top of list
+        const exp = json.expense;
+        const list = document.getElementById('expensesList');
+        const empty = document.getElementById('emptyState');
+        if (empty) empty.remove();
+
+        const item = document.createElement('div');
+        item.className = 'expense-item expense-item--new';
+        item.id = 'exp-' + exp.id;
+        item.innerHTML = `
+          <div class="expense-icon-wrap"><span class="expense-icon">${exp.icon}</span></div>
+          <div class="expense-details">
+            <p class="expense-name">${exp.label}</p>
+            <p class="expense-note">${exp.note}</p>
+          </div>
+          <div class="expense-right">
+            <span class="expense-amount">₹${exp.amount.toLocaleString('en-IN')}</span>
+            <span class="expense-tag ${exp.tag_class}">${exp.tag.toUpperCase()}</span>
+          </div>
+          <button class="expense-delete" title="Remove expense"
+                  onclick="deleteExpense(${exp.id}, this)">✕</button>
+        `;
+        list.prepend(item);
+        requestAnimationFrame(() => requestAnimationFrame(() => item.classList.add('expense-item--visible')));
+
+        // Reset form
+        this.reset();
+        showToast('Meter updated! You survived another day 🔥');
+
+      } catch(err) {
+        showToast('⚠️ Network error. Try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '⚡ Log Expense';
+      }
+    });
+
+    // ── Delete expense ────────────────────────────────────────
+    async function deleteExpense(id, btn) {
+      if (!confirm('Remove this expense?')) return;
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/expenses/${id}/delete`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const json = await res.json();
+
+        if (json.ok) {
+          const item = document.getElementById('exp-' + id);
+          if (item) {
+            item.style.transition = 'opacity 0.25s, transform 0.25s';
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(20px)';
+            setTimeout(() => item.remove(), 260);
+          }
+          animateMeter(json.meter_pct);
+          document.getElementById('statSpent').textContent     = '₹' + json.total_spent.toLocaleString('en-IN');
+          document.getElementById('statRemaining').textContent = '₹' + json.remaining.toLocaleString('en-IN');
+
+          const countEl = document.getElementById('expenseCountBadge');
+          const countText = countEl.textContent.match(/\d+/);
+          const newCount = Math.max(0, countText ? parseInt(countText[0]) - 1 : 0);
+          countEl.textContent = newCount + ' this month';
+          document.getElementById('statCount').textContent = newCount + ' logged';
+
+          showToast('Expense removed.');
+        }
+      } catch(err) {
+        showToast('⚠️ Network error. Try again.');
+        btn.disabled = false;
+      }
+    }
+
+    // ── Toast ─────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('toast--visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('toast--visible'), 3200);
+    }
+
+    // ── Form toggle ───────────────────────────────────────────
+    function toggleForm() {
+      const form = document.getElementById('expenseForm');
+      const btn  = document.getElementById('formToggle');
+      const card = document.getElementById('logFormCard');
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      form.style.display = expanded ? 'none' : '';
+      btn.textContent = expanded ? '▼ Show' : '▲ Hide';
+      btn.setAttribute('aria-expanded', !expanded);
+      card.classList.toggle('log-form-card--collapsed', expanded);
+    }
+  </script>
+
+</body>
+</html>
