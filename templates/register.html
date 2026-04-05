@@ -1,161 +1,98 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Join the Jungle — SurviveTheMonth</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
-</head>
-<body class="auth-page">
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+{% block body_class %}login-page{% endblock %}
+{% block nav %}{% endblock %}
 
-  <div class="auth-bg" aria-hidden="true">
-    <div class="auth-bg-pattern"></div>
-  </div>
+{% block content %}
+<div class="login-wrapper">
 
-  <a href="/" class="auth-back">← Back to camp</a>
+  <a href="{{ url_for('index') }}" class="login-brand">
+    <span class="login-brand-icon">🌿</span>
+    SurviveTheMonth
+  </a>
 
-  <main class="auth-main">
-    <div class="auth-card auth-card--wide">
+  <div class="login-card">
+    <h1 class="login-title">Join the jungle</h1>
+    <p class="login-subtitle">Free forever. No credit card. Ready in 60 seconds.</p>
 
-      <div class="auth-brand">
-        <span class="auth-brand-icon">🌿</span>
-        <h1 class="auth-brand-name">SurviveTheMonth</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="flash flash--{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('register') }}" class="login-form" novalidate>
+
+      <div class="form-group">
+        <label for="username" class="form-label">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="form-input"
+          placeholder="jungle_survivor"
+          autocomplete="username"
+          value="{{ username | default('') }}"
+          required
+        />
       </div>
 
-      <h2 class="auth-title">Enter the Jungle</h2>
-      <p class="auth-sub">Free forever. No credit card. Just your budget and your wits.</p>
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          class="form-input"
+          placeholder="min. 6 characters"
+          autocomplete="new-password"
+          required
+        />
+      </div>
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="flash-messages">
-            {% for category, message in messages %}
-              <div class="flash flash--{{ category }}">{{ message }}</div>
-            {% endfor %}
-          </div>
-        {% endif %}
-      {% endwith %}
+      <div class="form-group">
+        <label for="confirm_password" class="form-label">Confirm Password</label>
+        <input
+          type="password"
+          id="confirm_password"
+          name="confirm_password"
+          class="form-input"
+          placeholder="repeat password"
+          autocomplete="new-password"
+          required
+        />
+      </div>
 
-      <form class="auth-form" method="POST" action="/register" autocomplete="on" novalidate>
+      <div class="form-group">
+        <label for="monthly_budget" class="form-label">Monthly Budget (₹)</label>
+        <input
+          type="number"
+          id="monthly_budget"
+          name="monthly_budget"
+          class="form-input"
+          placeholder="30000"
+          min="1"
+          value="{{ budget | default('30000') }}"
+        />
+      </div>
 
-        <div class="form-row">
-          <div class="field-group">
-            <label class="field-label" for="username">Survivor Name</label>
-            <input class="field-input" type="text" id="username" name="username"
-              placeholder="e.g. BudgetBear" autocomplete="username" required
-              value="{{ form.get('username', '') }}" />
-          </div>
+      <button type="submit" class="btn btn-primary btn-full">
+        Begin Surviving
+      </button>
 
-          <div class="field-group">
-            <label class="field-label" for="email">Email</label>
-            <input class="field-input" type="email" id="email" name="email"
-              placeholder="you@example.com" autocomplete="email" required
-              value="{{ form.get('email', '') }}" />
-          </div>
-        </div>
+    </form>
 
-        <div class="form-row">
-          <div class="field-group">
-            <label class="field-label" for="password">Password</label>
-            <div class="password-wrap">
-              <input class="field-input" type="password" id="password" name="password"
-                placeholder="Min. 6 characters" autocomplete="new-password" required />
-              <button type="button" class="password-toggle" onclick="togglePw('password', this)">👁</button>
-            </div>
-          </div>
-
-          <div class="field-group">
-            <label class="field-label" for="confirm">Confirm Password</label>
-            <div class="password-wrap">
-              <input class="field-input" type="password" id="confirm" name="confirm"
-                placeholder="Same again" autocomplete="new-password" required />
-              <button type="button" class="password-toggle" onclick="togglePw('confirm', this)">👁</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Budget setup -->
-        <div class="budget-setup">
-          <label class="field-label" for="budget">
-            Monthly Budget
-            <span class="field-hint">How much can you spend this month?</span>
-          </label>
-          <div class="budget-input-wrap">
-            <span class="budget-currency">₹</span>
-            <input class="field-input budget-input" type="number" id="budget" name="budget"
-              placeholder="25000" min="1" step="500"
-              value="{{ budget or '25000' }}" required />
-          </div>
-          <!-- Preset budget buttons -->
-          <div class="budget-presets">
-            <button type="button" class="preset-btn" onclick="setBudget(10000)">₹10k</button>
-            <button type="button" class="preset-btn" onclick="setBudget(25000)">₹25k</button>
-            <button type="button" class="preset-btn" onclick="setBudget(50000)">₹50k</button>
-            <button type="button" class="preset-btn" onclick="setBudget(100000)">₹1L</button>
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-full btn-lg">
-          🌿 Start Surviving
-        </button>
-
-      </form>
-
-      <div class="auth-divider"><span>Already surviving?</span></div>
-
-      <a href="/login" class="btn btn-outline btn-full">Log In Instead</a>
-
-      <p class="auth-demo-nudge">
-        Not sure? <a href="/demo">Try the demo first →</a>
-      </p>
-
-    </div>
-  </main>
-
-  <div class="auth-meter-strip" aria-hidden="true">
-    <div class="auth-meter-fill" id="regMeterFill"></div>
+    <p class="login-register-cta">
+      Already have an account? <a href="{{ url_for('login') }}">Log in</a>
+    </p>
   </div>
 
-  <script>
-    function togglePw(id, btn) {
-      const input = document.getElementById(id);
-      if (!input) return;
-      input.type = input.type === 'password' ? 'text' : 'password';
-      btn.textContent = input.type === 'password' ? '👁' : '🙈';
-    }
-
-    function setBudget(val) {
-      document.getElementById('budget').value = val;
-      // Animate presets active state
-      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('preset-btn--active'));
-      event.target.classList.add('preset-btn--active');
-    }
-
-    // Password match indicator
-    const pw  = document.getElementById('password');
-    const cfm = document.getElementById('confirm');
-    cfm.addEventListener('input', () => {
-      if (cfm.value.length === 0) { cfm.style.borderColor = ''; return; }
-      cfm.style.borderColor = cfm.value === pw.value
-        ? 'var(--meter-green)' : 'var(--meter-red)';
-    });
-
-    // Animate meter strip
-    (function() {
-      const fill = document.getElementById('regMeterFill');
-      if (!fill) return;
-      let w = 0;
-      const iv = setInterval(() => {
-        w = Math.min(w + 0.6, 55);
-        fill.style.width = w + '%';
-        if (w >= 55) clearInterval(iv);
-      }, 12);
-    })();
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const u = document.getElementById('username');
-      if (u && !u.value) u.focus();
-    });
-  </script>
-</body>
-</html>
+  <p class="login-tip">
+    🔒 Your password is hashed. We never store it in plain text.
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}SurviveTheMonth{% endblock %} 🌿</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+  {% block nav %}
+  <nav class="site-nav">
+    <a href="{{ url_for('index') }}" class="nav-logo">
+      <span class="nav-logo-icon">🌿</span>
+      SurviveTheMonth
+    </a>
+    <div class="nav-links">
+      {% if current_user %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-ghost btn-sm">Dashboard</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-ghost btn-sm">Log out</a>
+      {% else %}
+        <a href="{{ url_for('demo') }}" class="btn btn-ghost btn-sm">Try Demo</a>
+        <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm">Log in</a>
+      {% endif %}
+    </div>
+  </nav>
+  {% endblock %}
+
+  {% block content %}{% endblock %}
+
+</body>
+</html>

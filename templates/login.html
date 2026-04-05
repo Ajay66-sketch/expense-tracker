@@ -1,159 +1,78 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login — SurviveTheMonth</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
-</head>
-<body class="auth-page">
+{% extends "base.html" %}
+{% block title %}Log In{% endblock %}
+{% block body_class %}login-page{% endblock %}
+{% block nav %}{% endblock %}
 
-  <!-- Subtle background texture — no heavy effects -->
-  <div class="auth-bg" aria-hidden="true">
-    <div class="auth-bg-pattern"></div>
-  </div>
+{% block content %}
+<div class="login-wrapper">
 
-  <!-- Back link -->
-  <a href="/" class="auth-back">← Back to camp</a>
+  <a href="{{ url_for('index') }}" class="login-brand">
+    <span class="login-brand-icon">🌿</span>
+    SurviveTheMonth
+  </a>
 
-  <!-- Auth container — always centered, always visible -->
-  <main class="auth-main">
+  <div class="login-card">
+    <h1 class="login-title">Welcome back, Survivor</h1>
+    <p class="login-subtitle">The jungle waits. Log in to check your meter.</p>
 
-    <div class="auth-card">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="flash flash--{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-      <!-- Brand -->
-      <div class="auth-brand">
-        <span class="auth-brand-icon">🌿</span>
-        <h1 class="auth-brand-name">SurviveTheMonth</h1>
+    <form method="POST" action="{{ url_for('login') }}" class="login-form" novalidate>
+
+      <div class="form-group">
+        <label for="username" class="form-label">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="form-input"
+          placeholder="your_survivor_handle"
+          autocomplete="username"
+          value="{{ request.form.get('username', '') }}"
+          required
+        />
       </div>
 
-      <h2 class="auth-title">Return to Base Camp</h2>
-      <p class="auth-sub">Your survival meter is waiting.</p>
-
-      <!-- Flash messages from Flask -->
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="flash-messages">
-            {% for category, message in messages %}
-              <div class="flash flash--{{ category }}">{{ message }}</div>
-            {% endfor %}
-          </div>
-        {% endif %}
-      {% endwith %}
-
-      <!-- LOGIN FORM — guaranteed visible, no tricks -->
-      <form
-        class="auth-form"
-        method="POST"
-        action="/login"
-        autocomplete="on"
-        novalidate
-      >
-        <!-- CSRF token: uncomment this line ONLY if you install Flask-WTF -->
-        {# <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" /> #}
-
-        <div class="field-group">
-          <label class="field-label" for="email">Email</label>
-          <input
-            class="field-input"
-            type="email"
-            id="email"
-            name="email"
-            placeholder="survivor@example.com"
-            autocomplete="email"
-            required
-            value="{{ request.form.get('email', '') }}"
-          />
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="password">
-            Password
-            <a href="{{ url_for('forgot_password') }}" class="field-label-link" tabindex="-1">Forgot?</a>
-          </label>
-          <div class="password-wrap">
-            <input
-              class="field-input"
-              type="password"
-              id="password"
-              name="password"
-              placeholder="••••••••"
-              autocomplete="current-password"
-              required
-            />
-            <button
-              type="button"
-              class="password-toggle"
-              aria-label="Show password"
-              onclick="togglePassword()"
-            >👁</button>
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-full btn-lg">
-          Enter the Jungle →
-        </button>
-
-      </form>
-
-      <div class="auth-divider">
-        <span>New here?</span>
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          class="form-input"
+          placeholder="••••••••"
+          autocomplete="current-password"
+          required
+        />
       </div>
 
-      <a href="/register" class="btn btn-outline btn-full">
-        Create Survival Account
-      </a>
+      <button type="submit" class="btn btn-primary btn-full">
+        Enter the Jungle
+      </button>
 
-      <p class="auth-demo-nudge">
-        Not ready? <a href="/demo">Try the demo first →</a>
-      </p>
+    </form>
 
-    </div>
+    <div class="login-divider"><span>or</span></div>
 
-  </main>
+    <a href="{{ url_for('demo') }}" class="btn btn-secondary btn-full">
+      Try Demo — no account needed
+    </a>
 
-  <!-- Decorative meter strip at bottom -->
-  <div class="auth-meter-strip" aria-hidden="true">
-    <div class="auth-meter-fill"></div>
+    <p class="login-register-cta">
+      New here? <a href="{{ url_for('register') }}">Create your free account</a>
+    </p>
   </div>
 
-  <script>
-    // Simple, reliable password toggle — no deps
-    function togglePassword() {
-      const input = document.getElementById('password');
-      const btn = document.querySelector('.password-toggle');
-      if (!input) return;
-      if (input.type === 'password') {
-        input.type = 'text';
-        btn.textContent = '🙈';
-        btn.setAttribute('aria-label', 'Hide password');
-      } else {
-        input.type = 'password';
-        btn.textContent = '👁';
-        btn.setAttribute('aria-label', 'Show password');
-      }
-    }
-
-    // Auto-focus email field unless already filled
-    document.addEventListener('DOMContentLoaded', function() {
-      const emailInput = document.getElementById('email');
-      if (emailInput && !emailInput.value) {
-        emailInput.focus();
-      }
-    });
-
-    // Animate the bottom meter strip
-    (function() {
-      const fill = document.querySelector('.auth-meter-fill');
-      if (!fill) return;
-      let w = 0;
-      const interval = setInterval(() => {
-        w = Math.min(w + 0.5, 75);
-        fill.style.width = w + '%';
-        if (w >= 75) clearInterval(interval);
-      }, 12);
-    })();
-  </script>
-</body>
-</html>
+  <p class="login-tip">
+    💡 Survivors who track daily spend 3× longer on their budget.
+  </p>
+</div>
+{% endblock %}

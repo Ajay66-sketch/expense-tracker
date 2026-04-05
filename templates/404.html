@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}404 — Lost in the Jungle{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block content %}
+<div class="error-page">
+  <div class="error-code">404</div>
+  <h1 class="error-title">Lost in the jungle</h1>
+  <p class="error-body">This page doesn't exist. The canopy swallowed it whole.</p>
+  <a href="{{ url_for('index') }}" class="btn btn-primary">Back to safety</a>
+</div>
+{% endblock %}

@@ -1,195 +1,146 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mission Control — SurviveTheMonth 🌿</title>
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}SurviveTheMonth — Budget Like Your Life Depends On It{% endblock %}
+{% block body_class %}landing-page{% endblock %}
 
-  <!-- ── Navbar ── -->
-  <nav class="navbar">
-    <a href="/" class="navbar-brand">🌿 SurviveTheMonth</a>
-    <div class="navbar-links">
-      <a href="/profile">👤 {{ current_user.username }}</a>
-      <a href="/edit">⚙️ Edit Month</a>
-      <a href="/logout" class="btn-nav-cta">Bail Out →</a>
-    </div>
-  </nav>
+{% block content %}
 
-  <!-- ── Flash Messages ── -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div class="flash-container">
-        {% for category, message in messages %}
-          <div class="flash flash-{{ category }}">{{ message }}</div>
-        {% endfor %}
+<!-- ── Hero ─────────────────────────────────────────────── -->
+<section class="hero">
+  <span class="hero-badge animate-up">Free • No credit card • Fun</span>
+
+  <h1 class="hero-title animate-up animate-up-1">
+    Your budget is a<br><span>survival mission.</span>
+  </h1>
+
+  <p class="hero-subtitle animate-up animate-up-2">
+    SurviveTheMonth turns your monthly spending into a jungle survival game.
+    Watch your health bar drain. Feel every purchase. Stay alive.
+  </p>
+
+  <div class="hero-actions animate-up animate-up-3">
+    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+      Start surviving — free
+    </a>
+    <a href="{{ url_for('demo') }}" class="btn btn-secondary btn-lg">
+      See the demo
+    </a>
+  </div>
+</section>
+
+<!-- ── Meter teaser ──────────────────────────────────────── -->
+<section class="landing-section">
+  <div class="landing-container">
+
+    <div class="teaser-label animate-up">The Survival Meter</div>
+    <h2 class="landing-title animate-up animate-up-1">
+      Green means safe.<br>Red means panic.
+    </h2>
+    <p class="landing-body animate-up animate-up-2">
+      A single animated health bar shows exactly where you stand.
+      No spreadsheets. No confusion. Just: are you surviving or not?
+    </p>
+
+    <!-- Live mini demo meter -->
+    <div class="teaser-meter-card animate-up animate-up-3">
+      <div class="teaser-meter-header">
+        <span class="teaser-meter-month">April 2025</span>
+        <span class="teaser-meter-pct" id="teaserPct">71%</span>
       </div>
-    {% endif %}
-  {% endwith %}
-
-  <div class="app-layout">
-    <div class="app-container">
-
-      <!-- ── Welcome Banner (shows once after login) ── -->
-      {% if show_welcome %}
-        <div class="welcome-banner">
-          <span class="welcome-icon">🌿</span>
-          <div>
-            <h2>Welcome back, {{ current_user.username }}!</h2>
-            <p>The jungle is waiting. Stay sharp — check your survival status below.</p>
-          </div>
+      <div class="meter-track">
+        <div class="meter-fill" id="teaserFill" style="width:71%">
+          <div class="meter-pulse-dot"></div>
         </div>
-      {% endif %}
+      </div>
+      <p class="teaser-meter-status" id="teaserStatus">
+        Holding steady. Watch your rations.
+      </p>
+      <div class="teaser-meter-controls">
+        <button class="btn btn-ghost btn-sm" id="teaserAdd">+ Spend ₹500</button>
+        <button class="btn btn-ghost btn-sm" id="teaserReset">Reset</button>
+      </div>
+    </div>
 
-      {% if metrics %}
+  </div>
+</section>
 
-        <!-- ── Survival Meter ── -->
-        <div class="card meter-card" style="margin-bottom: 1.5rem;">
+<!-- ── Features ──────────────────────────────────────────── -->
+<section class="landing-section landing-section--alt">
+  <div class="landing-container">
+    <div class="features-grid">
 
-          <div class="meter-header">
-            <span class="meter-title">☠️ Survival Status — {{ cycle.start_date.strftime('%B %Y') }}</span>
-            {% set pct = ((metrics.remaining_money / (cycle.pocket_money - cycle.fixed_expenses)) * 100) | round | int if (cycle.pocket_money - cycle.fixed_expenses) > 0 else 0 %}
-            {% if pct <= 15 %}
-              <span class="meter-status pulse" style="color: var(--danger-red);">🚨 DANGER ZONE</span>
-            {% elif pct <= 35 %}
-              <span class="meter-status pulse" style="color: var(--fire-yellow);">⚠ CRITICAL ZONE</span>
-            {% else %}
-              <span class="meter-status" style="color: var(--leaf-light);">✅ SURVIVING</span>
-            {% endif %}
-          </div>
+      <div class="feature-card animate-up">
+        <div class="feature-icon">🎯</div>
+        <h3 class="feature-title">One-glance clarity</h3>
+        <p class="feature-body">No graphs to decipher. Your meter tells you everything in under a second.</p>
+      </div>
 
-          <!-- Bar -->
-          <div class="meter-bar-track" style="margin-bottom: 1rem;">
-            {% set bar_pct = [pct, 100] | min %}
-            <div class="meter-bar-fill" style="
-              width: {{ bar_pct }}%;
-              animation: none;
-              {% if pct <= 15 %}
-                background: var(--danger-red);
-                box-shadow: 0 0 12px rgba(229,62,42,0.5);
-              {% elif pct <= 35 %}
-                background: linear-gradient(90deg, var(--danger-red), var(--fire-yellow));
-                box-shadow: 0 0 12px rgba(247,194,62,0.4);
-              {% else %}
-                background: linear-gradient(90deg, var(--danger-orange), var(--fire-yellow), var(--leaf-green));
-                box-shadow: 0 0 12px rgba(141,214,160,0.3);
-              {% endif %}
-            "></div>
-          </div>
+      <div class="feature-card animate-up animate-up-1">
+        <div class="feature-icon">🔥</div>
+        <h3 class="feature-title">Feels like a game</h3>
+        <p class="feature-body">Tracking expenses is boring. Watching your survival meter drop is not.</p>
+      </div>
 
-          <!-- Stats Row -->
-          <div class="meter-info" style="margin-bottom: 1rem;">
-            <div>
-              <div class="meter-amount">
-                ₹{{ "{:,.0f}".format(metrics.remaining_money) }}
-              </div>
-              <div class="meter-label">remaining budget</div>
-            </div>
-            <div class="meter-days">
-              <strong>{{ metrics.remaining_days }} days</strong>
-              <span>left to survive</span>
-            </div>
-          </div>
-
-          <!-- Feedback Banner -->
-          <div class="flash flash-{{ metrics.feedback.type }}" style="margin-bottom: 1rem;">
-            {{ metrics.feedback.msg }}
-          </div>
-
-          <!-- Daily Limit & Spent Today -->
-          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <div class="stat-pill">
-              <span class="stat-pill-label">Today's Spend</span>
-              <span class="stat-pill-value" style="color: var(--danger-orange);">
-                ₹{{ "{:,.0f}".format(metrics.spent_today) }}
-              </span>
-            </div>
-            <div class="stat-pill">
-              <span class="stat-pill-label">Safe Daily Limit</span>
-              <span class="stat-pill-value" style="color: var(--leaf-light);">
-                ₹{{ "{:,.0f}".format(metrics.safe_daily_limit) }}
-              </span>
-            </div>
-            <div class="stat-pill">
-              <span class="stat-pill-label">Disposable Budget</span>
-              <span class="stat-pill-value" style="color: var(--canopy);">
-                ₹{{ "{:,.0f}".format(cycle.pocket_money - cycle.fixed_expenses) }}
-              </span>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- ── Log Expense Form ── -->
-        <div class="card" style="padding: 1.6rem 2rem; margin-bottom: 1.5rem;">
-          <h3 style="font-size: 1.3rem; color: var(--canopy); margin-bottom: 1.2rem;">
-            ⚡ Log an Expense
-          </h3>
-          <form method="POST" action="/log_expense" style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end;">
-            <div class="form-group" style="flex: 1; min-width: 140px; margin-bottom: 0;">
-              <label class="form-label" for="amount">Amount (₹)</label>
-              <input
-                type="number"
-                id="amount"
-                name="amount"
-                class="form-input"
-                placeholder="e.g. 250"
-                min="1"
-                step="any"
-                required
-              />
-            </div>
-            <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.8rem; margin-bottom: 0;">
-              🔥 Log It
-            </button>
-          </form>
-        </div>
-
-        <!-- ── Expense History ── -->
-        <div class="card" style="padding: 1.6rem 2rem;">
-          <h3 style="font-size: 1.3rem; color: var(--canopy); margin-bottom: 1.2rem;">
-            📋 Expense History
-          </h3>
-
-          {% if expenses %}
-            <div class="meter-expenses">
-              {% for expense in expenses %}
-                <div class="expense-row">
-                  <span class="expense-name">
-                    <span class="expense-dot" style="background: var(--danger-orange);"></span>
-                    {{ expense.category }}
-                  </span>
-                  <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); margin-right: auto; padding-left: 1rem;">
-                    {{ expense.date.strftime('%d %b') }}
-                  </span>
-                  <span class="expense-amt">−₹{{ "{:,.0f}".format(expense.amount) }}</span>
-                </div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 1.5rem 0;">
-              🌿 No expenses logged yet. Stay frugal, survivor.
-            </p>
-          {% endif %}
-        </div>
-
-      {% else %}
-        <!-- No cycle set up yet -->
-        <div class="card" style="padding: 3rem 2rem; text-align: center;">
-          <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">🌿</span>
-          <h2 style="color: var(--canopy); margin-bottom: 0.6rem;">No Mission Active</h2>
-          <p style="color: var(--text-secondary); margin-bottom: 1.8rem;">
-            Set up this month's budget to start your survival mission.
-          </p>
-          <a href="/edit" class="btn btn-primary">⚙️ Set Up This Month</a>
-        </div>
-      {% endif %}
+      <div class="feature-card animate-up animate-up-2">
+        <div class="feature-icon">⚡</div>
+        <h3 class="feature-title">Log in 5 seconds</h3>
+        <p class="feature-body">Name, amount, category. Done. No friction between you and your data.</p>
+      </div>
 
     </div>
   </div>
+</section>
 
-</body>
-</html>
+<!-- ── Final CTA ─────────────────────────────────────────── -->
+<section class="landing-section">
+  <div class="landing-container landing-container--narrow">
+    <div class="final-cta animate-up">
+      <span class="final-cta-icon">🌿</span>
+      <h2 class="landing-title">Ready to survive?</h2>
+      <p class="landing-body">
+        Free forever. No ads. No nonsense. Just you and your budget,
+        fighting through the jungle one day at a time.
+      </p>
+      <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+        Create free account
+      </a>
+    </div>
+  </div>
+</section>
+
+<script>
+  const BUDGET = 30000;
+  let spent = 8700;
+
+  const fill   = document.getElementById('teaserFill');
+  const pctEl  = document.getElementById('teaserPct');
+  const status = document.getElementById('teaserStatus');
+
+  const STATES = [
+    { min: 60, color: '#639922', msg: 'Holding steady. Watch your rations.' },
+    { min: 30, color: '#EF9F27', msg: 'Danger zone. The jungle is closing in.' },
+    { min: 0,  color: '#E24B4A', msg: 'Critical. One bad day ends everything.' },
+  ];
+
+  function render() {
+    const pct = Math.max(0, Math.round(((BUDGET - spent) / BUDGET) * 100));
+    const s   = STATES.find(s => pct >= s.min) || STATES[STATES.length - 1];
+    fill.style.width           = pct + '%';
+    fill.style.backgroundColor = s.color;
+    pctEl.textContent          = pct + '%';
+    pctEl.style.color          = s.color;
+    status.textContent         = s.msg;
+    status.style.color         = s.color;
+  }
+
+  document.getElementById('teaserAdd').addEventListener('click', () => {
+    spent = Math.min(BUDGET, spent + 500);
+    render();
+  });
+  document.getElementById('teaserReset').addEventListener('click', () => {
+    spent = 8700;
+    render();
+  });
+
+  render();
+</script>
+{% endblock %}

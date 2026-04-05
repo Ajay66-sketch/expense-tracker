@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}500 — Something broke{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block content %}
+<div class="error-page">
+  <div class="error-code">500</div>
+  <h1 class="error-title">The server took damage</h1>
+  <p class="error-body">Something went wrong on our end. Try again in a moment.</p>
+  <a href="{{ url_for('index') }}" class="btn btn-primary">Back to safety</a>
+</div>
+{% endblock %}
