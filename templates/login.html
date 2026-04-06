@@ -1,164 +1,133 @@
-{# ============================================================
-   templates/login.html
-   Replace your current login template with this.
-   Preserves all existing Jinja2 logic (flash, form POST).
-   ============================================================ #}
 <!DOCTYPE html>
+<!--
+  SurviveTheMonth — templates/login.html
+  Fixed: form fields always visible, jungle dark theme, glass card styling
+-->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Log In — SurviveTheMonth 🌿</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>" />
+  <title>Log In 🌿 | SurviveTheMonth</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <style>
-    /* Login-specific decorative background */
-    .login-scene {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
-    }
-    .login-scene .orb {
-      position: absolute; border-radius: 50%;
-      background: radial-gradient(circle, rgba(76,175,80,.12) 0%, transparent 70%);
-    }
-    .stat-hint {
-      background: rgba(76,175,80,.08);
-      border: 1px solid rgba(76,175,80,.18);
-      border-radius: var(--radius-md);
-      padding: .85rem 1rem;
-      font-size: .825rem; color: var(--muted);
-      text-align: center;
-      margin-top: 1.5rem;
-    }
-    .stat-hint strong { color: var(--jungle-lime); }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 </head>
-<body class="login-wrap">
+<body class="auth-body">
 
-<!-- Decorative orbs -->
-<div class="login-scene" aria-hidden="true">
-  <div class="orb" style="width:500px;height:500px;top:-150px;right:-100px;"></div>
-  <div class="orb" style="width:350px;height:350px;bottom:-80px;left:-80px;"></div>
-</div>
+  <!-- Ambient jungle background blobs -->
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
 
-<!-- ── NAV ─────────────────────────────────────────────────── -->
-<nav>
-  <a class="nav-logo" href="/">🌿 SurviveTheMonth</a>
-  <div class="nav-links">
-    <a href="/demo">Try Demo</a>
-    <a href="/register" class="btn-nav-cta">Sign up free</a>
-  </div>
-</nav>
-
-<!-- ── FLASH MESSAGES ──────────────────────────────────────── -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <div class="flash-wrap">
-      {% for category, message in messages %}
-        <div class="flash {{ category }}">{{ message }}</div>
-      {% endfor %}
+  <!-- Navbar -->
+  <nav class="nav">
+    <a href="/" class="nav-brand">🌿 SurviveTheMonth</a>
+    <div class="nav-links">
+      <a href="/demo" class="nav-link">Try Demo</a>
+      <a href="/register" class="btn btn-outline btn-sm">Sign Up</a>
     </div>
-  {% endif %}
-{% endwith %}
+  </nav>
 
-<!-- ── LOGIN BODY ───────────────────────────────────────────── -->
-<div class="login-body" style="position:relative;z-index:1;">
-  <div class="login-card">
-
-    <div class="card">
+  <!-- Login Card -->
+  <main class="auth-main">
+    <div class="auth-card">
 
       <!-- Header -->
-      <div style="text-align:center;margin-bottom:2rem;">
-        <div style="font-size:2.5rem;margin-bottom:.75rem;">🌿</div>
-        <h1 class="display-headline" style="font-size:1.7rem;margin-bottom:.5rem;">
-          Welcome back, Survivor
-        </h1>
-        <p style="font-size:.9rem;color:var(--muted);">
-          The jungle waits. Check your meter.
-        </p>
+      <div class="auth-header">
+        <div class="auth-icon">🏕️</div>
+        <h1 class="auth-title">Welcome back, Survivor</h1>
+        <p class="auth-subtitle">The jungle waits. Log in to check your meter.</p>
       </div>
 
-      <!-- Login Form -->
-      <form method="POST" action="/login" id="login-form" novalidate>
-        {# Include CSRF token if your app uses Flask-WTF #}
-        {% if csrf_token is defined %}
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="flash flash-{{ category }}">
+                {{ '⚠️' if category == 'danger' else '✅' }} {{ message }}
+              </div>
+            {% endfor %}
+          </div>
         {% endif %}
+      {% endwith %}
 
-        <div class="form-group">
-          <label for="username">Username</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            class="form-input"
-            placeholder="your_survivor_name"
-            autocomplete="username"
-            required
-            autofocus
-          />
+      <!-- Login Form -->
+      <form method="POST" action="/login" class="auth-form" autocomplete="on">
+
+        <div class="field-group">
+          <label for="username" class="field-label">Username</label>
+          <div class="field-wrapper">
+            <span class="field-icon">👤</span>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              class="field-input"
+              placeholder="your_survivor_name"
+              required
+              autocomplete="username"
+            />
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="form-input"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            required
-          />
+        <div class="field-group">
+          <label for="password" class="field-label">Password</label>
+          <div class="field-wrapper">
+            <span class="field-icon">🔒</span>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="field-input"
+              placeholder="••••••••"
+              required
+              autocomplete="current-password"
+            />
+            <button type="button" class="toggle-pw" onclick="togglePassword('password', this)" aria-label="Show password">👁</button>
+          </div>
         </div>
 
-        <button
-          type="submit"
-          class="btn btn-primary btn-full"
-          id="submit-btn"
-          style="margin-top:.5rem;padding:.9rem;font-size:1rem;"
-        >
-          🌿 Enter the Jungle
+        <button type="submit" class="btn btn-primary btn-full">
+          <span>Enter the Jungle</span>
+          <span class="btn-arrow">→</span>
         </button>
+
       </form>
 
       <!-- Divider -->
-      <div class="login-divider">or</div>
+      <div class="auth-divider"><span>or</span></div>
 
       <!-- Demo link -->
-      <a href="/demo" class="btn btn-secondary btn-full" style="justify-content:center;padding:.8rem;font-size:.9rem;">
-        ⚡ Try Demo — no account needed
+      <a href="/demo" class="btn btn-ghost btn-full">
+        🎮 Try Demo — no account needed
       </a>
 
-      <!-- Footer links -->
-      <p style="text-align:center;margin-top:1.5rem;font-size:.85rem;color:var(--muted);">
-        New here?
-        <a href="/register" style="color:var(--jungle-lime);font-weight:600;">Create your free account</a>
+      <!-- Footer link -->
+      <p class="auth-footer">
+        New here? <a href="/register" class="auth-link">Create your free account</a>
       </p>
 
+      <!-- Social proof -->
+      <div class="auth-proof">
+        💡 Survivors who track daily spend 3× longer on their budget.
+      </div>
+
     </div>
+  </main>
 
-    <!-- Survival stat -->
-    <div class="stat-hint">
-      💡 Survivors who track daily spend <strong>3× longer</strong> on their budget.
-    </div>
-
-  </div>
-</div>
-
-<footer>
-  <p>🌿 SurviveTheMonth &nbsp;·&nbsp; Free forever</p>
-</footer>
-
-<script>
-  // Prevent double-submit / show loading state
-  const form = document.getElementById('login-form');
-  const btn  = document.getElementById('submit-btn');
-  form.addEventListener('submit', function() {
-    btn.textContent = '🌿 Entering the jungle…';
-    btn.disabled = true;
-    btn.style.opacity = '.7';
-  });
-</script>
+  <script>
+    function togglePassword(fieldId, btn) {
+      const input = document.getElementById(fieldId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+      } else {
+        input.type = 'password';
+        btn.textContent = '👁';
+      }
+    }
+  </script>
 
 </body>
 </html>

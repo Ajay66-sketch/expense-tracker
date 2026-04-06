@@ -1,266 +1,207 @@
-{# ============================================================
-   templates/register.html
-   New file — /register route, public, no login required.
-   Matches the survival theme of login.html exactly.
-   ============================================================ #}
 <!DOCTYPE html>
+<!--
+  SurviveTheMonth — templates/register.html
+  Improved: consistent with login, jungle themed, all fields properly styled
+-->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Join the Jungle — SurviveTheMonth 🌿</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>" />
+  <title>Join the Mission 🌿 | SurviveTheMonth</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <style>
-    .login-scene {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
-    }
-    .login-scene .orb {
-      position: absolute; border-radius: 50%;
-      background: radial-gradient(circle, rgba(76,175,80,.12) 0%, transparent 70%);
-    }
-    .stat-hint {
-      background: rgba(76,175,80,.08);
-      border: 1px solid rgba(76,175,80,.18);
-      border-radius: var(--radius-md);
-      padding: .85rem 1rem;
-      font-size: .825rem; color: var(--muted);
-      text-align: center;
-      margin-top: 1.5rem;
-    }
-    .stat-hint strong { color: var(--jungle-lime); }
-    .password-strength {
-      height: 4px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.08);
-      margin-top: .5rem;
-      overflow: hidden;
-    }
-    .password-strength-fill {
-      height: 100%; border-radius: 999px;
-      width: 0%; transition: width .3s, background .3s;
-    }
-    .strength-label {
-      font-size: .72rem; color: var(--muted);
-      margin-top: .3rem; min-height: 1em;
-      transition: color .3s;
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 </head>
-<body class="login-wrap">
+<body class="auth-body">
 
-<!-- Decorative orbs -->
-<div class="login-scene" aria-hidden="true">
-  <div class="orb" style="width:500px;height:500px;top:-150px;left:-100px;"></div>
-  <div class="orb" style="width:350px;height:350px;bottom:-80px;right:-80px;"></div>
-</div>
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
 
-<!-- ── NAV ─────────────────────────────────────────────────── -->
-<nav>
-  <a class="nav-logo" href="/">🌿 SurviveTheMonth</a>
-  <div class="nav-links">
-    <a href="/demo">Try Demo</a>
-    <a href="/login">Log in</a>
-  </div>
-</nav>
-
-<!-- ── FLASH MESSAGES ──────────────────────────────────────── -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <div class="flash-wrap">
-      {% for category, message in messages %}
-        <div class="flash {{ category }}">{{ message }}</div>
-      {% endfor %}
+  <!-- Navbar -->
+  <nav class="nav">
+    <a href="/" class="nav-brand">🌿 SurviveTheMonth</a>
+    <div class="nav-links">
+      <a href="/demo" class="nav-link">Try Demo</a>
+      <a href="/login" class="btn btn-outline btn-sm">Log In</a>
     </div>
-  {% endif %}
-{% endwith %}
+  </nav>
 
-<!-- ── REGISTER BODY ────────────────────────────────────────── -->
-<div class="login-body" style="position:relative;z-index:1;">
-  <div class="login-card">
-
-    <div class="card">
+  <!-- Register Card -->
+  <main class="auth-main">
+    <div class="auth-card auth-card--wide">
 
       <!-- Header -->
-      <div style="text-align:center;margin-bottom:2rem;">
-        <div style="font-size:2.5rem;margin-bottom:.75rem;">🌿</div>
-        <h1 class="display-headline" style="font-size:1.7rem;margin-bottom:.5rem;">
-          Enter the Jungle
-        </h1>
-        <p style="font-size:.9rem;color:var(--muted);">
-          Free forever. Your Survival Meter starts the moment you sign up.
-        </p>
+      <div class="auth-header">
+        <div class="auth-icon">🌿</div>
+        <h1 class="auth-title">Begin Your Survival</h1>
+        <p class="auth-subtitle">Set your budget. Survive the month. It's free, forever.</p>
       </div>
 
-      <!-- Register Form -->
-      <form method="POST" action="/register" id="register-form" novalidate>
-        {% if csrf_token is defined %}
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        {% endif %}
-
-        <div class="form-group">
-          <label for="username">Choose a Survivor Name</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            class="form-input"
-            placeholder="jungle_warrior_42"
-            autocomplete="username"
-            autocapitalize="none"
-            required
-            autofocus
-            minlength="3"
-            maxlength="32"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="budget">Monthly Budget (₹)</label>
-          <input
-            type="number"
-            id="budget"
-            name="budget"
-            class="form-input"
-            placeholder="e.g. 30000"
-            autocomplete="off"
-            required
-            min="100"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="password">Set a Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="form-input"
-            placeholder="Make it strong — the jungle is unforgiving"
-            autocomplete="new-password"
-            required
-            minlength="6"
-          />
-          <div class="password-strength">
-            <div class="password-strength-fill" id="strength-fill"></div>
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="flash flash-{{ category }}">
+                {{ '⚠️' if category == 'danger' else '✅' }} {{ message }}
+              </div>
+            {% endfor %}
           </div>
-          <div class="strength-label" id="strength-label"></div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Register Form -->
+      <form method="POST" action="/register" class="auth-form" autocomplete="on">
+
+        <div class="field-group">
+          <label for="username" class="field-label">Username</label>
+          <div class="field-wrapper">
+            <span class="field-icon">👤</span>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              class="field-input"
+              placeholder="choose_your_callsign"
+              required
+              autocomplete="username"
+            />
+          </div>
+          <span class="field-hint">This is your survivor identity. Make it memorable.</span>
         </div>
 
-        <div class="form-group">
-          <label for="confirm_password">Confirm Password</label>
-          <input
-            type="password"
-            id="confirm_password"
-            name="confirm_password"
-            class="form-input"
-            placeholder="••••••••"
-            autocomplete="new-password"
-            required
-          />
-          <div class="strength-label" id="match-label"></div>
+        <div class="field-group">
+          <label for="monthly_budget" class="field-label">
+            Monthly Budget
+            <span class="field-label-optional">(optional)</span>
+          </label>
+          <div class="field-wrapper">
+            <span class="field-icon">💰</span>
+            <input
+              type="number"
+              id="monthly_budget"
+              name="monthly_budget"
+              class="field-input"
+              placeholder="e.g. 30000"
+              min="0"
+              step="100"
+              autocomplete="off"
+            />
+          </div>
+          <span class="field-hint">Your monthly ration supply. You can change this anytime.</span>
         </div>
 
-        <button
-          type="submit"
-          class="btn btn-primary btn-full"
-          id="submit-btn"
-          style="margin-top:.5rem;padding:.9rem;font-size:1rem;"
-        >
-          🌿 Start Surviving — It's Free
+        <div class="field-row">
+
+          <div class="field-group">
+            <label for="password" class="field-label">Password</label>
+            <div class="field-wrapper">
+              <span class="field-icon">🔒</span>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="field-input"
+                placeholder="••••••••"
+                required
+                autocomplete="new-password"
+              />
+              <button type="button" class="toggle-pw" onclick="togglePassword('password', this)" aria-label="Show password">👁</button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="confirm_password" class="field-label">Confirm Password</label>
+            <div class="field-wrapper">
+              <span class="field-icon">🔐</span>
+              <input
+                type="password"
+                id="confirm_password"
+                name="confirm_password"
+                class="field-input"
+                placeholder="••••••••"
+                required
+                autocomplete="new-password"
+              />
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Password strength bar -->
+        <div class="pw-strength-bar">
+          <div class="pw-strength-fill" id="pwStrengthFill"></div>
+        </div>
+        <span class="pw-strength-label" id="pwStrengthLabel"></span>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          <span>Start Surviving 🌿</span>
+          <span class="btn-arrow">→</span>
         </button>
+
+        <p class="auth-terms">
+          By joining you agree to track your budget and survive the month.
+          No spam. No credit card. Just you vs. your wallet.
+        </p>
+
       </form>
 
       <!-- Divider -->
-      <div class="login-divider">or</div>
+      <div class="auth-divider"><span>or</span></div>
 
-      <!-- Demo link -->
-      <a href="/demo" class="btn btn-secondary btn-full" style="justify-content:center;padding:.8rem;font-size:.9rem;">
-        ⚡ Try Demo first — no account needed
+      <a href="/demo" class="btn btn-ghost btn-full">
+        🎮 Try Demo first — no account needed
       </a>
 
-      <!-- Footer links -->
-      <p style="text-align:center;margin-top:1.5rem;font-size:.85rem;color:var(--muted);">
-        Already a survivor?
-        <a href="/login" style="color:var(--jungle-lime);font-weight:600;">Log in here</a>
+      <p class="auth-footer">
+        Already a survivor? <a href="/login" class="auth-link">Log back in</a>
       </p>
 
+      <!-- Trust badges -->
+      <div class="trust-badges">
+        <span class="badge">✅ Free forever</span>
+        <span class="badge">🔒 Secure</span>
+        <span class="badge">⚡ 60-second setup</span>
+      </div>
+
     </div>
+  </main>
 
-    <!-- Reassurance hint -->
-    <div class="stat-hint">
-      🔒 No credit card &nbsp;·&nbsp; No ads &nbsp;·&nbsp; <strong>Free forever</strong>
-    </div>
-
-  </div>
-</div>
-
-<footer>
-  <p>🌿 SurviveTheMonth &nbsp;·&nbsp; Free forever</p>
-</footer>
-
-<script>
-  // ── Password strength meter ──────────────────────────────
-  const pwdInput     = document.getElementById('password');
-  const confirmInput = document.getElementById('confirm_password');
-  const fill         = document.getElementById('strength-fill');
-  const label        = document.getElementById('strength-label');
-  const matchLabel   = document.getElementById('match-label');
-
-  function getStrength(pwd) {
-    if (!pwd) return { score: 0, text: '', color: '' };
-    let score = 0;
-    if (pwd.length >= 8)             score++;
-    if (/[A-Z]/.test(pwd))           score++;
-    if (/[0-9]/.test(pwd))           score++;
-    if (/[^A-Za-z0-9]/.test(pwd))   score++;
-    const levels = [
-      { text: '',                color: '' },
-      { text: 'Weak — easy prey 🐾',    color: '#e83f3f' },
-      { text: 'Fair — stay alert ⚠️',   color: '#f5c842' },
-      { text: 'Strong — solid defense 🛡️', color: '#4caf50' },
-      { text: 'Unbreakable — apex survivor 🏆', color: '#a8e063' },
-    ];
-    return { score, ...levels[score] };
-  }
-
-  pwdInput.addEventListener('input', () => {
-    const { score, text, color } = getStrength(pwdInput.value);
-    fill.style.width      = (score * 25) + '%';
-    fill.style.background = color;
-    label.textContent     = text;
-    label.style.color     = color;
-    checkMatch();
-  });
-
-  function checkMatch() {
-    if (!confirmInput.value) { matchLabel.textContent = ''; return; }
-    if (pwdInput.value === confirmInput.value) {
-      matchLabel.textContent = '✓ Passwords match';
-      matchLabel.style.color = 'var(--jungle-lime)';
-    } else {
-      matchLabel.textContent = '✗ Passwords don\'t match';
-      matchLabel.style.color = 'var(--danger-red)';
+  <script>
+    function togglePassword(fieldId, btn) {
+      const input = document.getElementById(fieldId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+      } else {
+        input.type = 'password';
+        btn.textContent = '👁';
+      }
     }
-  }
-  confirmInput.addEventListener('input', checkMatch);
 
-  // ── Prevent double-submit ────────────────────────────────
-  const form = document.getElementById('register-form');
-  const btn  = document.getElementById('submit-btn');
-  form.addEventListener('submit', function(e) {
-    if (pwdInput.value !== confirmInput.value) {
-      e.preventDefault();
-      matchLabel.textContent = '✗ Passwords must match before you enter the jungle';
-      matchLabel.style.color = 'var(--danger-red)';
-      confirmInput.focus();
-      return;
-    }
-    btn.textContent = '🌿 Setting up your jungle…';
-    btn.disabled = true;
-    btn.style.opacity = '.7';
-  });
-</script>
+    // Password strength indicator
+    const pwInput = document.getElementById('password');
+    const fill = document.getElementById('pwStrengthFill');
+    const label = document.getElementById('pwStrengthLabel');
+
+    pwInput.addEventListener('input', () => {
+      const val = pwInput.value;
+      let strength = 0;
+      if (val.length >= 8) strength++;
+      if (/[A-Z]/.test(val)) strength++;
+      if (/[0-9]/.test(val)) strength++;
+      if (/[^a-zA-Z0-9]/.test(val)) strength++;
+
+      const levels = ['', 'Weak', 'Fair', 'Strong', 'Fort Knox 🏰'];
+      const colors = ['', '#e74c3c', '#f39c12', '#27ae60', '#2ecc71'];
+      const widths = ['0%', '25%', '50%', '75%', '100%'];
+
+      fill.style.width = widths[strength] || '0%';
+      fill.style.background = colors[strength] || 'transparent';
+      label.textContent = val.length > 0 ? (levels[strength] || '') : '';
+    });
+  </script>
 
 </body>
 </html>

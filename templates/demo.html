@@ -1,426 +1,370 @@
-{# ============================================================
-   templates/demo.html
-   New file — public /demo route, no login required.
-   ============================================================ #}
 <!DOCTYPE html>
+<!--
+  SurviveTheMonth — templates/demo.html
+  New: animated survival meter, sample expenses, toast feedback, CTA to register
+-->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Demo — SurviveTheMonth 🌿</title>
-  <meta name="description" content="Try the SurviveTheMonth survival meter without signing up. Watch your budget health bar change in real time." />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>" />
+  <title>Demo — Budget Mission 🌿 | SurviveTheMonth</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <style>
-    /* Demo-specific styles */
-    .demo-header {
-      text-align: center;
-      padding: 2.5rem 1.5rem 1.5rem;
-      position: relative; z-index: 1;
-    }
-    .demo-month {
-      font-family: var(--font-display);
-      font-size: 1.5rem; font-weight: 800;
-      color: var(--off-white);
-      margin: .25rem 0 .5rem;
-    }
-    .demo-sub { font-size: .875rem; color: var(--muted); }
-
-    /* Quick-add expense panel */
-    .quick-add {
-      background: rgba(255,255,255,.03);
-      border: 1px dashed rgba(76,175,80,.25);
-      border-radius: var(--radius-lg);
-      padding: 1.25rem;
-      margin-bottom: 1rem;
-    }
-    .quick-add-title {
-      font-family: var(--font-display);
-      font-size: .72rem; font-weight: 700; letter-spacing: .1em;
-      text-transform: uppercase; color: var(--muted);
-      margin-bottom: .75rem;
-    }
-    .cat-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: .5rem;
-    }
-    @media (max-width: 400px) { .cat-grid { grid-template-columns: repeat(2,1fr); } }
-
-    .cat-btn {
-      background: rgba(255,255,255,.04);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius-md);
-      color: var(--off-white);
-      cursor: pointer;
-      padding: .65rem .5rem;
-      text-align: center;
-      transition: background .15s, border-color .15s, transform .12s;
-      font-family: var(--font-body);
-    }
-    .cat-btn:hover {
-      background: rgba(76,175,80,.12);
-      border-color: rgba(76,175,80,.4);
-      transform: translateY(-2px);
-    }
-    .cat-btn:active { transform: scale(.97); }
-    .cat-btn .cat-emoji { display:block; font-size:1.3rem; }
-    .cat-btn .cat-name { display:block; font-size:.72rem; font-weight:600; color:var(--muted); margin-top:.25rem; }
-    .cat-btn .cat-cost { display:block; font-size:.78rem; font-weight:700; color:var(--accent-yellow); }
-
-    /* New expense animation */
-    @keyframes slideIn {
-      from { opacity:0; transform:translateX(-10px); }
-      to   { opacity:1; transform:translateX(0); }
-    }
-    .expense-item.new { animation: slideIn .35s ease; }
-
-    /* Shake animation when meter hits danger */
-    @keyframes shake {
-      0%,100%{transform:translateX(0)}
-      20%{transform:translateX(-5px)}
-      40%{transform:translateX(5px)}
-      60%{transform:translateX(-4px)}
-      80%{transform:translateX(4px)}
-    }
-    .shake { animation: shake .4s ease; }
-
-    /* CTA nudge */
-    .cta-nudge {
-      background: linear-gradient(135deg, var(--jungle-deep), var(--jungle-mid));
-      border: 1px solid rgba(76,175,80,.3);
-      border-radius: var(--radius-xl);
-      padding: 2.5rem 1.5rem;
-      text-align: center;
-      position: relative; overflow: hidden;
-      margin-top: .5rem;
-    }
-    .cta-nudge::before {
-      content: '🌿';
-      position: absolute; bottom: -1.5rem; right: 1rem;
-      font-size: 7rem; opacity: .07;
-      transform: rotate(-10deg);
-      pointer-events: none;
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 </head>
-<body>
+<body class="demo-body">
 
-<!-- Toast -->
-<div id="toast" role="alert" aria-live="polite"></div>
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
 
-<!-- ── NAV ─────────────────────────────────────────────────── -->
-<nav>
-  <a class="nav-logo" href="/">🌿 SurviveTheMonth</a>
-  <div class="nav-links">
-    <a href="/login">Log in</a>
-    <a href="/register" class="btn-nav-cta">Sign up free</a>
+  <!-- Demo Banner -->
+  <div class="demo-banner">
+    🎮 <strong>Demo Mode</strong> — Sample account. Interact freely. Nothing is saved.
+    <a href="/register" class="demo-banner-cta">Get your real meter →</a>
   </div>
-</nav>
 
-<!-- ── DEMO HEADER ──────────────────────────────────────────── -->
-<div class="demo-header">
-  <span class="badge badge-demo">🧪 Demo Mode — nothing is saved</span>
-  <div class="demo-month">April 2025 — Budget Mission</div>
-  <p class="demo-sub">Interact freely. Add expenses and watch your meter react.</p>
-</div>
-
-<!-- ── DASHBOARD ────────────────────────────────────────────── -->
-<div style="padding:0 1.25rem 1.5rem;position:relative;z-index:1;">
-  <div class="demo-layout">
-
-    <!-- LEFT COLUMN: Meter + Stats + Quick Add -->
-    <div style="display:flex;flex-direction:column;gap:1rem;">
-
-      <!-- Survival Meter Card -->
-      <div class="meter-wrap" id="meter-card">
-        <div class="meter-label">
-          <span class="meter-title">⚔️ Survival Meter</span>
-          <span class="meter-pct safe" id="meter-pct">68%</span>
-        </div>
-
-        <div class="meter-bar-track" id="meter-track">
-          <div class="meter-bar-fill" id="meter-bar" style="width:68%;background:var(--meter-safe);"></div>
-        </div>
-
-        <p class="meter-status safe" id="meter-status">Holding steady. Watch your rations. 🌿</p>
-
-        <!-- Budget stats -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-label">Budget</div>
-            <div class="stat-value" id="stat-budget">₹30,000</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Spent</div>
-            <div class="stat-value" id="stat-spent" style="color:var(--accent-yellow);">₹9,600</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Remaining</div>
-            <div class="stat-value" id="stat-remaining" style="color:var(--jungle-lime);">₹20,400</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Days Left</div>
-            <div class="stat-value" id="stat-days">17</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Add Panel -->
-      <div class="quick-add">
-        <div class="quick-add-title">⚡ Log Sample Expense</div>
-        <div class="cat-grid">
-          <button class="cat-btn" onclick="addExpense('Rations',   'Food & Groceries', '🥩', 320)">
-            <span class="cat-emoji">🥩</span>
-            <span class="cat-name">Rations</span>
-            <span class="cat-cost">₹320</span>
-          </button>
-          <button class="cat-btn" onclick="addExpense('Shelter',   'Rent & Housing',   '🏕️', 1200)">
-            <span class="cat-emoji">🏕️</span>
-            <span class="cat-name">Shelter</span>
-            <span class="cat-cost">₹1,200</span>
-          </button>
-          <button class="cat-btn" onclick="addExpense('Tools',     'Subscriptions',    '🔧', 499)">
-            <span class="cat-emoji">🔧</span>
-            <span class="cat-name">Tools</span>
-            <span class="cat-cost">₹499</span>
-          </button>
-          <button class="cat-btn" onclick="addExpense('Expedition','Transport',         '🚌', 220)">
-            <span class="cat-emoji">🚌</span>
-            <span class="cat-name">Expedition</span>
-            <span class="cat-cost">₹220</span>
-          </button>
-          <button class="cat-btn" onclick="addExpense('Medicine',  'Health',            '💊', 350)">
-            <span class="cat-emoji">💊</span>
-            <span class="cat-name">Medicine</span>
-            <span class="cat-cost">₹350</span>
-          </button>
-          <button class="cat-btn" onclick="addExpense('Leisure',   'Entertainment',     '🎯', 600)">
-            <span class="cat-emoji">🎯</span>
-            <span class="cat-name">Leisure</span>
-            <span class="cat-cost">₹600</span>
-          </button>
-        </div>
-      </div>
-
+  <!-- Navbar -->
+  <nav class="nav">
+    <a href="/" class="nav-brand">🌿 SurviveTheMonth</a>
+    <div class="nav-links">
+      <a href="/login" class="nav-link">Log In</a>
+      <a href="/register" class="btn btn-primary btn-sm">Sign Up Free</a>
     </div>
+  </nav>
 
-    <!-- RIGHT COLUMN: Expense log + CTA -->
-    <div style="display:flex;flex-direction:column;gap:1rem;">
+  <!-- Toast container -->
+  <div id="toastContainer" class="toast-container"></div>
 
-      <!-- Expense Log Card -->
-      <div class="card" style="flex:1;">
-        <div class="expense-log">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;">
-            <span class="expense-log-title">📋 Expense Log</span>
-            <span id="expense-count" style="font-size:.75rem;color:var(--muted);font-weight:600;">5 entries</span>
+  <!-- Main Dashboard -->
+  <main class="demo-main">
+
+    <!-- Page header -->
+    <header class="dash-header">
+      <div>
+        <p class="dash-month" id="demoMonth">April 2025 — Budget Mission</p>
+        <h1 class="dash-title">Survival Dashboard</h1>
+      </div>
+      <div class="dash-status" id="dashStatus">
+        <span class="status-dot status-green"></span>
+        <span id="statusText">Holding steady</span>
+      </div>
+    </header>
+
+    <!-- Grid layout -->
+    <div class="demo-grid">
+
+      <!-- ===== SURVIVAL METER ===== -->
+      <section class="card card-meter">
+        <div class="meter-label-row">
+          <span class="card-eyebrow">🔋 Survival Meter</span>
+          <span class="meter-pct" id="meterPct">68%</span>
+        </div>
+
+        <!-- The meter track -->
+        <div class="meter-track" aria-label="Survival meter">
+          <div class="meter-fill" id="meterFill" style="width: 68%"></div>
+          <!-- Danger zones -->
+          <div class="meter-zone zone-danger" style="left:0;width:20%"></div>
+          <div class="meter-zone zone-warn" style="left:20%;width:20%"></div>
+        </div>
+
+        <div class="meter-legend">
+          <span class="leg-item leg-danger">💀 Critical</span>
+          <span class="leg-item leg-warn">⚠️ Warning</span>
+          <span class="leg-item leg-safe">✅ Safe</span>
+        </div>
+
+        <p class="meter-mood" id="meterMood">Holding steady. Watch your rations. 🌿</p>
+
+        <!-- Stats row -->
+        <div class="stats-row">
+          <div class="stat">
+            <span class="stat-value" id="statBudget">₹30,000</span>
+            <span class="stat-label">Budget</span>
           </div>
-          <div id="expense-list">
-            <!-- Seed expenses -->
-            <div class="expense-item">
-              <div class="expense-icon">🥩</div>
-              <div class="expense-info">
-                <div class="expense-cat">Rations</div>
-                <div class="expense-sub">Food &amp; Groceries · Apr 1</div>
-              </div>
-              <div class="expense-amount">₹4,200</div>
-            </div>
-            <div class="expense-item">
-              <div class="expense-icon">🏕️</div>
-              <div class="expense-info">
-                <div class="expense-cat">Shelter</div>
-                <div class="expense-sub">Rent &amp; Housing · Apr 1</div>
-              </div>
-              <div class="expense-amount">₹12,000</div>
-            </div>
-            <div class="expense-item">
-              <div class="expense-icon">🔧</div>
-              <div class="expense-info">
-                <div class="expense-cat">Tools</div>
-                <div class="expense-sub">Subscriptions · Apr 3</div>
-              </div>
-              <div class="expense-amount">₹1,850</div>
-            </div>
-            <div class="expense-item">
-              <div class="expense-icon">💊</div>
-              <div class="expense-info">
-                <div class="expense-cat">Medicine</div>
-                <div class="expense-sub">Health · Apr 5</div>
-              </div>
-              <div class="expense-amount">₹680</div>
-            </div>
-            <div class="expense-item">
-              <div class="expense-icon">🚌</div>
-              <div class="expense-info">
-                <div class="expense-cat">Expedition</div>
-                <div class="expense-sub">Transport · Apr 7</div>
-              </div>
-              <div class="expense-amount">₹870</div>
-            </div>
+          <div class="stat">
+            <span class="stat-value" id="statSpent">₹9,600</span>
+            <span class="stat-label">Spent</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="statRemaining">₹20,400</span>
+            <span class="stat-label">Remaining</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="statDays">17</span>
+            <span class="stat-label">Days left</span>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- CTA Nudge -->
-      <div class="cta-nudge">
-        <h2 class="display-headline" style="font-size:1.35rem;margin-bottom:.6rem;">
-          Ready to track your real month? 🌿
-        </h2>
-        <p style="font-size:.875rem;color:var(--muted);max-width:300px;margin:0 auto 1.5rem;">
-          Create a free account and your real Survival Meter starts breathing. Takes 60 seconds.
+      <!-- ===== LOG EXPENSE ===== -->
+      <section class="card card-log">
+        <span class="card-eyebrow">⚡ Quick Log</span>
+        <h2 class="card-title">Drop a Ration</h2>
+
+        <div class="log-form">
+          <div class="field-group">
+            <label class="field-label">Category</label>
+            <div class="category-chips" id="categoryChips">
+              <button class="chip chip-active" data-cat="Rations" data-emoji="🍖">🍖 Rations</button>
+              <button class="chip" data-cat="Shelter" data-emoji="🏕️">🏕️ Shelter</button>
+              <button class="chip" data-cat="Tools" data-emoji="🔧">🔧 Tools</button>
+              <button class="chip" data-cat="Medicine" data-emoji="💊">💊 Medicine</button>
+              <button class="chip" data-cat="Expedition" data-emoji="🚗">🚗 Expedition</button>
+              <button class="chip" data-cat="Intel" data-emoji="📡">📡 Intel</button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="expAmount" class="field-label">Amount (₹)</label>
+            <div class="field-wrapper">
+              <span class="field-icon">₹</span>
+              <input
+                type="number"
+                id="expAmount"
+                class="field-input"
+                placeholder="500"
+                min="1"
+                step="1"
+              />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="expDesc" class="field-label">Note <span class="field-label-optional">(optional)</span></label>
+            <div class="field-wrapper">
+              <span class="field-icon">📝</span>
+              <input
+                type="text"
+                id="expDesc"
+                class="field-input"
+                placeholder="e.g. Weekly groceries"
+              />
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-full" id="logBtn" onclick="logExpense()">
+            <span>Log Expense 🔥</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ===== EXPENSE LIST ===== -->
+      <section class="card card-expenses">
+        <div class="card-header-row">
+          <span class="card-eyebrow">📋 Expense Log</span>
+          <span class="exp-count" id="expCount">5 entries</span>
+        </div>
+
+        <ul class="expense-list" id="expenseList">
+          <li class="expense-item" data-amount="4200">
+            <div class="exp-icon" style="background: #2d6a4f;">🍖</div>
+            <div class="exp-info">
+              <span class="exp-name">Rations</span>
+              <span class="exp-sub">Food &amp; Groceries · May 1</span>
+            </div>
+            <span class="exp-amount">₹4,200</span>
+          </li>
+          <li class="expense-item" data-amount="12000">
+            <div class="exp-icon" style="background: #1b4332;">🏕️</div>
+            <div class="exp-info">
+              <span class="exp-name">Shelter</span>
+              <span class="exp-sub">Rent &amp; Housing · May 1</span>
+            </div>
+            <span class="exp-amount">₹12,000</span>
+          </li>
+          <li class="expense-item" data-amount="1850">
+            <div class="exp-icon" style="background: #40916c;">🔧</div>
+            <div class="exp-info">
+              <span class="exp-name">Tools</span>
+              <span class="exp-sub">Subscriptions · May 3</span>
+            </div>
+            <span class="exp-amount">₹1,850</span>
+          </li>
+          <li class="expense-item" data-amount="680">
+            <div class="exp-icon" style="background: #52b788;">💊</div>
+            <div class="exp-info">
+              <span class="exp-name">Medicine</span>
+              <span class="exp-sub">Health · May 5</span>
+            </div>
+            <span class="exp-amount">₹680</span>
+          </li>
+          <li class="expense-item" data-amount="870">
+            <div class="exp-icon" style="background: #74c69d;">🚗</div>
+            <div class="exp-info">
+              <span class="exp-name">Expedition</span>
+              <span class="exp-sub">Transport · May 7</span>
+            </div>
+            <span class="exp-amount">₹870</span>
+          </li>
+        </ul>
+      </section>
+
+    </div><!-- /demo-grid -->
+
+    <!-- CTA Section -->
+    <section class="demo-cta-section">
+      <div class="demo-cta-card">
+        <div class="demo-cta-emoji">🌿</div>
+        <h2 class="demo-cta-title">Ready to survive your real month?</h2>
+        <p class="demo-cta-sub">
+          Create a free account and watch your own Survival Meter breathe.
+          It takes 60 seconds.
         </p>
-        <div style="display:flex;flex-direction:column;gap:.75rem;align-items:center;">
-          <a href="/register" class="btn btn-primary" style="width:100%;justify-content:center;max-width:280px;">
-            🌿 Start surviving — it's free
-          </a>
-          <a href="/login" style="font-size:.8rem;color:var(--muted);">
-            I already have an account →
-          </a>
+        <div class="demo-cta-buttons">
+          <a href="/register" class="btn btn-primary btn-lg">Start Surviving — it's free</a>
+          <a href="/login" class="btn btn-ghost">I already have an account</a>
         </div>
       </div>
+    </section>
 
-    </div>
-  </div>
-</div>
+  </main>
 
-<footer>
-  <p>🌿 SurviveTheMonth &nbsp;·&nbsp; Demo mode — no data is saved &nbsp;·&nbsp;
-    <a href="/register">Create free account</a>
-  </p>
-</footer>
-
-<!-- ── DEMO JS ──────────────────────────────────────────────── -->
-<script>
-  // State
-  const BUDGET    = 30000;
-  let spent       = 9600;
-  let entryCount  = 5;
-
-  // Toast messages by zone
-  const toastMessages = {
-    safe:   [
-      'Meter updated! You survived another day 🔥',
-      'Logged! Still in the safe zone. Keep it up 🌿',
-      'Nice. Meter holding steady ✅',
-    ],
-    warn:   [
-      'Getting risky out there… ⚠️',
-      'Budget tightening. Spend wisely 🟡',
-      'Caution zone. Every rupee matters now ⚠️',
-    ],
-    danger: [
-      'DANGER. The jungle is closing in 🔴',
-      'Critical level. Ramen only from here 💀',
-      'Meter in the red. Surviving by a thread 🚨',
-    ],
-  };
-
-  function getZone(pct) {
-    if (pct > 60) return 'safe';
-    if (pct > 25) return 'warn';
-    return 'danger';
-  }
-
-  function updateMeter() {
-    const remaining = Math.max(0, BUDGET - spent);
-    const pct       = Math.round((remaining / BUDGET) * 100);
-    const zone      = getZone(pct);
-
-    const pctEl      = document.getElementById('meter-pct');
-    const barEl      = document.getElementById('meter-bar');
-    const trackEl    = document.getElementById('meter-track');
-    const statusEl   = document.getElementById('meter-status');
-    const spentEl    = document.getElementById('stat-spent');
-    const remEl      = document.getElementById('stat-remaining');
-
-    // Update percentage and bar
-    pctEl.textContent   = pct + '%';
-    barEl.style.width   = pct + '%';
-
-    // Clear old classes
-    ['safe','warn','danger'].forEach(c => {
-      pctEl.classList.remove(c);
-      statusEl.classList.remove(c);
-    });
-    trackEl.classList.remove('pulse-glow');
-
-    // Apply zone styles
-    const barColors = { safe:'var(--meter-safe)', warn:'var(--meter-warn)', danger:'var(--meter-danger)' };
-    barEl.style.background = barColors[zone];
-    pctEl.classList.add(zone);
-    statusEl.classList.add(zone);
-
-    if (zone === 'danger') trackEl.classList.add('pulse-glow');
-
-    const statusTexts = {
-      safe:   pct > 80 ? 'You\'re thriving, Survivor! 🌿' : 'Holding steady. Watch your rations. 🌿',
-      warn:   pct > 40 ? 'Budget tightening. Tread carefully. ⚠️' : 'Deep in the jungle. Every coin counts. ⚠️',
-      danger: pct <= 5 ? 'GAME OVER? Never. Fight back. 💀' : 'CRITICAL: Danger zone. Ramen only. 🔴',
+  <script>
+    /* ─── State ─────────────────────────────────────── */
+    const state = {
+      budget: 30000,
+      spent: 9600,
+      days: 17,
+      selectedCat: 'Rations',
+      selectedEmoji: '🍖',
     };
-    statusEl.textContent = statusTexts[zone];
 
-    // Update stats
-    spentEl.textContent   = '₹' + spent.toLocaleString('en-IN');
-    remEl.textContent     = '₹' + remaining.toLocaleString('en-IN');
+    /* ─── Category chip selection ────────────────────── */
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('chip-active'));
+        chip.classList.add('chip-active');
+        state.selectedCat = chip.dataset.cat;
+        state.selectedEmoji = chip.dataset.emoji;
+      });
+    });
 
-    // Shake card on danger entry
-    const card = document.getElementById('meter-card');
-    if (zone === 'danger') {
-      card.classList.remove('shake');
-      void card.offsetWidth; // reflow
-      card.classList.add('shake');
+    /* ─── Meter update ───────────────────────────────── */
+    function updateMeter(pct) {
+      const fill = document.getElementById('meterFill');
+      const pctEl = document.getElementById('meterPct');
+      const mood = document.getElementById('meterMood');
+      const statusDot = document.querySelector('.status-dot');
+      const statusText = document.getElementById('statusText');
+
+      fill.style.width = pct + '%';
+      pctEl.textContent = Math.round(pct) + '%';
+
+      // Color transitions
+      if (pct >= 50) {
+        fill.style.background = 'linear-gradient(90deg, #52b788, #2d6a4f)';
+        fill.style.boxShadow = '0 0 20px rgba(82,183,136,0.5)';
+        mood.textContent = 'Holding steady. Watch your rations. 🌿';
+        statusDot.className = 'status-dot status-green';
+        statusText.textContent = 'Holding steady';
+      } else if (pct >= 25) {
+        fill.style.background = 'linear-gradient(90deg, #f9c74f, #f3722c)';
+        fill.style.boxShadow = '0 0 20px rgba(249,199,79,0.5)';
+        mood.textContent = 'Resources thinning. Reduce non-essentials. ⚠️';
+        statusDot.className = 'status-dot status-yellow';
+        statusText.textContent = 'Warning zone';
+      } else {
+        fill.style.background = 'linear-gradient(90deg, #e63946, #9d0208)';
+        fill.style.boxShadow = '0 0 30px rgba(230,57,70,0.7)';
+        mood.textContent = 'CRITICAL. Cut everything now. You\'re almost done. 💀';
+        statusDot.className = 'status-dot status-red';
+        statusText.textContent = 'CRITICAL';
+        fill.style.animation = 'pulse-danger 0.8s ease infinite alternate';
+      }
     }
-  }
 
-  function addExpense(cat, sub, emoji, amount) {
-    spent += amount;
-    entryCount++;
+    /* ─── Stats update ──────────────────────────────── */
+    function updateStats() {
+      const remaining = state.budget - state.spent;
+      const pct = (remaining / state.budget) * 100;
+      document.getElementById('statBudget').textContent = '₹' + state.budget.toLocaleString('en-IN');
+      document.getElementById('statSpent').textContent = '₹' + state.spent.toLocaleString('en-IN');
+      document.getElementById('statRemaining').textContent = '₹' + remaining.toLocaleString('en-IN');
+      document.getElementById('statDays').textContent = state.days;
+      updateMeter(Math.max(0, pct));
+    }
 
-    const remaining = Math.max(0, BUDGET - spent);
-    const pct       = Math.round((remaining / BUDGET) * 100);
-    const zone      = getZone(pct);
+    /* ─── Toast ─────────────────────────────────────── */
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast toast-' + type;
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(() => toast.classList.add('toast-visible'), 10);
+      setTimeout(() => {
+        toast.classList.remove('toast-visible');
+        setTimeout(() => toast.remove(), 400);
+      }, 3500);
+    }
 
-    // Pick random toast
-    const msgs = toastMessages[zone];
-    showToast(msgs[Math.floor(Math.random() * msgs.length)]);
+    /* ─── Log expense ────────────────────────────────── */
+    function logExpense() {
+      const amountEl = document.getElementById('expAmount');
+      const descEl = document.getElementById('expDesc');
+      const amount = parseFloat(amountEl.value);
 
-    // Add row to log
-    const today = new Date();
-    const dateStr = today.toLocaleDateString('en-IN', { month:'short', day:'numeric' });
-    const list = document.getElementById('expense-list');
-    const item = document.createElement('div');
-    item.className = 'expense-item new';
-    item.innerHTML = `
-      <div class="expense-icon">${emoji}</div>
-      <div class="expense-info">
-        <div class="expense-cat">${cat}</div>
-        <div class="expense-sub">${sub} · ${dateStr}</div>
-      </div>
-      <div class="expense-amount">₹${amount.toLocaleString('en-IN')}</div>
-    `;
-    list.prepend(item);
+      if (!amount || amount <= 0) {
+        showToast('⚠️ Enter a valid amount first.', 'warn');
+        amountEl.focus();
+        return;
+      }
 
-    // Update count
-    document.getElementById('expense-count').textContent = entryCount + ' entries';
+      state.spent += amount;
+      const remaining = state.budget - state.spent;
+      const pct = (remaining / state.budget) * 100;
 
-    // Update meter
-    updateMeter();
-  }
+      // Determine toast message
+      let toastMsg;
+      if (pct >= 50) toastMsg = 'Meter updated! You survived another day 🔥';
+      else if (pct >= 25) toastMsg = 'Ration logged. Tread carefully, Survivor ⚠️';
+      else if (pct > 0) toastMsg = 'CRITICAL RATION ALERT. You\'re in the danger zone 💀';
+      else toastMsg = 'Budget depleted. Mission failed. 💸';
 
-  function showToast(msg) {
-    const toast = document.getElementById('toast');
-    toast.textContent = msg;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3200);
-  }
+      showToast(toastMsg, pct >= 50 ? 'success' : pct >= 25 ? 'warn' : 'danger');
 
-  // Animate meter in on load
-  window.addEventListener('load', () => {
-    const bar = document.getElementById('meter-bar');
-    bar.style.width = '0%';
-    setTimeout(() => { bar.style.width = '68%'; }, 200);
-  });
-</script>
+      // Add to expense list
+      const list = document.getElementById('expenseList');
+      const li = document.createElement('li');
+      li.className = 'expense-item expense-item--new';
+      li.dataset.amount = amount;
+      const today = new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+      li.innerHTML = `
+        <div class="exp-icon" style="background: #40916c;">${state.selectedEmoji}</div>
+        <div class="exp-info">
+          <span class="exp-name">${state.selectedCat}</span>
+          <span class="exp-sub">${descEl.value || 'Quick expense'} · ${today}</span>
+        </div>
+        <span class="exp-amount">₹${amount.toLocaleString('en-IN')}</span>
+      `;
+      list.prepend(li);
+
+      // Update count
+      const items = list.querySelectorAll('li').length;
+      document.getElementById('expCount').textContent = items + ' entries';
+
+      // Reset form
+      amountEl.value = '';
+      descEl.value = '';
+
+      updateStats();
+
+      // Animate new entry
+      requestAnimationFrame(() => {
+        setTimeout(() => li.classList.remove('expense-item--new'), 50);
+      });
+    }
+
+    /* ─── Init ──────────────────────────────────────── */
+    updateStats();
+
+    // Set current month display
+    const now = new Date();
+    const monthYear = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    document.getElementById('demoMonth').textContent = monthYear + ' — Budget Mission';
+  </script>
 
 </body>
 </html>

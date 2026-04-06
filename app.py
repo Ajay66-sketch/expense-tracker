@@ -1,6 +1,5 @@
 # ============================================================
-#  app.py — SurviveTheMonth (Complete & Final)
-#  Replace your entire app.py with this file.
+#  app.py — SurviveTheMonth
 # ============================================================
 
 import os
@@ -31,12 +30,13 @@ db = SQLAlchemy(app)
 # ── Models ───────────────────────────────────────────────────
 
 class User(db.Model):
-    id           = db.Column(db.Integer, primary_key=True)
-    username     = db.Column(db.String(32), unique=True, nullable=False)
-    password     = db.Column(db.String(256), nullable=False)
-    budget       = db.Column(db.Float, default=30000.0)
-    created_at   = db.Column(db.DateTime, default=datetime.utcnow)
-    expenses     = db.relationship('Expense', backref='user', lazy=True, cascade='all, delete-orphan')
+    id         = db.Column(db.Integer, primary_key=True)
+    username   = db.Column(db.String(32), unique=True, nullable=False)
+    password   = db.Column(db.String(256), nullable=False)
+    budget     = db.Column(db.Float, default=30000.0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expenses   = db.relationship('Expense', backref='user', lazy=True,
+                                 cascade='all, delete-orphan')
 
     def set_password(self, raw):
         self.password = generate_password_hash(raw)
@@ -46,9 +46,7 @@ class User(db.Model):
 
     def current_month_spent(self):
         now = date.today()
-        total = db.session.query(
-            db.func.sum(Expense.amount)
-        ).filter(
+        total = db.session.query(db.func.sum(Expense.amount)).filter(
             Expense.user_id == self.id,
             db.extract('month', Expense.expense_date) == now.month,
             db.extract('year',  Expense.expense_date) == now.year,
@@ -58,8 +56,7 @@ class User(db.Model):
     def survival_pct(self):
         if self.budget <= 0:
             return 0
-        spent     = self.current_month_spent()
-        remaining = max(0.0, self.budget - spent)
+        remaining = max(0.0, self.budget - self.current_month_spent())
         return round((remaining / self.budget) * 100)
 
 
@@ -92,8 +89,6 @@ def get_current_user():
 
 
 # ── Context Processor ────────────────────────────────────────
-# Injects `current_user` into EVERY template automatically.
-# This is what makes base.html nav work on all pages.
 
 @app.context_processor
 def inject_current_user():
@@ -104,6 +99,8 @@ def inject_current_user():
 
 @app.route('/')
 def index():
+    if 'user_id' in session:
+        return redirect(url_for('dashboard'))
     return render_template('landing.html')
 
 
@@ -123,7 +120,8 @@ def register():
         username         = request.form.get('username', '').strip().lower()
         password         = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
-        budget_raw       = request.form.get('budget', '').strip()
+        # register.html sends name="monthly_budget" (optional field)
+        budget_raw       = request.form.get('monthly_budget', '').strip()
 
         if not username or len(username) < 3:
             flash('Survivor name must be at least 3 characters. 🌿', 'error')
@@ -133,14 +131,6 @@ def register():
             flash('That survivor name is already taken. Choose another. ⚠️', 'error')
             return render_template('register.html')
 
-        try:
-            budget = float(budget_raw)
-            if budget < 100:
-                raise ValueError
-        except (ValueError, TypeError):
-            flash('Please enter a valid monthly budget (min ₹100). 🌿', 'error')
-            return render_template('register.html')
-
         if len(password) < 6:
             flash('Password must be at least 6 characters. 🔴', 'error')
             return render_template('register.html')
@@ -148,6 +138,17 @@ def register():
         if password != confirm_password:
             flash("Passwords don't match. Try again, Survivor. 🔴", 'error')
             return render_template('register.html')
+
+        # Budget is optional — default to 30000 if blank
+        budget = 30000.0
+        if budget_raw:
+            try:
+                budget = float(budget_raw)
+                if budget < 100:
+                    raise ValueError
+            except (ValueError, TypeError):
+                flash('Please enter a valid monthly budget (min ₹100). 🌿', 'error')
+                return render_template('register.html')
 
         user = User(username=username, budget=budget)
         user.set_password(password)
@@ -177,9 +178,8 @@ def login():
             session['user_id'] = user.id
             flash(f'Welcome back, {user.username}! 🌿', 'success')
             return redirect(url_for('dashboard'))
-        else:
-            flash("Invalid username or password. The jungle doesn't forgive. 🔴", 'error')
-            return render_template('login.html')
+
+        flash("Invalid username or password. The jungle doesn't forgive. 🔴", 'error')
 
     return render_template('login.html')
 
@@ -194,6 +194,10 @@ def logout():
 
 
 # ── Dashboard ─────────────────────────────────────────────────
+
+CATEGORIES = ['Rations', 'Shelter', 'Tools', 'Medicine',
+              'Expedition', 'Signal', 'Supplies', 'Other']
+
 
 @app.route('/dashboard')
 @login_required
@@ -221,59 +225,53 @@ def dashboard():
         days_left     = days_left,
         month_label   = now.strftime('%B %Y'),
         today_str     = now.strftime('%Y-%m-%d'),
+        categories    = CATEGORIES,
     )
 
 
 # ── Add Expense ───────────────────────────────────────────────
 
-CATEGORIES = ['Rations', 'Shelter', 'Tools', 'Medicine', 'Expedition', 'Signal', 'Supplies', 'Other']
-
-@app.route('/add', methods=['GET', 'POST'])
+@app.route('/add', methods=['POST'])
 @login_required
 def add_expense():
-    user = get_current_user()
+    user     = get_current_user()
+    name     = request.form.get('name', '').strip()
+    amount   = request.form.get('amount', '').strip()
+    category = request.form.get('category', 'Other')
+    date_raw = request.form.get('expense_date', '')
+    note     = request.form.get('note', '').strip()
 
-    if request.method == 'POST':
-        name     = request.form.get('name', '').strip()
-        amount   = request.form.get('amount', '').strip()
-        category = request.form.get('category', 'Other')
-        date_raw = request.form.get('expense_date', '')
-        note     = request.form.get('note', '').strip()
-
-        if not name:
-            flash('Give your expense a name. 🌿', 'error')
-            return redirect(url_for('dashboard'))
-
-        try:
-            amount = float(amount)
-            if amount <= 0:
-                raise ValueError
-        except (ValueError, TypeError):
-            flash('Enter a valid amount greater than 0. 🔴', 'error')
-            return redirect(url_for('dashboard'))
-
-        try:
-            exp_date = datetime.strptime(date_raw, '%Y-%m-%d').date() if date_raw else date.today()
-        except ValueError:
-            exp_date = date.today()
-
-        if category not in CATEGORIES:
-            category = 'Other'
-
-        expense = Expense(
-            user_id      = user.id,
-            name         = name,
-            amount       = amount,
-            category     = category,
-            expense_date = exp_date,
-            note         = note,
-        )
-        db.session.add(expense)
-        db.session.commit()
-
-        flash(f'Rs.{amount:,.0f} logged! Meter updated. 🔥', 'success')
+    if not name:
+        flash('Give your expense a name. 🌿', 'error')
         return redirect(url_for('dashboard'))
 
+    try:
+        amount = float(amount)
+        if amount <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        flash('Enter a valid amount greater than 0. 🔴', 'error')
+        return redirect(url_for('dashboard'))
+
+    try:
+        exp_date = datetime.strptime(date_raw, '%Y-%m-%d').date() if date_raw else date.today()
+    except ValueError:
+        exp_date = date.today()
+
+    if category not in CATEGORIES:
+        category = 'Other'
+
+    db.session.add(Expense(
+        user_id      = user.id,
+        name         = name,
+        amount       = amount,
+        category     = category,
+        expense_date = exp_date,
+        note         = note,
+    ))
+    db.session.commit()
+
+    flash(f'₹{amount:,.0f} logged! Meter updated. 🔥', 'success')
     return redirect(url_for('dashboard'))
 
 
@@ -323,11 +321,12 @@ def settings():
 @app.route('/api/meter')
 @login_required
 def api_meter():
-    user = get_current_user()
+    user  = get_current_user()
+    spent = user.current_month_spent()
     return jsonify({
         'pct':       user.survival_pct(),
-        'spent':     user.current_month_spent(),
-        'remaining': max(0.0, user.budget - user.current_month_spent()),
+        'spent':     spent,
+        'remaining': max(0.0, user.budget - spent),
         'budget':    user.budget,
     })
 
