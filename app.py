@@ -120,7 +120,6 @@ def register():
         username         = request.form.get('username', '').strip().lower()
         password         = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
-        # register.html sends name="monthly_budget" (optional field)
         budget_raw       = request.form.get('monthly_budget', '').strip()
 
         if not username or len(username) < 3:
@@ -139,7 +138,6 @@ def register():
             flash("Passwords don't match. Try again, Survivor. 🔴", 'error')
             return render_template('register.html')
 
-        # Budget is optional — default to 30000 if blank
         budget = 30000.0
         if budget_raw:
             try:
@@ -179,7 +177,9 @@ def login():
             flash(f'Welcome back, {user.username}! 🌿', 'success')
             return redirect(url_for('dashboard'))
 
+        # render_template (not redirect) so flash message survives
         flash("Invalid username or password. The jungle doesn't forgive. 🔴", 'error')
+        return render_template('login.html')
 
     return render_template('login.html')
 
