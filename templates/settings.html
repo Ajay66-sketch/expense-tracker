@@ -1,78 +1,68 @@
-{% extends "base.html" %}
-{% block title %}Settings{% endblock %}
-{% block body_class %}dashboard-page{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — SurviveTheMonth</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
 
-{% block content %}
-<div class="dashboard-layout">
+<nav class="navbar">
+  <a href="{{ url_for('dashboard') }}" class="navbar-brand">🌿 SURVIVE<span>THEMONTH</span></a>
+  <div class="nav-links">
+    <a href="{{ url_for('dashboard') }}" class="nav-link">← Dashboard</a>
+    <a href="{{ url_for('logout') }}" class="nav-link">Exit</a>
+  </div>
+</nav>
 
-  <div class="dashboard-topbar animate-up">
-    <div>
-      <h1 class="dashboard-greeting">Settings</h1>
-      <p class="dashboard-month">{{ current_user.username }}</p>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-container">
+    {% for category, message in messages %}
+      <div class="flash flash-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<div class="settings-wrap">
+  <h2 style="color:var(--jungle-glow); margin-bottom:1.5rem; letter-spacing:0.1em;">⚙ SETTINGS</h2>
+
+  <div class="card">
+    <div class="section-title">Survivor Profile</div>
+    <div style="margin-bottom:1.25rem;">
+      <div class="form-label">Survivor ID</div>
+      <div class="mono" style="color:var(--text-primary); font-size:1rem;">{{ user.username }}</div>
     </div>
-    <a href="{{ url_for('dashboard') }}" class="btn btn-ghost btn-sm">← Dashboard</a>
+
+    <div class="divider"></div>
+
+    <div class="section-title" style="margin-top:1.25rem;">Monthly Budget</div>
+    <form method="POST" action="{{ url_for('settings') }}">
+      <div class="form-group">
+        <label class="form-label" for="monthly_budget">Budget (₹)</label>
+        <input
+          type="number"
+          id="monthly_budget"
+          name="monthly_budget"
+          class="form-control"
+          value="{{ user.monthly_budget|int }}"
+          min="1"
+          step="100"
+          required
+        >
+      </div>
+      <button type="submit" class="btn btn-primary">💾 Save Budget</button>
+    </form>
   </div>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div class="flash-messages animate-up">
-        {% for category, message in messages %}
-          <div class="flash flash--{{ category }}">{{ message }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
-
-  <!-- Update Budget -->
-  <section class="section-card animate-up animate-up-1">
-    <div class="section-card-header">
-      <span class="section-card-title">Monthly Budget</span>
-    </div>
-    <form method="POST" action="{{ url_for('settings') }}" class="add-expense-form" novalidate>
-      <input type="hidden" name="action" value="update_budget" />
-      <div class="form-group">
-        <label class="form-label">Budget Amount (₹)</label>
-        <input type="number" name="monthly_budget" class="form-input"
-               value="{{ current_user.monthly_budget | int }}"
-               min="1" required />
-      </div>
-      <button type="submit" class="btn btn-primary">Save Budget</button>
-    </form>
-  </section>
-
-  <!-- Change Password -->
-  <section class="section-card animate-up animate-up-2">
-    <div class="section-card-header">
-      <span class="section-card-title">Change Password</span>
-    </div>
-    <form method="POST" action="{{ url_for('settings') }}" class="add-expense-form" novalidate>
-      <input type="hidden" name="action" value="change_password" />
-      <div class="form-group">
-        <label class="form-label">Current Password</label>
-        <input type="password" name="current_password" class="form-input"
-               placeholder="••••••••" autocomplete="current-password" required />
-      </div>
-      <div class="form-group">
-        <label class="form-label">New Password</label>
-        <input type="password" name="new_password" class="form-input"
-               placeholder="min. 6 characters" autocomplete="new-password" required />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Confirm New Password</label>
-        <input type="password" name="confirm_password" class="form-input"
-               placeholder="repeat new password" autocomplete="new-password" required />
-      </div>
-      <button type="submit" class="btn btn-primary">Change Password</button>
-    </form>
-  </section>
-
-  <!-- Danger zone -->
-  <section class="section-card animate-up animate-up-3">
-    <div class="section-card-header">
-      <span class="section-card-title" style="color:var(--red-400);">Account</span>
-    </div>
-    <a href="{{ url_for('logout') }}" class="btn btn-ghost">Log out</a>
-  </section>
-
+  <div class="card" style="margin-top:1.5rem;">
+    <div class="section-title">Danger Zone</div>
+    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">Ready to abandon the jungle?</p>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger">🚪 Log Out</a>
+  </div>
 </div>
-{% endblock %}
+
+</body>
+</html>
