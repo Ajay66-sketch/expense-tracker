@@ -8,6 +8,7 @@
 </head>
 <body>
 
+<!-- ── NAVBAR ─────────────────────────────────────────────── -->
 <nav class="navbar">
   <a href="{{ url_for('index') }}" class="navbar-brand">🌿 SURVIVE<span>THEMONTH</span></a>
   <div class="nav-links">
@@ -16,37 +17,58 @@
   </div>
 </nav>
 
+<!-- ── DEMO HERO ───────────────────────────────────────────── -->
 <div class="demo-hero">
+  <p style="
+    font-size:.72rem; text-transform:uppercase; letter-spacing:.18em;
+    color:var(--jungle-mid); margin-bottom:.6rem;
+  ">Live Simulation</p>
   <h1>SURVIVAL DEMO</h1>
-  <p>See how your budget health looks in real time. Every expense drains your meter.</p>
+  <p>Every expense you log drains the meter in real time. No account needed.</p>
 </div>
 
+<!-- ── MAIN CONTAINER ─────────────────────────────────────── -->
 <div class="demo-container">
 
-  <!-- Big animated meter -->
+  <!-- ── SURVIVAL METER ──────────────────────────────────── -->
   <div class="demo-meter-wrap">
-    <div class="card" id="meterCard">
-      <div class="meter-container">
-        <div class="meter-label-row">
-          <span class="meter-title">☠ Survival Meter</span>
-          <span class="meter-pct mono" id="meterPct">{{ survival_pct }}%</span>
+    <div class="card" id="meterCard" style="position:relative; overflow:hidden;">
+
+      <!-- Glow blob behind meter -->
+      <div style="
+        position:absolute; top:-40px; left:50%; transform:translateX(-50%);
+        width:300px; height:200px;
+        background:radial-gradient(ellipse, rgba(105,240,174,.06) 0%, transparent 70%);
+        pointer-events:none;
+      "></div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; position:relative;">
+
+        <!-- Left: label + bar + sublabels -->
+        <div style="flex:1; min-width:260px;">
+          <div class="meter-container">
+            <div class="meter-label-row">
+              <span class="meter-title">☠ Survival Meter</span>
+              <span class="meter-pct mono" id="meterPct">{{ survival_pct }}%</span>
+            </div>
+            <div class="meter-track">
+              <div class="meter-fill" id="meterFill" style="width:{{ survival_pct }}%;"></div>
+            </div>
+            <div class="meter-sublabel">
+              <span>₹{{ "{:,.0f}".format(total_spent) }} spent</span>
+              <span>₹{{ "{:,.0f}".format(budget - total_spent) }} left</span>
+            </div>
+          </div>
         </div>
 
-        <div class="meter-track">
-          <div class="meter-fill" id="meterFill" style="width: {{ survival_pct }}%;"></div>
-        </div>
+        <!-- Right: status badge -->
+        <div id="statusBadge" style="flex-shrink:0;"></div>
 
-        <div class="meter-sublabel">
-          <span>₹{{ "{:,.0f}".format(total_spent) }} spent</span>
-          <span>₹{{ "{:,.0f}".format(budget - total_spent) }} left</span>
-        </div>
-
-        <div id="statusBadge"></div>
       </div>
     </div>
   </div>
 
-  <!-- Stats -->
+  <!-- ── STATS GRID ──────────────────────────────────────── -->
   <div class="stats-grid" style="margin-bottom:1.5rem;">
     <div class="stat-card">
       <div class="stat-value mono" id="statSpent">₹{{ "{:,.0f}".format(total_spent) }}</div>
@@ -66,35 +88,11 @@
     </div>
   </div>
 
-  <!-- Expense log -->
+  <!-- ── LOG EXPENSE ─────────────────────────────────────── -->
   <div class="card" style="margin-bottom:1.5rem;">
-    <div class="section-title">📋 Sample Field Log</div>
-    <table class="expense-table">
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th>Category</th>
-          <th>Date</th>
-          <th style="text-align:right;">Amount</th>
-        </tr>
-      </thead>
-      <tbody id="expenseBody">
-        {% for expense in expenses %}
-        <tr>
-          <td>{{ expense.description }}</td>
-          <td><span class="cat-pill">{{ expense.category }}</span></td>
-          <td style="color:var(--text-muted); font-family:var(--font-mono); font-size:0.82rem;">{{ expense.date }}</td>
-          <td class="amount-display">₹{{ "{:,.0f}".format(expense.amount) }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+    <div class="section-title">⚡ Try It — Log a Sample Expense</div>
 
-  <!-- Log sample expense -->
-  <div class="card" style="margin-bottom:1.5rem;">
-    <div class="section-title">⚡ Try It: Log a Sample Expense</div>
-    <div style="display:grid; grid-template-columns:1fr 120px 160px auto; gap:0.75rem; align-items:end;">
+    <div style="display:grid; grid-template-columns:1fr 120px 160px auto; gap:.75rem; align-items:end;">
       <div>
         <label class="form-label">Description</label>
         <input type="text" id="demoDesc" class="form-control" placeholder="e.g. Night market snacks">
@@ -115,12 +113,39 @@
         <button class="btn btn-primary" onclick="logDemoExpense()">Log It</button>
       </div>
     </div>
-    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.75rem;">
-      * Demo only — no data is saved. <a href="{{ url_for('register') }}" style="color:var(--jungle-glow);">Register to track for real →</a>
+
+    <div style="font-size:.78rem; color:var(--text-muted); margin-top:.75rem; padding-top:.75rem; border-top:1px solid var(--border-dim);">
+      * Demo only — nothing is saved.
+      <a href="{{ url_for('register') }}" style="color:var(--jungle-glow); font-weight:600;">Register to track for real →</a>
     </div>
   </div>
 
-  <!-- CTA -->
+  <!-- ── EXPENSE TABLE ───────────────────────────────────── -->
+  <div class="card" style="margin-bottom:2rem;">
+    <div class="section-title">📋 Field Log</div>
+    <table class="expense-table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th style="text-align:right;">Amount</th>
+        </tr>
+      </thead>
+      <tbody id="expenseBody">
+        {% for expense in expenses %}
+        <tr>
+          <td data-label="Description">{{ expense.description }}</td>
+          <td data-label="Category"><span class="cat-pill">{{ expense.category }}</span></td>
+          <td data-label="Date" style="color:var(--text-muted); font-family:var(--font-mono); font-size:.82rem;">{{ expense.date }}</td>
+          <td data-label="Amount" class="amount-display">₹{{ "{:,.0f}".format(expense.amount) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── CTA BANNER ─────────────────────────────────────── -->
   <div class="cta-banner">
     <h2>Ready to Survive for Real?</h2>
     <p>Track every rupee. Watch your health bar. Make it to month end.</p>
@@ -130,18 +155,17 @@
     </div>
   </div>
 
-</div>
+</div><!-- /demo-container -->
 
-<!-- Toast notification -->
+<!-- ── TOAST ───────────────────────────────────────────────── -->
 <div class="toast" id="toast">
   <div class="toast-title" id="toastTitle"></div>
   <div id="toastMsg"></div>
 </div>
 
 <script>
-  // State
   let totalSpent = {{ total_spent }};
-  let budget = {{ budget }};
+  let budget     = {{ budget }};
   let expenseCount = {{ expenses|length }};
 
   const demoExpenses = [
@@ -153,92 +177,87 @@
   function getSurvivalPct(spent, bud) {
     return Math.max(0, 100 - (spent / bud * 100));
   }
-
   function getMeterStatus(pct) {
     if (pct > 50) return 'alive';
     if (pct > 20) return 'warning';
     return 'critical';
   }
-
   function getBadgeHTML(pct) {
     const status = getMeterStatus(pct);
-    const labels = { alive: '🟢 SURVIVING', warning: '⚠ DANGER ZONE', critical: '💀 CRITICAL' };
-    const classes = { alive: 'badge-alive', warning: 'badge-warning', critical: 'badge-critical' };
-    const dotClasses = { alive: 'dot-alive', warning: 'dot-warning', critical: 'dot-critical' };
+    const labels  = { alive: '🟢 SURVIVING', warning: '⚠ DANGER ZONE', critical: '💀 CRITICAL' };
+    const classes  = { alive: 'badge-alive', warning: 'badge-warning', critical: 'badge-critical' };
+    const dotCls   = { alive: 'dot-alive',   warning: 'dot-warning',   critical: 'dot-critical'  };
     return `<div class="status-badge ${classes[status]}">
-      <span class="status-dot ${dotClasses[status]}"></span>
+      <span class="status-dot ${dotCls[status]}"></span>
       ${labels[status]}
     </div>`;
   }
-
   function updateMeter(pct) {
-    const fill = document.getElementById('meterFill');
+    const fill  = document.getElementById('meterFill');
     const pctEl = document.getElementById('meterPct');
-    const card = document.getElementById('meterCard');
+    const card  = document.getElementById('meterCard');
     const badge = document.getElementById('statusBadge');
-
     const status = getMeterStatus(pct);
-    fill.style.width = pct.toFixed(1) + '%';
-    pctEl.textContent = pct.toFixed(1) + '%';
-    badge.innerHTML = getBadgeHTML(pct);
 
-    // Update status classes
+    fill.style.width   = pct.toFixed(1) + '%';
+    pctEl.textContent  = pct.toFixed(1) + '%';
+    badge.innerHTML    = getBadgeHTML(pct);
+
     card.classList.remove('status-alive', 'status-warning', 'status-critical');
     card.classList.add('status-' + status);
   }
-
   function showToast(title, msg, color) {
     const t = document.getElementById('toast');
     document.getElementById('toastTitle').textContent = title;
-    document.getElementById('toastMsg').textContent = msg;
+    document.getElementById('toastMsg').textContent   = msg;
     t.style.borderColor = color || 'var(--glass-border-bright)';
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 3500);
   }
-
   function logDemoExpense() {
-    const desc = document.getElementById('demoDesc').value.trim();
-    const amount = parseFloat(document.getElementById('demoAmount').value);
+    const desc     = document.getElementById('demoDesc').value.trim();
+    const amount   = parseFloat(document.getElementById('demoAmount').value);
     const category = document.getElementById('demoCategory').value;
 
-    if (!desc) { showToast('⚠ Missing info', 'Enter a description.', 'var(--accent-yellow)'); return; }
-    if (!amount || amount <= 0) { showToast('⚠ Missing info', 'Enter a valid amount.', 'var(--accent-yellow)'); return; }
+    if (!desc)              { showToast('⚠ Missing info', 'Enter a description.', 'var(--warning)'); return; }
+    if (!amount || amount <= 0) { showToast('⚠ Missing info', 'Enter a valid amount.', 'var(--warning)'); return; }
 
     totalSpent += amount;
     expenseCount++;
-    demoExpenses.unshift({ description: desc, amount, category, date: new Date().toISOString().slice(0,10) });
 
-    const pct = getSurvivalPct(totalSpent, budget);
+    const pct  = getSurvivalPct(totalSpent, budget);
     const left = budget - totalSpent;
 
     updateMeter(pct);
+
     document.getElementById('statSpent').textContent = '₹' + totalSpent.toLocaleString('en-IN', {maximumFractionDigits:0});
-    document.getElementById('statLeft').textContent = '₹' + Math.max(0, left).toLocaleString('en-IN', {maximumFractionDigits:0});
+    document.getElementById('statLeft').textContent  = '₹' + Math.max(0, left).toLocaleString('en-IN', {maximumFractionDigits:0});
     document.getElementById('statCount').textContent = expenseCount;
 
-    // Add row to table
+    // Insert new row at top of table
     const tbody = document.getElementById('expenseBody');
-    const row = document.createElement('tr');
+    const row   = document.createElement('tr');
+    const today = new Date().toISOString().slice(0,10);
     row.innerHTML = `
-      <td>${desc}</td>
-      <td><span class="cat-pill">${category}</span></td>
-      <td style="color:var(--text-muted); font-family:var(--font-mono); font-size:0.82rem;">${new Date().toISOString().slice(0,10)}</td>
-      <td class="amount-display">₹${amount.toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
+      <td data-label="Description">${desc}</td>
+      <td data-label="Category"><span class="cat-pill">${category}</span></td>
+      <td data-label="Date" style="color:var(--text-muted);font-family:var(--font-mono);font-size:.82rem;">${today}</td>
+      <td data-label="Amount" class="amount-display">₹${amount.toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
     `;
-    row.style.background = 'rgba(78,203,87,0.06)';
+    row.style.background = 'rgba(105,240,174,.06)';
     tbody.insertBefore(row, tbody.firstChild);
-    setTimeout(() => row.style.background = '', 1500);
+    setTimeout(() => row.style.background = '', 1800);
 
-    const statusEmoji = pct > 50 ? '✅' : pct > 20 ? '⚠️' : '💀';
-    showToast(`${statusEmoji} Expense Logged!`, `${desc} — ₹${amount.toLocaleString('en-IN')} • Survival: ${pct.toFixed(1)}%`);
+    const emoji = pct > 50 ? '✅' : pct > 20 ? '⚠️' : '💀';
+    showToast(`${emoji} Logged!`, `${desc} — ₹${amount.toLocaleString('en-IN')} · Survival: ${pct.toFixed(1)}%`);
 
-    document.getElementById('demoDesc').value = '';
+    document.getElementById('demoDesc').value   = '';
     document.getElementById('demoAmount').value = '';
   }
 
-  // Init
-  const initPct = getSurvivalPct(totalSpent, budget);
-  updateMeter(initPct);
+  // Init on load
+  updateMeter(getSurvivalPct(totalSpent, budget));
 </script>
+
 </body>
 </html>

@@ -1,22 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SurviveTheMonth — Budget Tracker</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SurviveTheMonth 🌿</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
 </head>
-<body>
-<div class="landing-hero">
-  <h1>🌿 SURVIVE<br>THE MONTH</h1>
-  <p class="tagline">Your jungle survival budget tracker. Watch your health bar. Don't go broke.</p>
-  <div class="landing-cta">
-    <a href="{{ url_for('register') }}" class="btn btn-primary" style="font-size:1.1rem; padding:0.8rem 2rem;">🌿 Start Surviving</a>
-    <a href="{{ url_for('demo') }}" class="btn btn-outline" style="font-size:1.1rem; padding:0.8rem 2rem;">See the Demo</a>
-  </div>
-  <p style="color:var(--text-muted); font-size:0.85rem; margin-top:2rem;">
-    Already a survivor? <a href="{{ url_for('login') }}" style="color:var(--jungle-glow);">Log in →</a>
-  </p>
-</div>
+<body class="landing-body">
+
+  <!-- ── NAV ─────────────────────────────────────────────────────── -->
+  <nav class="land-nav">
+    <span class="land-logo">🌿 SurviveTheMonth</span>
+    <div class="land-nav-links">
+      <a href="{{ url_for('login') }}">Login</a>
+      <a href="{{ url_for('register') }}" class="btn btn-nav-cta">Start Mission</a>
+    </div>
+  </nav>
+
+  <!-- ── HERO ─────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <p class="hero-eyebrow">💸 Budget Tracker for Real Life</p>
+    <h1 class="hero-headline">Will you make it<br>to payday?</h1>
+    <p class="hero-sub">
+      Track expenses, visualize your runway, and survive the month —
+      without the spreadsheet anxiety.
+    </p>
+    <div class="hero-ctas">
+      <a href="{{ url_for('demo') }}" class="btn btn-primary">Try Demo — No Sign-up</a>
+      <a href="{{ url_for('register') }}" class="btn btn-ghost">Start Your Mission →</a>
+    </div>
+  </section>
+
+  <!-- ── SURVIVAL METER ────────────────────────────────────────────── -->
+  <section class="meter-section">
+    <p class="meter-label-top">YOUR SURVIVAL STATUS</p>
+
+    <div class="meter-ring-wrap">
+      <svg class="meter-ring" viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg">
+        <circle class="ring-track" cx="130" cy="130" r="110" />
+        <circle class="ring-fill" cx="130" cy="130" r="110"
+          stroke-dasharray="691"
+          stroke-dashoffset="207"
+          pathLength="691" />
+      </svg>
+      <div class="meter-inner">
+        <span class="meter-pct">70%</span>
+        <span class="meter-status">HOLDING</span>
+        <span class="meter-days">18 days left</span>
+      </div>
+    </div>
+
+    <div class="meter-stats">
+      <div class="mstat">
+        <span class="mstat-val">₹12,400</span>
+        <span class="mstat-lbl">Budget</span>
+      </div>
+      <div class="mstat mstat-mid">
+        <span class="mstat-val danger">₹3,720</span>
+        <span class="mstat-lbl">Spent Today</span>
+      </div>
+      <div class="mstat">
+        <span class="mstat-val safe">₹8,680</span>
+        <span class="mstat-lbl">Remaining</span>
+      </div>
+    </div>
+
+    <p class="meter-hint">↑ This is what your dashboard looks like in real-time</p>
+  </section>
+
+  <!-- ── THREE FEATURES ────────────────────────────────────────────── -->
+  <section class="features">
+    <div class="feat-card">
+      <span class="feat-icon">📊</span>
+      <h3>Live Survival Meter</h3>
+      <p>Instantly see if you're on track or burning through funds too fast.</p>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🗂️</span>
+      <h3>Expense Categories</h3>
+      <p>Food, rent, fun — tag every rupee and spot where the leaks are.</p>
+    </div>
+    <div class="feat-card">
+      <span class="feat-icon">🔒</span>
+      <h3>Private & Simple</h3>
+      <p>No banks linked. No data sold. Just you, your budget, and the jungle.</p>
+    </div>
+  </section>
+
+  <!-- ── FINAL CTA ─────────────────────────────────────────────────── -->
+  <section class="final-cta">
+    <h2>Your money. Your mission.</h2>
+    <p>Set your budget once. Let the meter do the talking.</p>
+    <a href="{{ url_for('register') }}" class="btn btn-primary btn-large">Start Your Mission — Free</a>
+    <a href="{{ url_for('demo') }}" class="demo-link">or peek at the demo first →</a>
+  </section>
+
+  <!-- ── FOOTER ────────────────────────────────────────────────────── -->
+  <footer class="land-footer">
+    <p>🌿 SurviveTheMonth &nbsp;·&nbsp; Built for budget survivors</p>
+  </footer>
+
 </body>
 </html>
