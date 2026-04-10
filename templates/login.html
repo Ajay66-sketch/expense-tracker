@@ -1,71 +1,121 @@
-{# Replace your current templates/login.html with this #}
+<!-- Replace your current templates/login.html with this -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Log In — BudgetSurvive</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Return to Base — SurviveTheMonth 🌿</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
-<body class="auth-body">
+<body class="auth-page">
 
-  <!-- NAV -->
-  <nav class="nav-bar">
-    <a href="{{ url_for('landing') }}" class="nav-logo">&#9741; BudgetSurvive</a>
-    <div class="nav-links">
-      <a href="{{ url_for('register') }}">No account? Sign up</a>
-    </div>
-  </nav>
+  <div class="auth-bg">
+    <div class="auth-canopy">🌿🍃🌴🍃🌿🌴🍃🌿🍃🌴🌿🍃🌿🌴🍃</div>
+  </div>
 
-  <!-- AUTH CARD -->
-  <div class="auth-wrapper">
+  <div class="auth-container">
+
     <div class="auth-card">
 
-      <!-- Mini meter teaser -->
-      <div class="auth-meter-mini">
-        <div class="auth-meter-track">
-          <div class="auth-meter-fill" style="width: 55%"></div>
-        </div>
-        <span class="auth-meter-hint">Your meter is waiting…</span>
+      <div class="auth-logo">
+        <span class="auth-logo-icon">🌿</span>
+        <span class="auth-logo-text">SurviveTheMonth</span>
       </div>
 
-      <h2 class="auth-title">Welcome Back</h2>
-      <p class="auth-sub">Log in to check your survival status.</p>
+      <div class="auth-heading">
+        <h1>Return to Base Camp</h1>
+        <p>Your survival meter has been waiting.</p>
+      </div>
 
+      <!-- Flash messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
-            <div class="flash flash-{{ category }}">{{ message }}</div>
+            <div class="flash flash-{{ category }}">
+              {% if category == 'danger' %}💀{% elif category == 'success' %}✅{% else %}⚠️{% endif %}
+              {{ message }}
+            </div>
           {% endfor %}
         {% endif %}
       {% endwith %}
 
-      <form method="POST" action="{{ url_for('login') }}" class="auth-form">
-        {{ form.hidden_tag() }}
+      <form method="POST" action="/login" class="auth-form">
+        <!-- CSRF token if you use Flask-WTF -->
+        {% if csrf_token is defined %}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        {% endif %}
 
-        <div class="field-group">
-          <label for="email">Email</label>
-          {{ form.email(id="email", placeholder="you@example.com") }}
-          {% if form.email.errors %}
-            <span class="field-error">{{ form.email.errors[0] }}</span>
-          {% endif %}
+        <div class="form-group">
+          <label class="form-label" for="username">🧭 Survivor ID (Username)</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-input"
+            placeholder="Enter your survivor name"
+            autocomplete="username"
+            required
+          />
         </div>
 
-        <div class="field-group">
-          <label for="password">Password</label>
-          {{ form.password(id="password", placeholder="••••••••") }}
-          {% if form.password.errors %}
-            <span class="field-error">{{ form.password.errors[0] }}</span>
-          {% endif %}
+        <div class="form-group">
+          <label class="form-label" for="password">🔑 Secret Passphrase</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-input"
+            placeholder="Your secret passphrase"
+            autocomplete="current-password"
+            required
+          />
         </div>
 
-        <button type="submit" class="btn-primary btn-full">Log In &#8594;</button>
+        <button type="submit" class="btn btn-primary btn-full btn-xl">
+          🌿 Enter the Jungle
+        </button>
       </form>
 
-      <p class="auth-switch">Don't have an account? <a href="{{ url_for('register') }}">Sign up free</a></p>
+      <div class="auth-footer">
+        <p>New to the jungle? <a href="/register" class="auth-link">Create a free account →</a></p>
+        <p class="auth-demo-nudge">Just browsing? <a href="/demo" class="auth-link">Try the demo →</a></p>
+      </div>
+
     </div>
+
+    <!-- SIDE FLAVOR -->
+    <div class="auth-flavor">
+      <div class="flavor-meter-mini">
+        <div class="flavor-meter-label">Your meter is waiting...</div>
+        <div class="meter-track flavor-meter-track">
+          <div class="meter-fill meter-yellow flavor-idle-fill" id="flavorFill"></div>
+        </div>
+        <div class="flavor-meter-sub">Log in to see your real status</div>
+      </div>
+      <blockquote class="auth-quote">
+        "Every expense is a battle. Every budget day survived is a victory."
+      </blockquote>
+    </div>
+
   </div>
 
+  <script>
+    // Idle animation on flavor meter
+    let dir = -1;
+    let pct = 58;
+    setInterval(() => {
+      pct += dir * 0.4;
+      if (pct <= 30 || pct >= 72) dir *= -1;
+      const fill = document.getElementById('flavorFill');
+      fill.style.width = pct + '%';
+      if (pct < 40) {
+        fill.className = 'meter-fill meter-red flavor-idle-fill';
+      } else if (pct < 55) {
+        fill.className = 'meter-fill meter-yellow flavor-idle-fill';
+      } else {
+        fill.className = 'meter-fill meter-green flavor-idle-fill';
+      }
+    }, 80);
+  </script>
 </body>
 </html>

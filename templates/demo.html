@@ -1,278 +1,284 @@
-{# Replace your current templates/demo.html with this #}
+<!-- New file: templates/demo.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Try the Demo — BudgetSurvive</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Demo — SurviveTheMonth 🌿</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
-<body class="landing-body">
+<body class="dashboard-page">
 
-  <!-- NAV -->
-  <nav class="nav-bar">
-    <a href="{{ url_for('index') }}" class="nav-logo">&#9741; BudgetSurvive</a>
+  <nav class="nav">
+    <a href="/" class="nav-logo">🌿 SurviveTheMonth</a>
     <div class="nav-links">
-      <span style="font-size:0.8rem;color:var(--text-dim);border:1px solid var(--border);padding:0.25rem 0.65rem;border-radius:4px;">DEMO MODE</span>
-      <a href="{{ url_for('register') }}" class="btn-primary-sm">Save Progress &#8594;</a>
+      <span class="nav-badge">DEMO MODE</span>
+      <a href="/register" class="btn btn-primary">Create Free Account</a>
     </div>
   </nav>
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
-  <div class="demo-layout">
+  <div class="dashboard-layout">
 
-    <!-- HEADER -->
-    <div class="demo-header">
-      <h1 class="demo-title">Your Survival Demo</h1>
-      <p class="demo-sub">Log expenses. Watch your meter drain. Can you survive the month?</p>
-    </div>
-
-    <!-- STAT ROW -->
-    <div class="stat-row">
-      <div class="stat-box">
-        <div class="stat-label">Monthly Budget</div>
-        <div class="stat-value green" id="budget-display">&#8377;{{ "{:,.0f}".format(budget) }}</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Spent</div>
-        <div class="stat-value red" id="spent-display">&#8377;{{ "{:,.0f}".format(total_spent) }}</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">Remaining</div>
-        <div class="stat-value yellow" id="remaining-display">&#8377;{{ "{:,.0f}".format(budget - total_spent) }}</div>
-      </div>
-    </div>
-
-    <!-- SURVIVAL METER -->
-    <div class="demo-card" style="margin-bottom:1.25rem;position:relative;overflow:hidden;">
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% -20%,rgba(57,211,83,0.06) 0%,transparent 70%);pointer-events:none;"></div>
-      <div class="meter-label-row">
-        <span class="meter-label-text">SURVIVAL METER</span>
-        <span class="meter-percent {% if survival_pct <= 20 %}danger{% elif survival_pct <= 40 %}warning{% endif %}" id="demo-pct">{{ survival_pct }}%</span>
-      </div>
-      <div class="meter-track">
-        <div class="meter-fill {% if survival_pct <= 20 %}danger{% elif survival_pct <= 40 %}warning{% endif %}"
-             id="demo-fill" style="width:{{ survival_pct }}%"></div>
-        <div class="meter-glow" id="demo-glow" style="left:{{ survival_pct }}%"></div>
-      </div>
-      <div class="meter-caption" id="meter-msg">
-        {% if survival_pct <= 0 %}
-          &#9760; Budget exhausted. You did not survive.
-        {% elif survival_pct <= 20 %}
-          &#9888; Critical — barely surviving. Stop spending.
-        {% elif survival_pct <= 40 %}
-          &#9889; Low reserves — be careful.
-        {% else %}
-          Holding steady. Keep watching those expenses.
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- TWO-COLUMN GRID -->
-    <div class="demo-grid">
-
-      <!-- LOG AN EXPENSE -->
-      <div class="demo-card">
-        <h3>Log an Expense</h3>
-
-        <div class="field-group" style="margin-bottom:0.85rem;">
-          <label>Description</label>
-          <input type="text" id="exp-desc" placeholder="e.g. Base camp supplies…" />
+    <!-- SURVIVAL METER — big and dramatic -->
+    <section class="meter-section">
+      <div class="meter-header">
+        <div>
+          <h2 class="meter-title">Survival Meter</h2>
+          <p class="meter-subtitle">October 2025 · Demo Expedition</p>
         </div>
+        <div class="meter-badge" id="meterBadge">🟢 THRIVING</div>
+      </div>
 
-        <div class="field-group" style="margin-bottom:0.85rem;">
-          <label>Amount (&#8377;)</label>
-          <input type="number" id="exp-amount" placeholder="0" min="0" step="1" />
+      <div class="meter-track main-meter-track">
+        <div class="meter-fill meter-green" id="mainFill" style="width:72%"></div>
+        <div class="meter-pulse" id="mainPulse"></div>
+        <div class="meter-pct-label" id="meterPct">72%</div>
+      </div>
+
+      <div class="meter-stats main-stats">
+        <div class="stat-card">
+          <span class="stat-icon">🛡️</span>
+          <span class="stat-label">Remaining</span>
+          <span class="stat-value" id="statRemaining">₹14,400</span>
         </div>
+        <div class="stat-card stat-card-danger">
+          <span class="stat-icon">💸</span>
+          <span class="stat-label">Spent</span>
+          <span class="stat-value" id="statSpent">₹5,600</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">📅</span>
+          <span class="stat-label">Days Left</span>
+          <span class="stat-value" id="statDays">19</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">⚡</span>
+          <span class="stat-label">Daily Budget</span>
+          <span class="stat-value" id="statDaily">₹758</span>
+        </div>
+      </div>
 
-        <div class="field-group" style="margin-bottom:1.25rem;">
-          <label>Category</label>
-          <select id="exp-cat">
-            {% for cat in categories %}
-            <option value="{{ cat }}">{{ cat }}</option>
-            {% endfor %}
+      <!-- QUICK ADD EXPENSE -->
+      <div class="quick-add">
+        <h3 class="quick-add-title">⚔️ Log Sample Expense</h3>
+        <div class="quick-add-form">
+          <select id="expCategory" class="form-select">
+            <option value="rations">🍖 Rations (Food)</option>
+            <option value="shelter">🏕️ Shelter (Rent/Bills)</option>
+            <option value="tools">🪓 Tools (Work/Education)</option>
+            <option value="medicine">💊 Medicine (Health)</option>
+            <option value="travel">🗺️ Scouting (Transport)</option>
+            <option value="luxury">💎 Luxury Loot</option>
           </select>
+          <input type="number" id="expAmount" class="form-input" placeholder="₹ Amount" value="500" min="1" />
+          <button class="btn btn-primary" onclick="logExpense()">💸 Spend It</button>
         </div>
 
-        <button class="btn-primary btn-full" onclick="logExpense()">Log Expense &#8594;</button>
+        <!-- PRESET QUICK-SPEND BUTTONS -->
+        <div class="preset-row">
+          <button class="preset-btn" onclick="quickSpend('🍖 Rations', 120)">🍖 Lunch ₹120</button>
+          <button class="preset-btn" onclick="quickSpend('☕ Coffee', 80)">☕ Coffee ₹80</button>
+          <button class="preset-btn" onclick="quickSpend('🚗 Cab', 200)">🚗 Cab ₹200</button>
+          <button class="preset-btn preset-btn-danger" onclick="quickSpend('🎮 Games', 999)">🎮 Games ₹999</button>
+          <button class="preset-btn preset-btn-danger" onclick="quickSpend('🍕 Late Night Pizza', 450)">🍕 Pizza ₹450</button>
+        </div>
+      </div>
+    </section>
 
-        <!-- QUICK-ADD PRESETS -->
-        <div style="margin-top:1rem;">
-          <p style="font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:0.6rem;">Quick Add</p>
-          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-            <button class="meter-sim-btn" onclick="quickAdd('Field Rations', 800, 'Rations')">Rations &#8377;800</button>
-            <button class="meter-sim-btn" onclick="quickAdd('Camp Fuel', 450, 'Expedition')">Fuel &#8377;450</button>
-            <button class="meter-sim-btn" onclick="quickAdd('First Aid Kit', 650, 'Medicine')">Medicine &#8377;650</button>
-            <button class="meter-sim-btn" onclick="quickAdd('Rope &amp; Tools', 1200, 'Tools')">Tools &#8377;1,200</button>
-            <button class="meter-sim-btn" onclick="quickAdd('Shelter Repair', 2500, 'Shelter')">Shelter &#8377;2,500</button>
-            <button class="meter-sim-btn" onclick="quickAdd('Radio Batteries', 300, 'Signal')">Signal &#8377;300</button>
+    <!-- EXPENSE LOG -->
+    <section class="expenses-section">
+      <div class="expenses-header">
+        <h3>📜 Expedition Log</h3>
+        <span class="expense-count" id="expCount">6 entries</span>
+      </div>
+
+      <ul class="expense-list" id="expenseList">
+        <!-- Pre-loaded sample expenses -->
+        <li class="expense-item">
+          <span class="exp-icon">🏕️</span>
+          <div class="exp-details">
+            <span class="exp-name">Shelter — Monthly Rent</span>
+            <span class="exp-date">Oct 1</span>
           </div>
-        </div>
+          <span class="exp-amount exp-amount-big">₹3,500</span>
+        </li>
+        <li class="expense-item">
+          <span class="exp-icon">🍖</span>
+          <div class="exp-details">
+            <span class="exp-name">Rations — Groceries</span>
+            <span class="exp-date">Oct 3</span>
+          </div>
+          <span class="exp-amount">₹800</span>
+        </li>
+        <li class="expense-item">
+          <span class="exp-icon">🗺️</span>
+          <div class="exp-details">
+            <span class="exp-name">Scouting — Monthly Pass</span>
+            <span class="exp-date">Oct 4</span>
+          </div>
+          <span class="exp-amount">₹500</span>
+        </li>
+        <li class="expense-item">
+          <span class="exp-icon">💊</span>
+          <div class="exp-details">
+            <span class="exp-name">Medicine — Pharmacy</span>
+            <span class="exp-date">Oct 6</span>
+          </div>
+          <span class="exp-amount">₹350</span>
+        </li>
+        <li class="expense-item">
+          <span class="exp-icon">🪓</span>
+          <div class="exp-details">
+            <span class="exp-name">Tools — Internet Bill</span>
+            <span class="exp-date">Oct 8</span>
+          </div>
+          <span class="exp-amount">₹299</span>
+        </li>
+        <li class="expense-item">
+          <span class="exp-icon">💎</span>
+          <div class="exp-details">
+            <span class="exp-name">Luxury Loot — Movie Night</span>
+            <span class="exp-date">Oct 9</span>
+          </div>
+          <span class="exp-amount">₹151</span>
+        </li>
+      </ul>
+    </section>
+  </div>
+
+  <!-- UPGRADE NUDGE -->
+  <section class="upgrade-nudge">
+    <div class="nudge-inner">
+      <div class="nudge-text">
+        <h3>🌿 You're playing with fake money</h3>
+        <p>Create a free account to track your real survival budget — takes 30 seconds.</p>
       </div>
-
-      <!-- EXPENSE LOG -->
-      <div class="demo-card" style="overflow:hidden;">
-        <h3>Expense Log</h3>
-        <div style="overflow-y:auto;max-height:400px;">
-          <table class="expense-table">
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Category</th>
-                <th style="text-align:right;">Amount</th>
-              </tr>
-            </thead>
-            <tbody id="expense-body">
-              {% for exp in expenses %}
-              <tr>
-                <td>{{ exp.description }}</td>
-                <td><span class="tag tag-{{ exp.category | lower }}">{{ exp.category }}</span></td>
-                <td class="amount-neg" style="text-align:right;">&#8377;{{ "{:,.0f}".format(exp.amount) }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+      <div class="nudge-ctas">
+        <a href="/register" class="btn btn-primary btn-xl">Start My Real Survival 🌿</a>
+        <a href="/login" class="btn btn-ghost">I already have an account</a>
       </div>
-
-    </div><!-- /demo-grid -->
-
-    <!-- CTA BANNER -->
-    <div style="margin-top:2.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;text-align:center;">
-      <p style="font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:0.4rem;">This is just a demo.</p>
-      <p style="color:var(--text-muted);font-size:0.92rem;margin-bottom:1.25rem;">Create a free account to save your data, set a real budget, and track across months.</p>
-      <a href="{{ url_for('register') }}" class="btn-primary">Start Surviving for Real &#8594;</a>
     </div>
+  </section>
 
-  </div><!-- /demo-layout -->
+  <script>
+    const BUDGET = 20000;
+    let spent = 5600;
+    let expenseCount = 6;
 
-<script>
-  const BUDGET = {{ budget }};
-  let spent    = {{ total_spent }};
+    const categoryIcons = {
+      rations: '🍖', shelter: '🏕️', tools: '🪓',
+      medicine: '💊', travel: '🗺️', luxury: '💎'
+    };
+    const categoryNames = {
+      rations: 'Rations', shelter: 'Shelter', tools: 'Tools',
+      medicine: 'Medicine', travel: 'Scouting', luxury: 'Luxury Loot'
+    };
 
-  const CAT_CLASS = {
-    'rations':    'tag-rations',
-    'shelter':    'tag-shelter',
-    'tools':      'tag-tools',
-    'medicine':   'tag-medicine',
-    'expedition': 'tag-expedition',
-    'signal':     'tag-signal',
-    'supplies':   'tag-supplies',
-    'other':      'tag-other',
-  };
+    const toastMessages = {
+      green:    ['Meter updated! You survived another day 🔥', 'Nice move, survivor 🛡️', 'Still in the green zone ✅'],
+      yellow:   ['Caution — the jungle is closing in 🌿', 'Watch your step, survivor ⚠️', 'Meter updated. Tread carefully 🟡'],
+      red:      ['Danger zone entered. Every rupee counts 🔴', 'The meter is bleeding out... 💔', 'Critical territory. No luxury buys! 🚨'],
+      critical: ['💀 You\'re almost out of supplies!', 'MAYDAY. Budget nearly depleted 💀', 'One more big spend and it\'s over 🔴']
+    };
 
-  function formatRupee(n) {
-    return '\u20b9' + Math.round(n).toLocaleString('en-IN');
-  }
-
-  function updateMeter() {
-    const pct   = Math.max(0, Math.round(((BUDGET - spent) / BUDGET) * 100));
-    const fill  = document.getElementById('demo-fill');
-    const glow  = document.getElementById('demo-glow');
-    const pctEl = document.getElementById('demo-pct');
-    const msg   = document.getElementById('meter-msg');
-
-    fill.style.width = pct + '%';
-    glow.style.left  = pct + '%';
-    pctEl.textContent = pct + '%';
-
-    document.getElementById('spent-display').textContent     = formatRupee(spent);
-    document.getElementById('remaining-display').textContent = formatRupee(BUDGET - spent);
-
-    fill.className  = 'meter-fill';
-    pctEl.className = 'meter-percent';
-
-    if (pct <= 0) {
-      pctEl.textContent = '0% \u2014 CRITICAL';
-      fill.classList.add('danger');
-      pctEl.classList.add('danger');
-      msg.textContent = '\u2620 Budget exhausted. You did not survive.';
-      msg.style.color = 'var(--danger)';
-    } else if (pct <= 20) {
-      fill.classList.add('danger');
-      pctEl.classList.add('danger');
-      msg.textContent = '\u26a0 Critical \u2014 barely surviving. Stop spending.';
-      msg.style.color = 'var(--danger)';
-    } else if (pct <= 40) {
-      fill.classList.add('warning');
-      pctEl.classList.add('warning');
-      msg.textContent = '\u26a1 Low reserves \u2014 be careful.';
-      msg.style.color = 'var(--warn)';
-    } else {
-      msg.textContent = 'Holding steady. Keep watching those expenses.';
-      msg.style.color = 'var(--text-dim)';
+    function getZone(pct) {
+      if (pct > 60) return 'green';
+      if (pct > 30) return 'yellow';
+      if (pct > 10) return 'red';
+      return 'critical';
     }
-  }
 
-  function addRow(desc, cat, amount) {
-    const tbody = document.getElementById('expense-body');
-    const tr    = document.createElement('tr');
-    const cls   = CAT_CLASS[cat.toLowerCase()] || 'tag-other';
-    tr.innerHTML = `
-      <td>${desc}</td>
-      <td><span class="tag ${cls}">${cat}</span></td>
-      <td class="amount-neg" style="text-align:right;">${formatRupee(amount)}</td>
-    `;
-    tbody.insertBefore(tr, tbody.firstChild);
-  }
+    function updateMeter() {
+      const pct = Math.max(0, ((BUDGET - spent) / BUDGET) * 100);
+      const zone = getZone(pct);
+      const remaining = BUDGET - spent;
+      const daysLeft = 19;
 
-  function showToast(msg, type) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className   = 'toast show' + (type ? ' toast-' + type : '');
-    clearTimeout(t._timer);
-    t._timer = setTimeout(() => { t.className = 'toast'; }, 3200);
-  }
+      document.getElementById('mainFill').style.width = pct.toFixed(1) + '%';
+      document.getElementById('meterPct').textContent = Math.round(pct) + '%';
+      document.getElementById('statRemaining').textContent = '₹' + Math.max(0, remaining).toLocaleString();
+      document.getElementById('statSpent').textContent = '₹' + spent.toLocaleString();
+      document.getElementById('statDaily').textContent = '₹' + Math.round(Math.max(0, remaining) / daysLeft).toLocaleString();
+      document.getElementById('expCount').textContent = expenseCount + ' entries';
 
-  function logExpense() {
-    const desc   = document.getElementById('exp-desc').value.trim();
-    const amount = parseFloat(document.getElementById('exp-amount').value);
-    const cat    = document.getElementById('exp-cat').value;
+      const fill = document.getElementById('mainFill');
+      const pulse = document.getElementById('mainPulse');
+      const badge = document.getElementById('meterBadge');
+      fill.className = 'meter-fill';
+      pulse.className = 'meter-pulse';
 
-    if (!desc)                  { showToast('Please enter a description.', 'warning'); return; }
-    if (!amount || amount <= 0) { showToast('Please enter a valid amount.', 'warning'); return; }
+      const configs = {
+        green:    { fillClass: 'meter-green',    pulseClass: '',              badge: '🟢 THRIVING',     badgeClass: 'badge-green' },
+        yellow:   { fillClass: 'meter-yellow',   pulseClass: 'pulse-yellow',  badge: '🟡 CAUTION',      badgeClass: 'badge-yellow' },
+        red:      { fillClass: 'meter-red',      pulseClass: 'pulse-red',     badge: '🔴 DANGER ZONE',  badgeClass: 'badge-red' },
+        critical: { fillClass: 'meter-critical', pulseClass: 'pulse-critical',badge: '💀 CRITICAL',     badgeClass: 'badge-critical' }
+      };
+      const c = configs[zone];
+      fill.classList.add(c.fillClass);
+      if (c.pulseClass) pulse.classList.add(c.pulseClass);
+      badge.textContent = c.badge;
+      badge.className = 'meter-badge ' + c.badgeClass;
+    }
 
-    spent += amount;
-    addRow(desc, cat, amount);
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('toast-show');
+      setTimeout(() => t.classList.remove('toast-show'), 3200);
+    }
+
+    function addExpenseItem(icon, name, amount) {
+      const list = document.getElementById('expenseList');
+      const li = document.createElement('li');
+      li.className = 'expense-item expense-item-new';
+      li.innerHTML = `
+        <span class="exp-icon">${icon}</span>
+        <div class="exp-details">
+          <span class="exp-name">${name}</span>
+          <span class="exp-date">Just now</span>
+        </div>
+        <span class="exp-amount">₹${amount.toLocaleString()}</span>
+      `;
+      list.insertBefore(li, list.firstChild);
+      setTimeout(() => li.classList.remove('expense-item-new'), 600);
+    }
+
+    function logExpense() {
+      const cat = document.getElementById('expCategory').value;
+      const amount = parseInt(document.getElementById('expAmount').value) || 0;
+      if (amount <= 0) return;
+
+      spent += amount;
+      expenseCount++;
+      const icon = categoryIcons[cat];
+      const name = categoryNames[cat];
+      updateMeter();
+      addExpenseItem(icon, name + ' — Demo', amount);
+
+      const pct = Math.max(0, ((BUDGET - spent) / BUDGET) * 100);
+      const zone = getZone(pct);
+      const msgs = toastMessages[zone];
+      showToast(msgs[Math.floor(Math.random() * msgs.length)]);
+    }
+
+    function quickSpend(label, amount) {
+      spent += amount;
+      expenseCount++;
+      updateMeter();
+
+      const icon = label.split(' ')[0];
+      addExpenseItem(icon, label.slice(icon.length + 1) + ' — Demo', amount);
+
+      const pct = Math.max(0, ((BUDGET - spent) / BUDGET) * 100);
+      const zone = getZone(pct);
+      const msgs = toastMessages[zone];
+      showToast(msgs[Math.floor(Math.random() * msgs.length)]);
+    }
+
     updateMeter();
-
-    document.getElementById('exp-desc').value   = '';
-    document.getElementById('exp-amount').value = '';
-
-    const pct = Math.max(0, Math.round(((BUDGET - spent) / BUDGET) * 100));
-    if (pct <= 0)       showToast('\u2620 Budget gone. You did not survive.', 'danger');
-    else if (pct <= 20) showToast('\u26a0 Critical! Only ' + pct + '% left.', 'danger');
-    else if (pct <= 40) showToast('\u26a1 Low \u2014 ' + pct + '% remaining.', 'warning');
-    else                showToast('Logged: ' + desc + ' \u2014 ' + formatRupee(amount));
-  }
-
-  function quickAdd(desc, amount, cat) {
-    spent += amount;
-    addRow(desc, cat, amount);
-    updateMeter();
-
-    const pct = Math.max(0, Math.round(((BUDGET - spent) / BUDGET) * 100));
-    if (pct <= 0)       showToast('\u2620 Budget gone. You did not survive.', 'danger');
-    else if (pct <= 20) showToast('\u26a0 Critical! Only ' + pct + '% left.', 'danger');
-    else if (pct <= 40) showToast('\u26a1 Low \u2014 ' + pct + '% remaining.', 'warning');
-    else                showToast('Logged: ' + desc + ' \u2014 ' + formatRupee(amount));
-  }
-</script>
-
-<!-- Jungle category tag colours — add these to style.css if you prefer -->
-<style>
-  .tag-rations    { background: rgba(57,211,83,0.12);   color: #39d353; }
-  .tag-shelter    { background: rgba(80,100,200,0.12);  color: #7a9eee; }
-  .tag-tools      { background: rgba(232,160,32,0.12);  color: #e8a020; }
-  .tag-medicine   { background: rgba(224,48,48,0.12);   color: #e03030; }
-  .tag-expedition { background: rgba(180,120,60,0.12);  color: #c8843c; }
-  .tag-signal     { background: rgba(100,200,220,0.12); color: #64c8dc; }
-  .tag-supplies   { background: rgba(160,100,200,0.12); color: #a064c8; }
-  .tag-other      { background: rgba(120,120,120,0.12); color: #7a9a7a; }
-</style>
-
+  </script>
 </body>
 </html>

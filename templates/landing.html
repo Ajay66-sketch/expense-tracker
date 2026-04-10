@@ -1,106 +1,160 @@
-{# Replace your current templates/landing.html with this #}
+<!-- Replace your current templates/landing.html with this -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>BudgetSurvive — Will You Make It?</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SurviveTheMonth 🌿 — Will You Make It?</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
-<body class="landing-body">
+<body class="landing-page">
 
   <!-- NAV -->
-  <nav class="nav-bar">
-    <span class="nav-logo">&#9741; BudgetSurvive</span>
+  <nav class="nav">
+    <a href="/" class="nav-logo">🌿 SurviveTheMonth</a>
     <div class="nav-links">
-      <a href="{{ url_for('login') }}">Log In</a>
-      <a href="{{ url_for('register') }}" class="btn-primary-sm">Sign Up</a>
+      <a href="/demo" class="btn btn-ghost">Try Demo</a>
+      <a href="/login" class="btn btn-ghost">Log In</a>
+      <a href="/register" class="btn btn-primary">Start Surviving</a>
     </div>
   </nav>
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-tag">&#9660; Budget Tracker</div>
-    <h1 class="hero-title">Will Your Money<br><span class="hero-accent">Survive</span> the Month?</h1>
-    <p class="hero-sub">Track every expense. Watch your survival meter drain. Don't let it hit zero.</p>
+    <div class="hero-eyebrow">💀 Most people run out of money before Day 28</div>
+    <h1 class="hero-title">Will You <span class="survive-text">Survive</span><br>This Month?</h1>
+    <p class="hero-sub">Track every rupee. Feel the tension. Beat the month.</p>
 
-    <!-- SURVIVAL METER — HERO CENTREPIECE -->
-    <div class="meter-showcase">
+    <!-- THE METER — emotional star of the page -->
+    <div class="hero-meter-wrap">
       <div class="meter-label-row">
-        <span class="meter-label-text">SURVIVAL METER</span>
-        <span class="meter-percent" id="hero-pct">68%</span>
+        <span class="meter-label-left">💀 DANGER</span>
+        <span class="meter-status" id="heroStatus">🟢 THRIVING</span>
+        <span class="meter-label-right">SAFE 🛡️</span>
       </div>
-      <div class="meter-track">
-        <div class="meter-fill" id="hero-fill" style="width: 68%"></div>
-        <div class="meter-glow" id="hero-glow" style="left: 68%"></div>
+      <div class="meter-track hero-meter-track">
+        <div class="meter-fill" id="heroFill" style="width: 72%"></div>
+        <div class="meter-pulse" id="heroPulse"></div>
       </div>
-      <div class="meter-caption">Budget remaining this month</div>
-      <div class="meter-demo-controls">
-        <button class="meter-sim-btn" onclick="drainMeter()">&#8595; Simulate Expense</button>
-        <button class="meter-sim-btn refill" onclick="refillMeter()">&#8593; Reset</button>
+      <div class="meter-stats">
+        <div class="meter-stat">
+          <span class="meter-stat-label">Remaining</span>
+          <span class="meter-stat-value" id="heroRemaining">₹14,400</span>
+        </div>
+        <div class="meter-stat">
+          <span class="meter-stat-label">Spent</span>
+          <span class="meter-stat-value" id="heroSpent">₹5,600</span>
+        </div>
+        <div class="meter-stat">
+          <span class="meter-stat-label">Days Left</span>
+          <span class="meter-stat-value" id="heroDays">19</span>
+        </div>
+      </div>
+      <!-- Drain demo -->
+      <div class="hero-drain-demo">
+        <button class="btn btn-drain" onclick="drainMeter()">💸 Spend ₹500 (watch it drain)</button>
+        <button class="btn btn-refill" onclick="refillMeter()">↺ Reset</button>
       </div>
     </div>
 
-    <div class="hero-cta-row">
-      <a href="{{ url_for('demo') }}" class="btn-primary">Try Demo — Free</a>
-      <a href="{{ url_for('register') }}" class="btn-outline">Create Account</a>
+    <div class="hero-ctas">
+      <a href="/register" class="btn btn-primary btn-xl">🌿 Start Surviving — Free</a>
+      <a href="/demo" class="btn btn-outline btn-xl">👁 See Live Demo</a>
     </div>
   </section>
 
-  <!-- THREE PILLARS -->
-  <section class="pillars">
-    <div class="pillar">
-      <div class="pillar-icon">&#9651;</div>
-      <h3>Real-Time Meter</h3>
-      <p>Your budget displayed as a survival gauge — not spreadsheet rows.</p>
+  <!-- 3 PUNCHY FEATURES -->
+  <section class="features-strip">
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>See Your Fate</h3>
+      <p>One glance at your meter tells you everything. No spreadsheets. No confusion.</p>
     </div>
-    <div class="pillar">
-      <div class="pillar-icon">&#9888;</div>
-      <h3>Danger Alerts</h3>
-      <p>Critical warnings when you drop below 20%. No silent failures.</p>
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <h3>Feel the Tension</h3>
+      <p>Watch your meter drain with every expense. The red zone is real — and motivating.</p>
     </div>
-    <div class="pillar">
-      <div class="pillar-icon">&#9650;</div>
-      <h3>Log & Survive</h3>
-      <p>One tap to log an expense. Watch the meter react instantly.</p>
+    <div class="feature-card">
+      <div class="feature-icon">🏆</div>
+      <h3>Beat the Month</h3>
+      <p>Reach Day 30 with budget left. Celebrate surviving. Repeat every month.</p>
     </div>
   </section>
 
-  <!-- FOOTER -->
-  <footer class="site-footer">
-    <span>&#9741; BudgetSurvive</span>
-    <a href="{{ url_for('login') }}">Log In</a>
-    <a href="{{ url_for('register') }}">Sign Up</a>
+  <!-- SOCIAL PROOF / URGENCY -->
+  <section class="proof-strip">
+    <div class="proof-inner">
+      <span>🔥 <strong>2,847 survivors</strong> this month</span>
+      <span>💀 <strong>312 ran out</strong> before Day 25</span>
+      <span>🌿 <strong>Free forever</strong> — no credit card</span>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <h2>Your meter is waiting.<br>Will you survive?</h2>
+    <a href="/register" class="btn btn-primary btn-xl">Start My Survival — Free 🌿</a>
+    <a href="/demo" class="btn-link">See a demo first →</a>
+  </section>
+
+  <footer class="footer">
+    <span>🌿 SurviveTheMonth</span>
+    <span>Made for survivors. Not accountants.</span>
   </footer>
 
   <script>
-    let pct = 68;
+    // Hero meter drain demo
+    let currentPct = 72;
+    let spent = 5600;
+    const budget = 20000;
+
+    function updateHeroMeter(pct) {
+      currentPct = Math.max(0, Math.min(100, pct));
+      const fill = document.getElementById('heroFill');
+      const status = document.getElementById('heroStatus');
+      const pulse = document.getElementById('heroPulse');
+      const remaining = document.getElementById('heroRemaining');
+      const spentEl = document.getElementById('heroSpent');
+
+      fill.style.width = currentPct + '%';
+
+      fill.className = 'meter-fill';
+      pulse.className = 'meter-pulse';
+
+      if (currentPct > 60) {
+        fill.classList.add('meter-green');
+        status.textContent = '🟢 THRIVING';
+      } else if (currentPct > 30) {
+        fill.classList.add('meter-yellow');
+        status.textContent = '🟡 CAUTION';
+        pulse.classList.add('pulse-yellow');
+      } else if (currentPct > 10) {
+        fill.classList.add('meter-red');
+        status.textContent = '🔴 DANGER ZONE';
+        pulse.classList.add('pulse-red');
+      } else {
+        fill.classList.add('meter-critical');
+        status.textContent = '💀 CRITICAL';
+        pulse.classList.add('pulse-critical');
+      }
+
+      remaining.textContent = '₹' + Math.round((currentPct / 100) * budget).toLocaleString();
+      spentEl.textContent = '₹' + Math.round(((100 - currentPct) / 100) * budget).toLocaleString();
+    }
 
     function drainMeter() {
-      const drain = Math.floor(Math.random() * 12) + 5;
-      pct = Math.max(0, pct - drain);
-      updateMeter();
+      spent += 500;
+      const pct = ((budget - spent) / budget) * 100;
+      updateHeroMeter(pct);
     }
 
     function refillMeter() {
-      pct = 68;
-      updateMeter();
+      spent = 5600;
+      updateHeroMeter(72);
     }
 
-    function updateMeter() {
-      const fill = document.getElementById('hero-fill');
-      const glow = document.getElementById('hero-glow');
-      const pctEl = document.getElementById('hero-pct');
-
-      fill.style.width = pct + '%';
-      glow.style.left = pct + '%';
-      pctEl.textContent = pct + '%';
-
-      fill.className = 'meter-fill';
-      if (pct <= 20) fill.classList.add('danger');
-      else if (pct <= 40) fill.classList.add('warning');
-    }
+    updateHeroMeter(72);
   </script>
 </body>
 </html>

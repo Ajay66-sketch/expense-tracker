@@ -1,131 +1,187 @@
-{# Replace your current templates/register.html with this #}
+<!-- Replace your current templates/register.html with this -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register — SurviveTheMonth</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Begin Your Survival — SurviveTheMonth 🌿</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
-<body class="auth-body">
+<body class="auth-page">
 
-  <!-- NAV -->
-  <nav class="nav-bar">
-    <a href="{{ url_for('index') }}" class="nav-logo">&#9741; SurviveTheMonth</a>
-    <div class="nav-links">
-      <a href="{{ url_for('login') }}">Already surviving? Log in</a>
-    </div>
-  </nav>
+  <div class="auth-bg">
+    <div class="auth-canopy">🌿🍃🌴🍃🌿🌴🍃🌿🍃🌴🌿🍃🌿🌴🍃</div>
+  </div>
 
-  <div class="auth-wrapper">
+  <div class="auth-container">
+
     <div class="auth-card">
 
-      <!-- Mini meter teaser -->
-      <div class="auth-meter-mini">
-        <div class="auth-meter-track">
-          <div class="auth-meter-fill" style="width: 100%"></div>
-        </div>
-        <span class="auth-meter-hint">Your meter starts full. Keep it that way.</span>
+      <div class="auth-logo">
+        <span class="auth-logo-icon">🌿</span>
+        <span class="auth-logo-text">SurviveTheMonth</span>
       </div>
 
-      <h2 class="auth-title">&#127807; SurviveTheMonth</h2>
-      <p class="auth-sub">Create your survivor profile</p>
-
-      <!-- Mission briefing strip -->
-      <div style="
-        background: rgba(57,211,83,0.06);
-        border: 1px solid rgba(57,211,83,0.14);
-        border-radius: 8px;
-        padding: 0.65rem 1rem;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        font-size: 0.82rem;
-        color: var(--text-muted);
-      ">
-        <span>&#128225;</span>
-        <span>Free forever · No credit card · Your data stays yours</span>
+      <div class="auth-heading">
+        <h1>Begin Your Survival</h1>
+        <p>Set your budget. Arm yourself. Enter the jungle.</p>
       </div>
 
       <!-- Flash messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
-          <div class="flash flash-{{ category }}">{{ message }}</div>
-        {% endfor %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">
+              {% if category == 'danger' %}💀{% elif category == 'success' %}✅{% else %}⚠️{% endif %}
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
       {% endwith %}
 
-      <form method="POST" action="{{ url_for('register') }}" autocomplete="off" class="auth-form">
+      <form method="POST" action="/register" class="auth-form">
+        {% if csrf_token is defined %}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        {% endif %}
 
-        <div class="field-group">
-          <label for="username">Survivor ID</label>
+        <div class="form-group">
+          <label class="form-label" for="username">🧭 Survivor ID (Username)</label>
           <input
             type="text"
             id="username"
             name="username"
-            placeholder="choose_your_callsign"
+            class="form-input"
+            placeholder="Choose your survivor name"
             autocomplete="username"
             required
-          >
+          />
         </div>
 
-        <div class="field-group">
-          <label for="monthly_budget">
-            Monthly Budget (&#8377;)
-            <span style="color:var(--text-dim);font-weight:400;font-size:0.75rem;text-transform:none;letter-spacing:0;"> — optional</span>
+        <div class="form-group">
+          <label class="form-label" for="budget">
+            🎯 Monthly Survival Budget
+            <span class="form-label-hint">(optional — you can set this later)</span>
           </label>
+          <div class="input-prefix-wrap">
+            <span class="input-prefix">₹</span>
+            <input
+              type="number"
+              id="budget"
+              name="budget"
+              class="form-input input-with-prefix"
+              placeholder="e.g. 20000"
+              min="0"
+              step="500"
+            />
+          </div>
+          <div class="meter-preview" id="budgetPreview" style="display:none;">
+            <div class="meter-track preview-meter-track">
+              <div class="meter-fill meter-green" style="width:100%"></div>
+            </div>
+            <span class="preview-label">Your meter starts full 🛡️</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">🔑 Secret Passphrase</label>
           <input
-            type="number"
-            id="monthly_budget"
-            name="monthly_budget"
-            placeholder="30000"
-            min="1"
-            step="100"
-            style="-moz-appearance:textfield;"
-          >
-          <span style="font-size:0.75rem;color:var(--text-dim);margin-top:0.25rem;">Defaults to ₹30,000 — you can change this later</span>
+            type="password"
+            id="password"
+            name="password"
+            class="form-input"
+            placeholder="Create a strong passphrase"
+            autocomplete="new-password"
+            required
+            minlength="6"
+          />
         </div>
 
-        <!-- Password row — stacked on mobile, side by side on wider screens -->
-        <div class="password-row">
-          <div class="field-group" style="margin-bottom:0;">
-            <label for="password">Secret Code</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              placeholder="••••••••"
-              autocomplete="new-password"
-              required
-            >
-          </div>
-          <div class="field-group" style="margin-bottom:0;">
-            <label for="confirm_password">Confirm Code</label>
-            <input
-              type="password"
-              id="confirm_password"
-              name="confirm_password"
-              placeholder="••••••••"
-              autocomplete="new-password"
-              required
-            >
-          </div>
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">🔒 Confirm Passphrase</label>
+          <input
+            type="password"
+            id="confirm_password"
+            name="confirm_password"
+            class="form-input"
+            placeholder="Repeat your passphrase"
+            autocomplete="new-password"
+            required
+          />
+          <div class="password-match-hint" id="pwMatchHint"></div>
         </div>
 
-        <button type="submit" class="btn-primary btn-full" style="margin-top:1.25rem;">
-          &#127807; Begin Surviving
+        <button type="submit" class="btn btn-primary btn-full btn-xl" id="submitBtn">
+          🌿 Start Surviving — Free
         </button>
-
       </form>
 
-      <p class="auth-switch" style="margin-top:1rem;">Already surviving? <a href="{{ url_for('login') }}">Log in →</a></p>
-      <p class="auth-switch" style="margin-top:0.4rem;">
-        <a href="{{ url_for('demo') }}" style="color:var(--text-dim);font-size:0.82rem;">Peek at the demo first →</a>
-      </p>
+      <div class="auth-footer">
+        <p>Already a survivor? <a href="/login" class="auth-link">Log in →</a></p>
+        <p class="auth-demo-nudge">Not sure? <a href="/demo" class="auth-link">Try the demo first →</a></p>
+      </div>
 
-    </div><!-- /auth-card -->
+    </div>
+
+    <!-- SIDE FLAVOR -->
+    <div class="auth-flavor">
+      <div class="flavor-steps">
+        <div class="flavor-step">
+          <span class="step-num">01</span>
+          <div>
+            <strong>Set your budget</strong>
+            <p>Your monthly survival allowance is your life force.</p>
+          </div>
+        </div>
+        <div class="flavor-step">
+          <span class="step-num">02</span>
+          <div>
+            <strong>Log expenses</strong>
+            <p>Every Ration, Shelter cost, and Tool purchase drains your meter.</p>
+          </div>
+        </div>
+        <div class="flavor-step">
+          <span class="step-num">03</span>
+          <div>
+            <strong>Survive Day 30</strong>
+            <p>Reach month-end with budget left. You win. Repeat.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
+  <script>
+    // Show meter preview when budget is entered
+    const budgetInput = document.getElementById('budget');
+    const budgetPreview = document.getElementById('budgetPreview');
+    budgetInput.addEventListener('input', () => {
+      if (budgetInput.value && parseInt(budgetInput.value) > 0) {
+        budgetPreview.style.display = 'flex';
+      } else {
+        budgetPreview.style.display = 'none';
+      }
+    });
+
+    // Password match hint
+    const pw = document.getElementById('password');
+    const cpw = document.getElementById('confirm_password');
+    const hint = document.getElementById('pwMatchHint');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function checkPwMatch() {
+      if (!cpw.value) { hint.textContent = ''; return; }
+      if (pw.value === cpw.value) {
+        hint.textContent = '✅ Passphrases match';
+        hint.className = 'password-match-hint match-ok';
+        submitBtn.disabled = false;
+      } else {
+        hint.textContent = '❌ Passphrases do not match';
+        hint.className = 'password-match-hint match-fail';
+      }
+    }
+    pw.addEventListener('input', checkPwMatch);
+    cpw.addEventListener('input', checkPwMatch);
+  </script>
 </body>
 </html>

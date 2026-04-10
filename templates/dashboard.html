@@ -1,26 +1,32 @@
+<!-- Replace your current templates/dashboard.html with this -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — SurviveTheMonth</title>
+  <title>Dashboard — SurviveTheMonth 🌿</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="dashboard-page">
 
-<nav class="navbar">
-  <a href="{{ url_for('dashboard') }}" class="navbar-brand">🌿 SURVIVE<span>THEMONTH</span></a>
+<!-- NAV -->
+<nav class="nav">
+  <a href="{{ url_for('dashboard') }}" class="nav-logo">🌿 SurviveTheMonth</a>
   <div class="nav-links">
-    <a href="{{ url_for('settings') }}" class="nav-link"><span>⚙</span> Settings</a>
-    <a href="{{ url_for('logout') }}" class="nav-link"><span>🚪</span> Exit</a>
+    <a href="{{ url_for('settings') }}" class="btn btn-ghost">⚙ Settings</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-ghost">🚪 Exit</a>
   </div>
 </nav>
 
+<!-- Flash messages -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-  <div class="flash-container">
+  <div style="max-width:1100px; margin:1rem auto; padding:0 2rem;">
     {% for category, message in messages %}
-      <div class="flash flash-{{ category }}">{{ message }}</div>
+      <div class="flash flash-{{ category }}">
+        {% if category == 'danger' %}💀{% elif category == 'success' %}✅{% else %}⚠️{% endif %}
+        {{ message }}
+      </div>
     {% endfor %}
   </div>
   {% endif %}
@@ -28,87 +34,103 @@
 
 <div class="dashboard-layout">
 
-  <!-- Sidebar -->
-  <div class="sidebar">
+  <!-- ── LEFT: METER + FORM ───────────────────────────────── -->
+  <section class="meter-section">
 
-    <!-- Survival Meter -->
-    <div class="card" id="meterCard">
-      <div class="meter-container">
-        <div class="meter-label-row">
-          <span class="meter-title">☠ Survival Meter</span>
-          <span class="meter-pct mono" id="meterPct">{{ survival_pct }}%</span>
-        </div>
-        <div class="meter-track">
-          <div class="meter-fill" id="meterFill" style="width: {{ survival_pct }}%;"></div>
-        </div>
-        <div class="meter-sublabel">
-          <span>₹{{ "{:,.0f}".format(total_spent) }} spent</span>
-          <span>₹{{ "{:,.0f}".format(user.monthly_budget - total_spent) }} left</span>
-        </div>
-        <div id="statusBadge"></div>
+    <!-- SURVIVAL METER -->
+    <div class="meter-header">
+      <div>
+        <h2 class="meter-title">☠ Survival Meter</h2>
+        <p class="meter-subtitle">{{ now.strftime('%B %Y') }} · {{ user.username }}</p>
+      </div>
+      <div class="meter-badge" id="meterBadge">🟢 SURVIVING</div>
+    </div>
+
+    <div class="meter-track main-meter-track">
+      <div class="meter-fill meter-green" id="meterFill" style="width: {{ survival_pct }}%;"></div>
+      <div class="meter-pulse" id="meterPulse"></div>
+      <div class="meter-pct-label">{{ survival_pct }}%</div>
+    </div>
+
+    <div class="meter-stats main-stats">
+      <div class="stat-card">
+        <span class="stat-icon">💸</span>
+        <span class="stat-label">Spent</span>
+        <span class="stat-value">₹{{ "{:,.0f}".format(total_spent) }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🎯</span>
+        <span class="stat-label">Budget</span>
+        <span class="stat-value">₹{{ "{:,.0f}".format(user.monthly_budget) }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🛡️</span>
+        <span class="stat-label">Remaining</span>
+        <span class="stat-value" id="remainingVal">₹{{ "{:,.0f}".format([user.monthly_budget - total_spent, 0]|max) }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">📋</span>
+        <span class="stat-label">Entries</span>
+        <span class="stat-value">{{ expenses|length }}</span>
       </div>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-value mono">₹{{ "{:,.0f}".format(total_spent) }}</div>
-        <div class="stat-label">Spent</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value mono">₹{{ "{:,.0f}".format(user.monthly_budget) }}</div>
-        <div class="stat-label">Budget</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value mono">₹{{ "{:,.0f}".format([user.monthly_budget - total_spent, 0]|max) }}</div>
-        <div class="stat-label">Remaining</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value mono">{{ expenses|length }}</div>
-        <div class="stat-label">Expenses</div>
-      </div>
-    </div>
-
-    <!-- Add expense -->
-    <div class="card">
-      <div class="section-title">⚡ Log Expense</div>
-      <form method="POST" action="{{ url_for('add_expense') }}">
+    <!-- LOG EXPENSE FORM -->
+    <div class="quick-add">
+      <h3 class="quick-add-title">⚡ Log Expense</h3>
+      <form method="POST" action="{{ url_for('add_expense') }}" class="auth-form">
         <div class="form-group">
-          <label class="form-label">Description</label>
-          <input type="text" name="description" class="form-control" placeholder="What did you spend on?" required>
+          <label class="form-label" for="description">📝 Description</label>
+          <input
+            type="text"
+            id="description"
+            name="description"
+            class="form-input"
+            placeholder="What did you spend on?"
+            required
+          >
         </div>
         <div class="form-group">
-          <label class="form-label">Amount (₹)</label>
-          <input type="number" name="amount" class="form-control" placeholder="0.00" min="0.01" step="0.01" required>
+          <label class="form-label" for="amount">💰 Amount</label>
+          <div class="input-prefix-wrap">
+            <span class="input-prefix">₹</span>
+            <input
+              type="number"
+              id="amount"
+              name="amount"
+              class="form-input input-with-prefix"
+              placeholder="0.00"
+              min="0.01"
+              step="0.01"
+              required
+            >
+          </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Category</label>
-          <select name="category" class="form-control">
+          <label class="form-label" for="category">🗂 Category</label>
+          <select id="category" name="category" class="form-select">
             {% for cat in categories %}
             <option>{{ cat }}</option>
             {% endfor %}
           </select>
         </div>
-        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.25rem;">
           🌿 Log It
         </button>
       </form>
     </div>
 
-  </div>
+  </section>
 
-  <!-- Main panel -->
-  <div class="main-panel">
+  <!-- ── RIGHT: EXPENSE TABLE ─────────────────────────────── -->
+  <section class="expenses-section">
+    <div class="expenses-header">
+      <h3>📋 {{ now.strftime('%B %Y') }} Field Log</h3>
+      <span class="expense-count">{{ expenses|length }} entries</span>
+    </div>
 
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <div class="section-title" style="margin-bottom:0;">
-          📋 {{ now.strftime('%B %Y') }} Field Log
-        </div>
-        <span class="mono" style="font-size:0.8rem; color:var(--text-muted);">{{ expenses|length }} entries</span>
-      </div>
-
-      {% if expenses %}
+    {% if expenses %}
+    <div class="expense-table-wrap">
       <table class="expense-table">
         <thead>
           <tr>
@@ -122,57 +144,66 @@
         <tbody>
           {% for expense in expenses %}
           <tr>
-            <td>{{ expense.description }}</td>
+            <td class="exp-desc">{{ expense.description }}</td>
             <td><span class="cat-pill">{{ expense.category }}</span></td>
-            <td style="color:var(--text-muted); font-family:var(--font-mono); font-size:0.82rem;">
-              {{ expense.date.strftime('%d %b') }}
-            </td>
-            <td class="amount-display">₹{{ "{:,.0f}".format(expense.amount) }}</td>
+            <td class="exp-date-cell">{{ expense.date.strftime('%d %b') }}</td>
+            <td class="exp-amount-cell">₹{{ "{:,.0f}".format(expense.amount) }}</td>
             <td>
               <form method="POST" action="{{ url_for('delete_expense', expense_id=expense.id) }}" style="display:inline;">
-                <button type="submit" class="btn btn-danger" onclick="return confirm('Remove this expense?')">✕</button>
+                <button type="submit" class="btn-delete" onclick="return confirm('Remove this expense?')" title="Delete">✕</button>
               </form>
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
-      {% else %}
-      <div class="empty-state">
-        <div class="empty-icon">🌿</div>
-        <p>No expenses logged yet this month.</p>
-        <p style="margin-top:0.3rem; font-size:0.85rem;">Start tracking to see your survival meter in action.</p>
-      </div>
-      {% endif %}
     </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🌿</div>
+      <p>No expenses logged yet this month.</p>
+      <p class="empty-sub">Use the form on the left to start tracking.</p>
+    </div>
+    {% endif %}
+  </section>
 
-  </div>
-</div>
+</div><!-- /dashboard-layout -->
 
 <script>
   const pct = {{ survival_pct }};
 
-  function getMeterStatus(p) {
-    if (p > 50) return 'alive';
-    if (p > 20) return 'warning';
-    return 'critical';
+  function applyMeterState(p) {
+    const fill  = document.getElementById('meterFill');
+    const pulse = document.getElementById('meterPulse');
+    const badge = document.getElementById('meterBadge');
+
+    fill.className  = 'meter-fill';
+    pulse.className = 'meter-pulse';
+
+    if (p > 60) {
+      fill.classList.add('meter-green');
+      badge.textContent  = '🟢 SURVIVING';
+      badge.className    = 'meter-badge badge-green';
+    } else if (p > 30) {
+      fill.classList.add('meter-yellow');
+      pulse.classList.add('pulse-yellow');
+      badge.textContent  = '🟡 CAUTION';
+      badge.className    = 'meter-badge badge-yellow';
+    } else if (p > 10) {
+      fill.classList.add('meter-red');
+      pulse.classList.add('pulse-red');
+      badge.textContent  = '🔴 DANGER ZONE';
+      badge.className    = 'meter-badge badge-red';
+    } else {
+      fill.classList.add('meter-critical');
+      pulse.classList.add('pulse-critical');
+      badge.textContent  = '💀 CRITICAL';
+      badge.className    = 'meter-badge badge-critical';
+    }
   }
 
-  function getBadgeHTML(p) {
-    const status = getMeterStatus(p);
-    const labels = { alive: '🟢 SURVIVING', warning: '⚠ DANGER ZONE', critical: '💀 CRITICAL' };
-    const classes = { alive: 'badge-alive', warning: 'badge-warning', critical: 'badge-critical' };
-    const dotClasses = { alive: 'dot-alive', warning: 'dot-warning', critical: 'dot-critical' };
-    return `<div class="status-badge ${classes[status]}">
-      <span class="status-dot ${dotClasses[status]}"></span>
-      ${labels[status]}
-    </div>`;
-  }
-
-  const card = document.getElementById('meterCard');
-  const status = getMeterStatus(pct);
-  card.classList.add('status-' + status);
-  document.getElementById('statusBadge').innerHTML = getBadgeHTML(pct);
+  applyMeterState(pct);
 </script>
+
 </body>
 </html>
