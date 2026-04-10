@@ -1,8 +1,9 @@
-from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify
+from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone
 from functools import wraps
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'jungle-survival-secret-key-change-in-production'
@@ -10,6 +11,15 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///surviveThemonth.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
+# ── Favicon ────────────────────────────────────────────────
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon'
+    )
 
 CATEGORIES = ['Rations', 'Shelter', 'Tools', 'Medicine', 'Expedition', 'Signal', 'Supplies', 'Other']
 DEFAULT_BUDGET = 30000
