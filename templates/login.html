@@ -1,72 +1,71 @@
+{# Replace your current templates/login.html with this #}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login — SurviveTheMonth</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Log In — BudgetSurvive</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 </head>
-<body>
-<div class="auth-wrapper">
-  <div class="auth-card">
+<body class="auth-body">
 
-    <div class="auth-logo">
-      <h1>🌿 SurviveTheMonth</h1>
-      <p>Enter your credentials, survivor.</p>
+  <!-- NAV -->
+  <nav class="nav-bar">
+    <a href="{{ url_for('landing') }}" class="nav-logo">&#9741; BudgetSurvive</a>
+    <div class="nav-links">
+      <a href="{{ url_for('register') }}">No account? Sign up</a>
     </div>
+  </nav>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for category, message in messages %}
-        <div class="flash flash-{{ category }}">{{ message }}</div>
-      {% endfor %}
-    {% endwith %}
+  <!-- AUTH CARD -->
+  <div class="auth-wrapper">
+    <div class="auth-card">
 
-    <div class="card">
-      <form method="POST" action="{{ url_for('login') }}">
-        <div class="form-group">
-          <label class="form-label" for="username">Survivor ID</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            class="form-control"
-            placeholder="your_username"
-            autocomplete="username"
-            required
-          >
+      <!-- Mini meter teaser -->
+      <div class="auth-meter-mini">
+        <div class="auth-meter-track">
+          <div class="auth-meter-fill" style="width: 55%"></div>
+        </div>
+        <span class="auth-meter-hint">Your meter is waiting…</span>
+      </div>
+
+      <h2 class="auth-title">Welcome Back</h2>
+      <p class="auth-sub">Log in to check your survival status.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('login') }}" class="auth-form">
+        {{ form.hidden_tag() }}
+
+        <div class="field-group">
+          <label for="email">Email</label>
+          {{ form.email(id="email", placeholder="you@example.com") }}
+          {% if form.email.errors %}
+            <span class="field-error">{{ form.email.errors[0] }}</span>
+          {% endif %}
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="password">Secret Code</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="form-control"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            required
-          >
+        <div class="field-group">
+          <label for="password">Password</label>
+          {{ form.password(id="password", placeholder="••••••••") }}
+          {% if form.password.errors %}
+            <span class="field-error">{{ form.password.errors[0] }}</span>
+          {% endif %}
         </div>
 
-        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:0.5rem;">
-          🌿 Enter the Jungle
-        </button>
+        <button type="submit" class="btn-primary btn-full">Log In &#8594;</button>
       </form>
 
-      <div class="divider"></div>
-
-      <div class="auth-footer">
-        No account?
-        <a href="{{ url_for('register') }}">Register as a new survivor</a>
-      </div>
-
-      <div class="auth-footer" style="margin-top:0.5rem;">
-        <a href="{{ url_for('demo') }}">See the live demo →</a>
-      </div>
+      <p class="auth-switch">Don't have an account? <a href="{{ url_for('register') }}">Sign up free</a></p>
     </div>
-
   </div>
-</div>
+
 </body>
 </html>
