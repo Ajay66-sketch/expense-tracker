@@ -1,33 +1,33 @@
-<!-- Replace your current templates/login.html with this -->
+<!-- Replace templates/login.html with this -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Return to Base — SurviveTheMonth 🌿</title>
+  <title>Return to Base Camp — SurviveTheMonth 🌿</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
 </head>
 <body class="auth-page">
 
   <div class="auth-bg">
-    <div class="auth-canopy">🌿🍃🌴🍃🌿🌴🍃🌿🍃🌴🌿🍃🌿🌴🍃</div>
+    <div class="auth-canopy">🌿🍃🌴🍃🌿🌴🍃🌿🍃🌴🌿🍃🌿🌴🍃🌿🍃🌴🍃🌿</div>
   </div>
 
   <div class="auth-container">
 
     <div class="auth-card">
 
-      <div class="auth-logo">
+      <a href="/" class="auth-logo">
         <span class="auth-logo-icon">🌿</span>
         <span class="auth-logo-text">SurviveTheMonth</span>
-      </div>
+      </a>
 
       <div class="auth-heading">
-        <h1>Return to Base Camp</h1>
-        <p>Your survival meter has been waiting.</p>
+        <h1>Back from the wilderness?</h1>
+        <p>Your survival meter has been waiting. Every day without tracking is a day you're flying blind.</p>
       </div>
 
-      <!-- Flash messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
@@ -40,81 +40,81 @@
       {% endwith %}
 
       <form method="POST" action="/login" class="auth-form">
-        <!-- CSRF token if you use Flask-WTF -->
         {% if csrf_token is defined %}
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         {% endif %}
 
         <div class="form-group">
-          <label class="form-label" for="username">🧭 Survivor ID (Username)</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            class="form-input"
-            placeholder="Enter your survivor name"
-            autocomplete="username"
-            required
-          />
+          <label class="form-label" for="username">🧭 Survivor ID</label>
+          <input type="text" id="username" name="username" class="form-input"
+            placeholder="Your survivor name" autocomplete="username" required />
         </div>
 
         <div class="form-group">
           <label class="form-label" for="password">🔑 Secret Passphrase</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="form-input"
-            placeholder="Your secret passphrase"
-            autocomplete="current-password"
-            required
-          />
+          <input type="password" id="password" name="password" class="form-input"
+            placeholder="Your jungle passphrase" autocomplete="current-password" required />
         </div>
 
-        <button type="submit" class="btn btn-primary btn-full btn-xl">
-          🌿 Enter the Jungle
+        <button type="submit" class="btn btn-primary btn-full btn-xl btn-glow">
+          🌿 Re-enter the Jungle
         </button>
       </form>
 
+      <div class="auth-divider"><span>or</span></div>
+
+      <a href="/demo" class="btn btn-ghost btn-full">👁 Try Demo — no account needed</a>
+
       <div class="auth-footer">
-        <p>New to the jungle? <a href="/register" class="auth-link">Create a free account →</a></p>
-        <p class="auth-demo-nudge">Just browsing? <a href="/demo" class="auth-link">Try the demo →</a></p>
+        <p>New survivor? <a href="/register" class="auth-link">Begin your first expedition →</a></p>
       </div>
 
     </div>
 
-    <!-- SIDE FLAVOR -->
     <div class="auth-flavor">
+
+      <!-- Animated idle meter -->
       <div class="flavor-meter-mini">
-        <div class="flavor-meter-label">Your meter is waiting...</div>
+        <div class="flavor-meter-label">Your meter right now...</div>
         <div class="meter-track flavor-meter-track">
-          <div class="meter-fill meter-yellow flavor-idle-fill" id="flavorFill"></div>
+          <div class="meter-fill meter-yellow" id="flavorFill" style="width:58%"></div>
         </div>
-        <div class="flavor-meter-sub">Log in to see your real status</div>
+        <div class="flavor-meter-sub">Log in to see your real survival status</div>
       </div>
-      <blockquote class="auth-quote">
-        "Every expense is a battle. Every budget day survived is a victory."
-      </blockquote>
+
+      <!-- Survival log flavor -->
+      <div class="flavor-log">
+        <div class="flavor-log-title">📜 Jungle Rules</div>
+        <div class="flavor-log-item">
+          <span class="flavor-log-icon">🍖</span>
+          <span>Every expense drains your meter</span>
+        </div>
+        <div class="flavor-log-item">
+          <span class="flavor-log-icon">🔴</span>
+          <span>Red zone means danger — cut back now</span>
+        </div>
+        <div class="flavor-log-item">
+          <span class="flavor-log-icon">🏆</span>
+          <span>Reach Day 30 with budget left. You win.</span>
+        </div>
+        <div class="flavor-log-item">
+          <span class="flavor-log-icon">💀</span>
+          <span>Run out before Day 30. You don't.</span>
+        </div>
+      </div>
+
     </div>
 
   </div>
 
   <script>
-    // Idle animation on flavor meter
-    let dir = -1;
-    let pct = 58;
+    let dir = -1, pct = 58;
     setInterval(() => {
-      pct += dir * 0.4;
-      if (pct <= 30 || pct >= 72) dir *= -1;
+      pct += dir * 0.3;
+      if (pct <= 28 || pct >= 72) dir *= -1;
       const fill = document.getElementById('flavorFill');
       fill.style.width = pct + '%';
-      if (pct < 40) {
-        fill.className = 'meter-fill meter-red flavor-idle-fill';
-      } else if (pct < 55) {
-        fill.className = 'meter-fill meter-yellow flavor-idle-fill';
-      } else {
-        fill.className = 'meter-fill meter-green flavor-idle-fill';
-      }
+      fill.className = 'meter-fill ' + (pct < 35 ? 'meter-red' : pct < 55 ? 'meter-yellow' : 'meter-green');
     }, 80);
   </script>
 </body>

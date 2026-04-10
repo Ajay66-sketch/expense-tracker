@@ -975,3 +975,278 @@ a:hover { text-decoration: underline; }
 .expenses-section .expense-table-wrap {
   flex: 1;
 }
+
+/* ── LANDING V2 IMPROVEMENTS ──────────────────────────────── */
+.hero-top { text-align: center; margin-bottom: 2rem; }
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(239,68,68,0.1);
+  color: #f87171;
+  border: 1px solid rgba(239,68,68,0.22);
+  border-radius: 100px;
+  padding: 0.35rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+.eyebrow-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #f87171;
+  animation: dotPulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes dotPulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.7); }
+}
+
+.hero-title {
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.85rem;
+}
+.hero-title-survive {
+  color: #f87171;
+  position: relative;
+}
+.hero-sub {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+
+/* Hero meter — bigger and more dramatic */
+.hero-meter-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  padding: 1.75rem 2rem;
+  margin: 0 auto 2rem;
+  max-width: 680px;
+  transition: border-color 0.4s, box-shadow 0.4s;
+}
+.wrap-warning  { border-color: rgba(234,179,8,0.4); box-shadow: 0 0 32px rgba(234,179,8,0.08); }
+.wrap-danger   { border-color: rgba(239,68,68,0.45); box-shadow: 0 0 40px rgba(239,68,68,0.12); }
+.wrap-critical { border-color: rgba(124,58,237,0.5); box-shadow: 0 0 48px rgba(124,58,237,0.18); }
+
+.hero-meter-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.hero-meter-label { display: flex; flex-direction: column; gap: 2px; }
+.hero-meter-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+.hero-meter-month { font-size: 0.78rem; color: var(--text-muted); }
+
+.hero-meter-track { height: 56px; }
+
+.hero-meter-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 1.25rem;
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.hero-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.85rem 0.5rem;
+  gap: 3px;
+}
+.hero-stat-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.hero-stat-lbl {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-dim);
+}
+.hero-stat-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.hero-interact {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.hero-danger-msg {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f87171;
+  margin-top: 0.75rem;
+  min-height: 1.2rem;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+.danger-msg-visible {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+/* Glow button */
+.btn-glow {
+  box-shadow: 0 0 0 0 rgba(34,197,94,0.4);
+  animation: glowPulse 2.5s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.3); }
+  50%      { box-shadow: 0 0 20px 4px rgba(34,197,94,0.15); }
+}
+
+.hero-reassure {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
+/* Final CTA improvements */
+.final-cta-preview { margin-bottom: 1.5rem; }
+.final-cta-scary {
+  font-size: 0.85rem;
+  color: #f87171;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+.final-cta h2 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.25;
+  margin-bottom: 2rem;
+}
+
+/* ── AUTH V2 IMPROVEMENTS ─────────────────────────────────── */
+.auth-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+  text-decoration: none;
+}
+.auth-logo:hover { text-decoration: none; }
+
+.auth-heading h1 {
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin-bottom: 0.5rem;
+}
+.auth-heading p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 1.75rem;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Flavor log on login page */
+.flavor-log {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem;
+  margin-top: 1rem;
+}
+.flavor-log-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 0.85rem;
+  letter-spacing: 0.04em;
+}
+.flavor-log-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(34,197,94,0.06);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.flavor-log-item:last-child { border-bottom: none; }
+.flavor-log-icon { font-size: 0.9rem; flex-shrink: 0; }
+
+/* Register meter preview */
+.register-meter-preview {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+.preview-meter-track { height: 10px; flex: 1; }
+.preview-label { font-size: 0.75rem; color: var(--green); font-weight: 600; white-space: nowrap; }
+
+/* Survivor's oath */
+.flavor-survival-oath {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.oath-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+  margin-bottom: 0.85rem;
+}
+.oath-text {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+  font-style: italic;
+  border-left: 2px solid var(--green);
+  padding-left: 0.85rem;
+}
+.oath-text strong { color: var(--green); font-style: normal; }
+
+@media (max-width: 768px) {
+  .hero-meter-wrap { padding: 1.25rem; }
+  .hero-meter-track { height: 44px; }
+  .hero-meter-stats { flex-wrap: wrap; }
+  .hero-interact { flex-direction: column; }
+  .hero-interact .btn { width: 100%; justify-content: center; }
+}
