@@ -182,22 +182,22 @@
     document.getElementById('heroDays').textContent = _lastDay - _now.getDate();
 
     // Dramatic entrance: animate meter from 0% to TARGET_PCT on load
-    const fill   = document.getElementById('heroFill');
+    const animFill = document.getElementById('heroFill');
     const pctLbl = document.getElementById('heroPctLabel');
 
     // Force start at 0 with no transition
-    fill.style.cssText = 'width:0%; transition:none;';
+    animFill.style.cssText = 'width:0%; transition:none;';
 
     let cur = 0;
     function tick() {
       cur += 1.2;
       if (cur >= TARGET_PCT) {
         cur = TARGET_PCT;
-        fill.style.cssText = '';
+        animFill.style.cssText = '';
         updateHeroMeter(TARGET_PCT);
         return;
       }
-      fill.style.width = cur + '%';
+      animFill.style.width = cur + '%';
       pctLbl.textContent = Math.round(cur) + '%';
       setTimeout(tick, 12);
     }
