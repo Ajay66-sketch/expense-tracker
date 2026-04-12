@@ -1250,3 +1250,73 @@ a:hover { text-decoration: underline; }
   .hero-interact { flex-direction: column; }
   .hero-interact .btn { width: 100%; justify-content: center; }
 }
+
+/* ── GROK FIXES: dramatic meter, animation, form polish ───── */
+
+/* Fix 1: Stronger critical/danger state */
+.wrap-danger {
+  animation: dangerShake 0.4s ease-in-out;
+}
+.wrap-critical {
+  animation: criticalShake 0.3s ease-in-out;
+}
+@keyframes dangerShake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-3px); }
+  75%      { transform: translateX(3px); }
+}
+@keyframes criticalShake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-4px); }
+  40%      { transform: translateX(4px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+
+/* Fix 2: Much stronger pulse on red/critical */
+@keyframes pulseRed {
+  0%,100% { box-shadow: inset 0 0 0 0 rgba(239,68,68,0); }
+  50%      { box-shadow: inset 0 0 32px 8px rgba(239,68,68,0.45); }
+}
+@keyframes pulseCritical {
+  0%,100% { box-shadow: inset 0 0 0 0 rgba(124,58,237,0); }
+  50%      { box-shadow: inset 0 0 40px 10px rgba(124,58,237,0.6); }
+}
+
+/* Fix 3: Purple/critical actually fires */
+.meter-critical {
+  background: linear-gradient(90deg, #4c1d95, #7c3aed) !important;
+  animation: criticalFlash 0.6s infinite alternate !important;
+}
+
+/* Fix 4: Jungle glow on form input focus */
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--green) !important;
+  box-shadow: 0 0 0 3px rgba(34,197,94,0.15), 0 0 12px rgba(34,197,94,0.1) !important;
+}
+
+/* Fix 5: Stronger hero meter border glow on danger states */
+.wrap-warning {
+  border-color: rgba(234,179,8,0.5) !important;
+  box-shadow: 0 0 40px rgba(234,179,8,0.12), inset 0 0 0 1px rgba(234,179,8,0.1) !important;
+}
+.wrap-danger {
+  border-color: rgba(239,68,68,0.6) !important;
+  box-shadow: 0 0 50px rgba(239,68,68,0.18), inset 0 0 0 1px rgba(239,68,68,0.1) !important;
+}
+.wrap-critical {
+  border-color: rgba(124,58,237,0.7) !important;
+  box-shadow: 0 0 60px rgba(124,58,237,0.25), inset 0 0 0 1px rgba(124,58,237,0.15) !important;
+  animation: criticalBorderPulse 0.7s ease-in-out infinite !important;
+}
+@keyframes criticalBorderPulse {
+  0%,100% { box-shadow: 0 0 40px rgba(124,58,237,0.2); }
+  50%      { box-shadow: 0 0 70px rgba(124,58,237,0.4); }
+}
+
+/* Fix 6: Scale transform on critical meter fill */
+.meter-track:has(.meter-critical) {
+  transform: scaleY(1.06);
+  transition: transform 0.3s;
+}

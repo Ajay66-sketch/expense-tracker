@@ -192,15 +192,34 @@
     }
 
     // Dramatic entrance: animate from 0 to TARGET_PCT on load
-    let cur = 0;
-    const fill = document.getElementById('heroFill');
+    // Use requestAnimationFrame for reliable cross-browser animation
+    const fill   = document.getElementById('heroFill');
     const pctLbl = document.getElementById('heroPctLabel');
-    const anim = setInterval(() => {
-      cur += 1.5;
-      if (cur >= TARGET_PCT) { cur = TARGET_PCT; clearInterval(anim); updateHeroMeter(TARGET_PCT); return; }
+    fill.style.width = '0%';
+    fill.style.transition = 'none';
+
+    let cur = 0;
+    let lastTime = null;
+
+    function animateIn(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const elapsed = timestamp - lastTime;
+      lastTime = timestamp;
+      cur += elapsed * 0.055; // speed: ~1.3s to reach 72%
+      if (cur >= TARGET_PCT) {
+        cur = TARGET_PCT;
+        fill.style.width = cur + '%';
+        pctLbl.textContent = Math.round(cur) + '%';
+        updateHeroMeter(TARGET_PCT);
+        return;
+      }
       fill.style.width = cur + '%';
       pctLbl.textContent = Math.round(cur) + '%';
-    }, 16);
+      requestAnimationFrame(animateIn);
+    }
+
+    // Small delay so the page is fully painted before animating
+    setTimeout(() => requestAnimationFrame(animateIn), 120);
   </script>
 </body>
 </html>
