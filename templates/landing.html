@@ -62,7 +62,7 @@
         </div>
         <div class="hero-stat-divider"></div>
         <div class="hero-stat">
-          <span class="hero-stat-val" id="heroDays">19</span>
+          <span class="hero-stat-val" id="heroDays">—</span>
           <span class="hero-stat-lbl">days left</span>
         </div>
       </div>
@@ -84,23 +84,7 @@
 
   </section>
 
-  <section class="features-strip">
-    <div class="feature-card">
-      <div class="feature-icon">🎯</div>
-      <h3>One number that matters</h3>
-      <p>Your survival percentage. Watch it drop with every expense. Feel every rupee.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🔴</div>
-      <h3>The red zone is real</h3>
-      <p>When your meter hits danger, you'll feel it. That tension keeps you honest.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🏆</div>
-      <h3>Survive Day 30</h3>
-      <p>Reach month-end with budget left. You win. It's that simple. And that hard.</p>
-    </div>
-  </section>
+
 
   <section class="final-cta">
     <div class="final-cta-preview">
@@ -110,6 +94,7 @@
       <p class="final-cta-scary">This could be you on Day 25.</p>
     </div>
     <h2>Set your budget.<br>Enter the jungle.<br>Survive.</h2>
+    <p class="final-cta-honest">Built for people tired of running out of money.</p>
     <a href="/register" class="btn btn-primary btn-xl btn-glow">Start My Survival 🌿</a>
     <a href="/demo" class="btn-link">See the demo first →</a>
   </section>
@@ -191,6 +176,11 @@
       updateHeroMeter(TARGET_PCT);
     }
 
+    // Dynamic days left
+    const _now = new Date();
+    const _lastDay = new Date(_now.getFullYear(), _now.getMonth() + 1, 0).getDate();
+    document.getElementById('heroDays').textContent = _lastDay - _now.getDate();
+
     // Dramatic entrance: animate from 0 to TARGET_PCT on load
     // Use requestAnimationFrame for reliable cross-browser animation
     const fill   = document.getElementById('heroFill');
@@ -220,6 +210,9 @@
 
     // Small delay so the page is fully painted before animating
     setTimeout(() => requestAnimationFrame(animateIn), 120);
+
+    // Re-enable CSS transition after animation so drain/reset feels smooth
+    setTimeout(() => { fill.style.transition = ''; }, 1600);
   </script>
 </body>
 </html>

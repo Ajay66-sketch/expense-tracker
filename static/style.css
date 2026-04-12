@@ -1320,3 +1320,11 @@ a:hover { text-decoration: underline; }
   transform: scaleY(1.06);
   transition: transform 0.3s;
 }
+
+/* Final CTA honest line */
+.final-cta-honest {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  margin-bottom: 1.5rem;
+  margin-top: -1rem;
+}
