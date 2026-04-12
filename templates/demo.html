@@ -1,4 +1,3 @@
-<!-- New file: templates/demo.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,7 +26,7 @@
       <div class="meter-header">
         <div>
           <h2 class="meter-title">Survival Meter</h2>
-          <p class="meter-subtitle">October 2025 · Demo Expedition</p>
+          <p class="meter-subtitle" id="demoSubtitle">Demo Expedition</p>
         </div>
         <div class="meter-badge" id="meterBadge">🟢 THRIVING</div>
       </div>
@@ -168,6 +167,13 @@
     let spent = 5600;
     let expenseCount = 6;
 
+    // Dynamic date and days left
+    const _n = new Date();
+    const _months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const daysLeft = new Date(_n.getFullYear(), _n.getMonth() + 1, 0).getDate() - _n.getDate();
+    document.getElementById('demoSubtitle').textContent = _months[_n.getMonth()] + ' ' + _n.getFullYear() + ' · Demo Expedition';
+    document.getElementById('statDays').textContent = daysLeft;
+
     const categoryIcons = {
       rations: '🍖', shelter: '🏕️', tools: '🪓',
       medicine: '💊', travel: '🗺️', luxury: '💎'
@@ -195,7 +201,6 @@
       const pct = Math.max(0, ((BUDGET - spent) / BUDGET) * 100);
       const zone = getZone(pct);
       const remaining = BUDGET - spent;
-      const daysLeft = 19;
 
       document.getElementById('mainFill').style.width = pct.toFixed(1) + '%';
       document.getElementById('meterPct').textContent = Math.round(pct) + '%';
