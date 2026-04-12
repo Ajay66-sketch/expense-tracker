@@ -1,3 +1,4 @@
+<!-- Replace templates/landing.html with this -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -180,38 +181,28 @@
     const _lastDay = new Date(_now.getFullYear(), _now.getMonth() + 1, 0).getDate();
     document.getElementById('heroDays').textContent = _lastDay - _now.getDate();
 
-    // Dramatic entrance: animate from 0 to TARGET_PCT on load
-    // Use requestAnimationFrame for reliable cross-browser animation
+    // Dramatic entrance: animate meter from 0% to TARGET_PCT on load
     const fill   = document.getElementById('heroFill');
     const pctLbl = document.getElementById('heroPctLabel');
-    fill.style.width = '0%';
-    fill.style.transition = 'none';
+
+    // Force start at 0 with no transition
+    fill.style.cssText = 'width:0%; transition:none;';
 
     let cur = 0;
-    let lastTime = null;
-
-    function animateIn(timestamp) {
-      if (!lastTime) lastTime = timestamp;
-      const elapsed = timestamp - lastTime;
-      lastTime = timestamp;
-      cur += elapsed * 0.055; // speed: ~1.3s to reach 72%
+    function tick() {
+      cur += 1.2;
       if (cur >= TARGET_PCT) {
         cur = TARGET_PCT;
-        fill.style.width = cur + '%';
-        pctLbl.textContent = Math.round(cur) + '%';
+        fill.style.cssText = '';
         updateHeroMeter(TARGET_PCT);
         return;
       }
       fill.style.width = cur + '%';
       pctLbl.textContent = Math.round(cur) + '%';
-      requestAnimationFrame(animateIn);
+      setTimeout(tick, 12);
     }
-
-    // Small delay so the page is fully painted before animating
-    setTimeout(() => requestAnimationFrame(animateIn), 120);
-
-    // Re-enable CSS transition after animation so drain/reset feels smooth
-    setTimeout(() => { fill.style.transition = ''; }, 1600);
+    // Wait for DOM paint then start
+    setTimeout(tick, 150);
   </script>
 </body>
 </html>

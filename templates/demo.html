@@ -167,7 +167,7 @@
     let spent = 5600;
     let expenseCount = 6;
 
-    // Dynamic date and days left
+    // Dynamic date — runs once on load
     const _n = new Date();
     const _months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const daysLeft = new Date(_n.getFullYear(), _n.getMonth() + 1, 0).getDate() - _n.getDate();
@@ -206,8 +206,9 @@
       document.getElementById('meterPct').textContent = Math.round(pct) + '%';
       document.getElementById('statRemaining').textContent = '₹' + Math.max(0, remaining).toLocaleString();
       document.getElementById('statSpent').textContent = '₹' + spent.toLocaleString();
-      document.getElementById('statDaily').textContent = '₹' + Math.round(Math.max(0, remaining) / daysLeft).toLocaleString();
+      document.getElementById('statDaily').textContent = '₹' + Math.round(Math.max(0, remaining) / Math.max(1, daysLeft)).toLocaleString();
       document.getElementById('expCount').textContent = expenseCount + ' entries';
+      // statDays is set once on load — do not overwrite here
 
       const fill = document.getElementById('mainFill');
       const pulse = document.getElementById('mainPulse');

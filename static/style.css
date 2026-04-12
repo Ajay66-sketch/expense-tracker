@@ -1328,3 +1328,9 @@ a:hover { text-decoration: underline; }
   margin-bottom: 1.5rem;
   margin-top: -1rem;
 }
+
+/* Fix canopy drift animation — force GPU layer */
+.auth-canopy {
+  will-change: transform;
+  animation: canopyDrift 18s linear infinite !important;
+}
