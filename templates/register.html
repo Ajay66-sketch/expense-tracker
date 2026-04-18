@@ -1,177 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Begin Your Survival — SurviveTheMonth 🌿</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SurviveTheMonth — Begin Your Mission</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet"/>
 </head>
-<body class="auth-page">
+<body class="auth-body">
 
-  <div class="auth-bg">
-    <div class="auth-canopy">🌿🍃🌴🍃🌿🌴🍃🌿🍃🌴🌿🍃🌿🌴🍃🌿🍃🌴🍃🌿</div>
+  <div class="jungle-bg">
+    <div class="leaf leaf-1">🌿</div>
+    <div class="leaf leaf-2">🍃</div>
+    <div class="leaf leaf-4">🌿</div>
   </div>
 
-  <div class="auth-container">
-
-    <div class="auth-card">
-
-      <a href="/" class="auth-logo">
-        <span class="auth-logo-icon">🌿</span>
-        <span class="auth-logo-text">SurviveTheMonth</span>
-      </a>
-
-      <div class="auth-heading">
-        <h1>Choose your name.<br>Set your rations.<br>Enter the jungle.</h1>
-        <p>Your survival meter starts full. What you do next is up to you.</p>
-      </div>
+  <div class="auth-wrapper">
+    <div class="auth-card register-card">
+      <div class="auth-emblem">🎯</div>
+      <h1 class="auth-title">Mission Briefing</h1>
+      <p class="auth-sub">Set your budget. Enter the jungle. Don't run out.</p>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
-            <div class="flash flash-{{ category }}">
-              {% if category == 'danger' %}💀{% elif category == 'success' %}✅{% else %}⚠️{% endif %}
-              {{ message }}
-            </div>
+            <div class="flash flash-{{ category }}">{{ message }}</div>
           {% endfor %}
         {% endif %}
       {% endwith %}
 
-      <form method="POST" action="/register" class="auth-form">
-        {% if csrf_token is defined %}
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        {% endif %}
-
-        <div class="form-group">
-          <label class="form-label" for="username">🧭 Survivor Name</label>
-          <input type="text" id="username" name="username" class="form-input"
-            placeholder="What do they call you in the jungle?" autocomplete="username" required />
+      <form method="POST" action="{{ url_for('register') }}" class="auth-form">
+        <div class="field-group">
+          <label class="field-label">🧑 Survivor Name</label>
+          <input type="text" name="username" class="field-input" placeholder="Agent Cipher" required autocomplete="username"/>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="budget">
-            🎯 Monthly Rations (Budget)
-            <span class="form-label-hint">— set this now, change anytime</span>
-          </label>
-          <div class="input-prefix-wrap">
-            <span class="input-prefix">₹</span>
-            <input type="number" id="budget" name="monthly_budget"
-              class="form-input input-with-prefix"
-              placeholder="e.g. 20000" min="0" step="500" />
+        <div class="field-group">
+          <label class="field-label">🔒 Passphrase</label>
+          <input type="password" name="password" class="field-input" placeholder="Make it hard to crack" required autocomplete="new-password"/>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">🔒 Confirm Passphrase</label>
+          <input type="password" name="confirm_password" class="field-input" placeholder="Repeat your passphrase" required autocomplete="new-password"/>
+        </div>
+
+        <!-- LIVE METER PREVIEW -->
+        <div class="field-group">
+          <label class="field-label">💰 Monthly Survival Budget (₹)</label>
+          <input type="number" name="monthly_budget" id="budget-input" class="field-input" placeholder="e.g. 15000" min="1" required/>
+        </div>
+
+        <div class="live-meter-preview" id="meter-preview">
+          <div class="meter-label-row">
+            <span class="meter-label-text">YOUR SURVIVAL METER</span>
+            <span class="meter-label-pct" id="preview-pct">100%</span>
           </div>
-          <!-- Live meter preview -->
-          <div class="register-meter-preview" id="meterPreview">
-            <div class="meter-track preview-meter-track">
-              <div class="meter-fill meter-green" id="previewFill" style="width:100%"></div>
-            </div>
-            <span class="preview-label" id="previewLabel">Your meter starts at 100% 🛡️</span>
+          <div class="meter-track">
+            <div class="meter-fill" id="preview-fill" style="width:100%"></div>
+            <div class="meter-scanline"></div>
+          </div>
+          <div class="meter-status">
+            <span id="preview-budget-display">Set your budget above ↑</span>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="password">🔑 Secret Passphrase</label>
-          <input type="password" id="password" name="password" class="form-input"
-            placeholder="Something only you know" autocomplete="new-password" required minlength="6" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="confirm_password">🔒 Confirm Passphrase</label>
-          <input type="password" id="confirm_password" name="confirm_password" class="form-input"
-            placeholder="Repeat your passphrase" autocomplete="new-password" required />
-          <div class="password-match-hint" id="pwHint"></div>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-full btn-xl btn-glow" id="submitBtn">
-          🌿 Begin My Survival — Free
-        </button>
-
+        <button type="submit" class="btn btn-lg btn-danger btn-full">🌿 Begin Survival</button>
       </form>
 
-      <div class="auth-footer">
-        <p>Already a survivor? <a href="/login" class="auth-link">Return to base camp →</a></p>
-        <p class="auth-demo-nudge">Not ready? <a href="/demo" class="auth-link">Try the demo first →</a></p>
+      <div class="auth-footer-links">
+        <span>Already a survivor?</span>
+        <a href="{{ url_for('login') }}" class="auth-link">Return to base camp →</a>
       </div>
-
     </div>
-
-    <!-- Side panel -->
-    <div class="auth-flavor">
-
-      <div class="flavor-survival-oath">
-        <div class="oath-title">📋 The Survivor's Oath</div>
-        <div class="oath-text">
-          "I will log every expense.<br>
-          I will watch my meter.<br>
-          I will not flinch in the red zone.<br>
-          I will reach Day 30.<br>
-          <strong>I will survive the month.</strong>"
-        </div>
-      </div>
-
-      <div class="flavor-steps">
-        <div class="flavor-step">
-          <span class="step-num">01</span>
-          <div>
-            <strong>Set your rations</strong>
-            <p>Your monthly budget is your life force. Set it honestly.</p>
-          </div>
-        </div>
-        <div class="flavor-step">
-          <span class="step-num">02</span>
-          <div>
-            <strong>Log every spend</strong>
-            <p>Food, rent, tools, medicine — every rupee counts against your meter.</p>
-          </div>
-        </div>
-        <div class="flavor-step">
-          <span class="step-num">03</span>
-          <div>
-            <strong>Reach Day 30</strong>
-            <p>Budget remaining = survived. Zero budget = the jungle won.</p>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
   </div>
 
   <script>
-    // Budget → meter preview
-    const budgetInput = document.getElementById('budget');
-    const previewFill = document.getElementById('previewFill');
-    const previewLabel = document.getElementById('previewLabel');
-    const meterPreview = document.getElementById('meterPreview');
+    const budgetInput = document.getElementById('budget-input');
+    const previewFill = document.getElementById('preview-fill');
+    const previewPct  = document.getElementById('preview-pct');
+    const previewBudgetDisplay = document.getElementById('preview-budget-display');
 
     budgetInput.addEventListener('input', () => {
-      const val = parseInt(budgetInput.value);
-      if (val > 0) {
-        meterPreview.style.display = 'flex';
+      const val = parseFloat(budgetInput.value);
+      if (!val || val <= 0) {
         previewFill.style.width = '100%';
-        previewLabel.textContent = '₹' + val.toLocaleString() + ' — meter starts full 🛡️';
-      } else {
-        meterPreview.style.display = 'none';
+        previewPct.textContent = '100%';
+        previewFill.style.background = 'var(--green)';
+        previewBudgetDisplay.textContent = 'Set your budget above ↑';
+        return;
       }
+      previewFill.style.width = '100%';
+      previewPct.textContent = '100%';
+      previewFill.style.background = 'var(--green)';
+      previewBudgetDisplay.textContent = `Full power: ₹${val.toLocaleString('en-IN')} ready to deploy`;
     });
-
-    // Password match
-    const pw  = document.getElementById('password');
-    const cpw = document.getElementById('confirm_password');
-    const hint = document.getElementById('pwHint');
-
-    function checkMatch() {
-      if (!cpw.value) { hint.textContent = ''; return; }
-      if (pw.value === cpw.value) {
-        hint.textContent = '✅ Passphrases match — you\'re ready';
-        hint.className = 'password-match-hint match-ok';
-      } else {
-        hint.textContent = '❌ Passphrases do not match';
-        hint.className = 'password-match-hint match-fail';
-      }
-    }
-    pw.addEventListener('input', checkMatch);
-    cpw.addEventListener('input', checkMatch);
   </script>
 </body>
 </html>

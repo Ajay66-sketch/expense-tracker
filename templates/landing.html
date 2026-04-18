@@ -1,207 +1,152 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-container">
+  {% for category, message in messages %}
+  <div class="flash flash-{{ category }}">{{ message }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SurviveTheMonth 🌿 — Will You Make It?</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet"/>
 </head>
-<body class="landing-page">
+<body class="landing-body">
 
+  <!-- Jungle ambient particles -->
+  <div class="jungle-bg">
+    <div class="leaf leaf-1">🌿</div>
+    <div class="leaf leaf-2">🍃</div>
+    <div class="leaf leaf-3">🌿</div>
+    <div class="leaf leaf-4">🍃</div>
+    <div class="leaf leaf-5">🌿</div>
+  </div>
+
+  <!-- NAV -->
   <nav class="nav">
-    <a href="/" class="nav-logo">🌿 SurviveTheMonth</a>
+    <div class="nav-brand">🌿 SurviveTheMonth</div>
     <div class="nav-links">
-      <a href="/demo" class="btn btn-ghost">Try Demo</a>
-      <a href="/login" class="btn btn-ghost">Log In</a>
-      <a href="/register" class="btn btn-primary">Start Surviving</a>
+      <a href="{{ url_for('demo') }}" class="btn btn-ghost">Try Demo</a>
+      <a href="{{ url_for('login') }}" class="btn btn-ghost">Log In</a>
+      <a href="{{ url_for('register') }}" class="btn btn-danger">Start Mission</a>
     </div>
   </nav>
 
+  <!-- HERO -->
   <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">⚠ BUDGET CRITICAL</div>
+      <h1 class="hero-title">Your Money<br/><span class="hero-title-accent">Is Dying.</span></h1>
+      <p class="hero-sub">Track every expense. Watch your survival meter drain. Feel the tension. Make it to the end of the month — or don't.</p>
 
-    <div class="hero-top">
-      <div class="hero-eyebrow">
-        <span class="eyebrow-dot"></span>
-        Most people run out of money before Day 28
+      <!-- THE DRAMATIC METER -->
+      <div class="hero-meter-wrap">
+        <div class="meter-label-row">
+          <span class="meter-label-text">💰 SURVIVAL BUDGET</span>
+          <span class="meter-label-pct" id="hero-pct">73%</span>
+        </div>
+        <div class="meter-track hero-track">
+          <div class="meter-fill hero-fill" id="hero-fill" style="width:73%"></div>
+          <div class="meter-scanline"></div>
+        </div>
+        <div class="meter-status">
+          <span class="meter-days">14 days left</span>
+          <span class="meter-remaining">₹5,110 remaining</span>
+        </div>
       </div>
-      <h1 class="hero-title">
-        Your budget is<br>
-        <span class="hero-title-survive">bleeding out.</span><br>
-        Will you survive?
-      </h1>
-      <p class="hero-sub">One meter. Real tension. Beat the month.</p>
+
+      <div class="hero-ctas">
+        <a href="{{ url_for('demo') }}" class="btn btn-lg btn-outline-green">⚡ Try Demo Free</a>
+        <a href="{{ url_for('register') }}" class="btn btn-lg btn-danger btn-pulse">🎯 Start Your Mission</a>
+      </div>
     </div>
 
-    <div class="hero-meter-wrap" id="heroMeterWrap">
-
-      <div class="hero-meter-top">
-        <div class="hero-meter-label">
-          <span class="hero-meter-title">☠ SURVIVAL METER</span>
-          <span class="hero-meter-month">This Month</span>
+    <div class="hero-mockup">
+      <div class="mockup-card">
+        <div class="mockup-header">
+          <span class="mockup-dot red"></span>
+          <span class="mockup-dot yellow"></span>
+          <span class="mockup-dot green"></span>
+          <span class="mockup-title">survival_log.exe</span>
         </div>
-        <div class="meter-badge badge-green" id="heroStatus">🟢 THRIVING</div>
-      </div>
-
-      <div class="meter-track hero-meter-track">
-        <div class="meter-fill meter-green" id="heroFill" style="width:0%; transition:none;"></div>
-        <div class="meter-pulse" id="heroPulse"></div>
-        <div class="meter-pct-label" id="heroPctLabel">0%</div>
-      </div>
-
-      <div class="hero-meter-stats">
-        <div class="hero-stat">
-          <span class="hero-stat-val" id="heroRemaining">₹14,400</span>
-          <span class="hero-stat-lbl">remaining</span>
-        </div>
-        <div class="hero-stat-divider"></div>
-        <div class="hero-stat">
-          <span class="hero-stat-val" id="heroSpent">₹5,600</span>
-          <span class="hero-stat-lbl">spent</span>
-        </div>
-        <div class="hero-stat-divider"></div>
-        <div class="hero-stat">
-          <span class="hero-stat-val" id="heroDays">—</span>
-          <span class="hero-stat-lbl">days left</span>
+        <div class="mockup-body">
+          <div class="mockup-expense danger">🍕 Pizza &nbsp;<strong>− ₹450</strong></div>
+          <div class="mockup-expense warning">🚌 Transport &nbsp;<strong>− ₹180</strong></div>
+          <div class="mockup-expense safe">☕ Coffee &nbsp;<strong>− ₹90</strong></div>
+          <div class="mockup-expense danger">🎮 Netflix &nbsp;<strong>− ₹649</strong></div>
+          <div class="mockup-expense warning">🛒 Groceries &nbsp;<strong>− ₹1,200</strong></div>
+          <div class="mockup-divider"></div>
+          <div class="mockup-total">TOTAL SPENT &nbsp;<strong>₹2,569</strong></div>
         </div>
       </div>
-
-      <div class="hero-interact">
-        <button class="btn btn-drain" onclick="drainMeter()">💸 Spend ₹500 — watch it bleed</button>
-        <button class="btn btn-refill" onclick="refillMeter()">↺ Reset</button>
-      </div>
-
-      <div class="hero-danger-msg" id="heroDangerMsg"></div>
-
     </div>
-
-    <div class="hero-ctas">
-      <a href="/register" class="btn btn-primary btn-xl btn-glow">🌿 Start Surviving — Free</a>
-      <a href="/demo" class="btn btn-outline btn-xl">👁 Try Full Demo</a>
-    </div>
-    <p class="hero-reassure">No credit card · Free forever · Takes 30 seconds</p>
-
   </section>
 
-
-
-  <section class="final-cta">
-    <div class="final-cta-preview">
-      <div class="meter-track" style="height:10px; max-width:260px; margin:0 auto 0.75rem;">
-        <div class="meter-fill meter-red" style="width:18%"></div>
+  <!-- HOW IT WORKS — condensed -->
+  <section class="how-section">
+    <h2 class="section-title">How Survival Works</h2>
+    <div class="steps-row">
+      <div class="step">
+        <div class="step-icon">🎯</div>
+        <div class="step-text"><strong>Set Your Budget</strong><br/>Your monthly survival limit</div>
       </div>
-      <p class="final-cta-scary">This could be you on Day 25.</p>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-icon">💸</div>
+        <div class="step-text"><strong>Log Expenses</strong><br/>Every rupee drains your meter</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-icon">❤️</div>
+        <div class="step-text"><strong>Survive or Die</strong><br/>Hit zero and you're done</div>
+      </div>
     </div>
-    <h2>Set your budget.<br>Enter the jungle.<br>Survive.</h2>
-    <p class="final-cta-honest">Built for people tired of running out of money.</p>
-    <a href="/register" class="btn btn-primary btn-xl btn-glow">Start My Survival 🌿</a>
-    <a href="/demo" class="btn-link">See the demo first →</a>
+  </section>
+
+  <!-- SOCIAL PROOF STRIP -->
+  <section class="proof-strip">
+    <div class="proof-item">🧑‍💻 <strong>2,400+</strong> survivors</div>
+    <div class="proof-sep">|</div>
+    <div class="proof-item">📊 <strong>₹4.2Cr</strong> tracked</div>
+    <div class="proof-sep">|</div>
+    <div class="proof-item">🏆 <strong>61%</strong> made it last month</div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <h2 class="final-title">Do You Have What It Takes?</h2>
+    <p class="final-sub">Free forever. No credit card. Just you vs. your budget.</p>
+    <a href="{{ url_for('register') }}" class="btn btn-lg btn-danger btn-pulse">🌿 Begin Survival</a>
   </section>
 
   <footer class="footer">
-    <span>🌿 SurviveTheMonth</span>
-    <span>Made for survivors. Not accountants.</span>
+    <span>🌿 SurviveTheMonth &copy; 2025</span>
+    <span><a href="{{ url_for('login') }}">Log In</a> · <a href="{{ url_for('demo') }}">Demo</a></span>
   </footer>
 
   <script>
-    const BUDGET = 20000;
-    let spent = 5600;
-    const TARGET_PCT = 72;
-
-    const dangerLines = [
-      '💀 You\'re bleeding out. Stop spending.',
-      '🚨 Critical zone. Every rupee counts now.',
-      '☠ The jungle is winning. Tighten up.',
-      '🔴 One more big spend and it\'s over.',
-    ];
-
-    function updateHeroMeter(pct) {
-      pct = Math.max(0, Math.min(100, pct));
-      const fill   = document.getElementById('heroFill');
-      const pulse  = document.getElementById('heroPulse');
-      const status = document.getElementById('heroStatus');
-      const wrap   = document.getElementById('heroMeterWrap');
-      const danger = document.getElementById('heroDangerMsg');
-      const pctLbl = document.getElementById('heroPctLabel');
-
-      fill.style.width = pct + '%';
-      pctLbl.textContent = Math.round(pct) + '%';
-      document.getElementById('heroRemaining').textContent = '₹' + Math.round((pct / 100) * BUDGET).toLocaleString();
-      document.getElementById('heroSpent').textContent = '₹' + Math.round(((100 - pct) / 100) * BUDGET).toLocaleString();
-
-      fill.className  = 'meter-fill';
-      pulse.className = 'meter-pulse';
-      wrap.className  = 'hero-meter-wrap';
-      status.className = 'meter-badge';
-      danger.textContent = '';
-      danger.className = 'hero-danger-msg';
-
-      if (pct > 60) {
-        fill.classList.add('meter-green');
-        status.classList.add('badge-green');
-        status.textContent = '🟢 THRIVING';
-      } else if (pct > 30) {
-        fill.classList.add('meter-yellow');
-        pulse.classList.add('pulse-yellow');
-        status.classList.add('badge-yellow');
-        status.textContent = '🟡 CAUTION';
-        wrap.classList.add('wrap-warning');
-      } else if (pct > 10) {
-        fill.classList.add('meter-red');
-        pulse.classList.add('pulse-red');
-        status.classList.add('badge-red');
-        status.textContent = '🔴 DANGER';
-        wrap.classList.add('wrap-danger');
-        danger.textContent = dangerLines[Math.floor(Math.random() * dangerLines.length)];
-        danger.classList.add('danger-msg-visible');
-      } else {
-        fill.classList.add('meter-critical');
-        pulse.classList.add('pulse-critical');
-        status.classList.add('badge-critical');
-        status.textContent = '💀 CRITICAL';
-        wrap.classList.add('wrap-critical');
-        danger.textContent = '💀 GAME OVER TERRITORY. You are not surviving this month.';
-        danger.classList.add('danger-msg-visible');
-      }
-    }
-
-    function drainMeter() {
-      spent += 500;
-      updateHeroMeter(((BUDGET - spent) / BUDGET) * 100);
-    }
-
-    function refillMeter() {
-      spent = 5600;
-      updateHeroMeter(TARGET_PCT);
-    }
-
-    // Dynamic days left
-    const _now = new Date();
-    const _lastDay = new Date(_now.getFullYear(), _now.getMonth() + 1, 0).getDate();
-    document.getElementById('heroDays').textContent = _lastDay - _now.getDate();
-
-    // Dramatic entrance: animate meter from 0% to TARGET_PCT on load
-    const animFill = document.getElementById('heroFill');
-    const pctLbl = document.getElementById('heroPctLabel');
-
-    // Force start at 0 with no transition
-    animFill.style.cssText = 'width:0%; transition:none;';
-
-    let cur = 0;
-    function tick() {
-      cur += 1.2;
-      if (cur >= TARGET_PCT) {
-        cur = TARGET_PCT;
-        animFill.style.cssText = '';
-        updateHeroMeter(TARGET_PCT);
-        return;
-      }
-      animFill.style.width = cur + '%';
-      pctLbl.textContent = Math.round(cur) + '%';
-      setTimeout(tick, 12);
-    }
-    // Wait for DOM paint then start
-    setTimeout(tick, 150);
+    // Animate the hero meter on load
+    const fill = document.getElementById('hero-fill');
+    const pct  = document.getElementById('hero-pct');
+    const values = [100, 91, 86, 73];
+    let i = 0;
+    fill.style.width = '100%';
+    pct.textContent = '100%';
+    const iv = setInterval(() => {
+      i++;
+      if (i >= values.length) { clearInterval(iv); return; }
+      fill.style.width = values[i] + '%';
+      pct.textContent = values[i] + '%';
+      fill.style.background = values[i] > 60
+        ? 'var(--green)' : values[i] > 30
+        ? 'var(--yellow)' : 'var(--red)';
+    }, 900);
   </script>
 </body>
 </html>

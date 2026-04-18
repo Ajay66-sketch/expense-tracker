@@ -1,288 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Demo — SurviveTheMonth 🌿</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SurviveTheMonth — Live Demo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet"/>
 </head>
-<body class="dashboard-page">
+<body class="demo-body">
+
+  <div class="jungle-bg">
+    <div class="leaf leaf-1">🌿</div>
+    <div class="leaf leaf-2">🍃</div>
+    <div class="leaf leaf-5">🌿</div>
+  </div>
 
   <nav class="nav">
-    <a href="/" class="nav-logo">🌿 SurviveTheMonth</a>
+    <a href="{{ url_for('index') }}" class="nav-brand">🌿 SurviveTheMonth</a>
     <div class="nav-links">
-      <span class="nav-badge">DEMO MODE</span>
-      <a href="/register" class="btn btn-primary">Create Free Account</a>
+      <a href="{{ url_for('register') }}" class="btn btn-danger">Start Real Mission</a>
     </div>
   </nav>
+
+  <div class="demo-wrapper">
+
+    <!-- METER PANEL -->
+    <div class="demo-meter-panel">
+      <div class="demo-panel-header">
+        <span class="demo-badge">⚡ LIVE DEMO</span>
+        <span class="demo-month">APRIL 2025</span>
+      </div>
+
+      <div class="demo-budget-display">
+        <span class="demo-budget-label">BUDGET</span>
+        <span class="demo-budget-val" id="demo-budget-val">₹15,000</span>
+      </div>
+
+      <!-- BIG METER -->
+      <div class="big-meter-wrap">
+        <div class="meter-label-row">
+          <span class="meter-label-text">💚 SURVIVAL STATUS</span>
+          <span class="meter-label-pct" id="demo-pct">87%</span>
+        </div>
+        <div class="meter-track big-track">
+          <div class="meter-fill big-fill" id="demo-fill" style="width:87%"></div>
+          <div class="meter-scanline"></div>
+        </div>
+        <div class="meter-status">
+          <span id="demo-spent-label">₹1,950 spent</span>
+          <span id="demo-remaining-label">₹13,050 left</span>
+        </div>
+      </div>
+
+      <div class="demo-vitals">
+        <div class="vital-box">
+          <div class="vital-val" id="demo-days">16</div>
+          <div class="vital-label">Days Left</div>
+        </div>
+        <div class="vital-box">
+          <div class="vital-val" id="demo-txn-count">3</div>
+          <div class="vital-label">Expenses</div>
+        </div>
+        <div class="vital-box">
+          <div class="vital-val" id="demo-daily-burn">₹122</div>
+          <div class="vital-label">Avg/Day</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPENSES PANEL -->
+    <div class="demo-log-panel">
+      <div class="demo-log-header">
+        <h2 class="demo-log-title">📋 Expense Log</h2>
+        <button class="btn btn-danger btn-sm" id="log-expense-btn">+ Log Sample Expense</button>
+      </div>
+
+      <div class="expense-list" id="expense-list">
+        <div class="expense-item expense-safe">
+          <span class="exp-icon">☕</span>
+          <span class="exp-name">Coffee — Jungle Fuel</span>
+          <span class="exp-amount">− ₹90</span>
+        </div>
+        <div class="expense-item expense-warning">
+          <span class="exp-icon">🚌</span>
+          <span class="exp-name">Transport — Escape Route</span>
+          <span class="exp-amount">− ₹360</span>
+        </div>
+        <div class="expense-item expense-danger">
+          <span class="exp-icon">🍕</span>
+          <span class="exp-name">Food — Emergency Ration</span>
+          <span class="exp-amount">− ₹1,500</span>
+        </div>
+      </div>
+
+      <!-- NUDGE -->
+      <div class="demo-nudge">
+        <div class="nudge-text">
+          ⚠️ <strong>This is just a demo.</strong><br/>
+          Your real budget, your real tension. Start a free mission and feel it for real.
+        </div>
+        <a href="{{ url_for('register') }}" class="btn btn-danger btn-pulse btn-full">🌿 Start Real Survival</a>
+        <a href="{{ url_for('login') }}" class="demo-login-link">Already have an account? Log in →</a>
+      </div>
+    </div>
+
+  </div>
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
-  <div class="dashboard-layout">
-
-    <!-- SURVIVAL METER — big and dramatic -->
-    <section class="meter-section">
-      <div class="meter-header">
-        <div>
-          <h2 class="meter-title">Survival Meter</h2>
-          <p class="meter-subtitle" id="demoSubtitle">Demo Expedition</p>
-        </div>
-        <div class="meter-badge" id="meterBadge">🟢 THRIVING</div>
-      </div>
-
-      <div class="meter-track main-meter-track">
-        <div class="meter-fill meter-green" id="mainFill" style="width:72%"></div>
-        <div class="meter-pulse" id="mainPulse"></div>
-        <div class="meter-pct-label" id="meterPct">72%</div>
-      </div>
-
-      <div class="meter-stats main-stats">
-        <div class="stat-card">
-          <span class="stat-icon">🛡️</span>
-          <span class="stat-label">Remaining</span>
-          <span class="stat-value" id="statRemaining">₹14,400</span>
-        </div>
-        <div class="stat-card stat-card-danger">
-          <span class="stat-icon">💸</span>
-          <span class="stat-label">Spent</span>
-          <span class="stat-value" id="statSpent">₹5,600</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-icon">📅</span>
-          <span class="stat-label">Days Left</span>
-          <span class="stat-value" id="statDays">19</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-icon">⚡</span>
-          <span class="stat-label">Daily Budget</span>
-          <span class="stat-value" id="statDaily">₹758</span>
-        </div>
-      </div>
-
-      <!-- QUICK ADD EXPENSE -->
-      <div class="quick-add">
-        <h3 class="quick-add-title">⚔️ Log Sample Expense</h3>
-        <div class="quick-add-form">
-          <select id="expCategory" class="form-select">
-            <option value="rations">🍖 Rations (Food)</option>
-            <option value="shelter">🏕️ Shelter (Rent/Bills)</option>
-            <option value="tools">🪓 Tools (Work/Education)</option>
-            <option value="medicine">💊 Medicine (Health)</option>
-            <option value="travel">🗺️ Scouting (Transport)</option>
-            <option value="luxury">💎 Luxury Loot</option>
-          </select>
-          <input type="number" id="expAmount" class="form-input" placeholder="₹ Amount" value="500" min="1" />
-          <button class="btn btn-primary" onclick="logExpense()">💸 Spend It</button>
-        </div>
-
-        <!-- PRESET QUICK-SPEND BUTTONS -->
-        <div class="preset-row">
-          <button class="preset-btn" onclick="quickSpend('🍖 Rations', 120)">🍖 Lunch ₹120</button>
-          <button class="preset-btn" onclick="quickSpend('☕ Coffee', 80)">☕ Coffee ₹80</button>
-          <button class="preset-btn" onclick="quickSpend('🚗 Cab', 200)">🚗 Cab ₹200</button>
-          <button class="preset-btn preset-btn-danger" onclick="quickSpend('🎮 Games', 999)">🎮 Games ₹999</button>
-          <button class="preset-btn preset-btn-danger" onclick="quickSpend('🍕 Late Night Pizza', 450)">🍕 Pizza ₹450</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- EXPENSE LOG -->
-    <section class="expenses-section">
-      <div class="expenses-header">
-        <h3>📜 Expedition Log</h3>
-        <span class="expense-count" id="expCount">6 entries</span>
-      </div>
-
-      <ul class="expense-list" id="expenseList">
-        <!-- Pre-loaded sample expenses -->
-        <li class="expense-item">
-          <span class="exp-icon">🏕️</span>
-          <div class="exp-details">
-            <span class="exp-name">Shelter — Monthly Rent</span>
-            <span class="exp-date">Oct 1</span>
-          </div>
-          <span class="exp-amount exp-amount-big">₹3,500</span>
-        </li>
-        <li class="expense-item">
-          <span class="exp-icon">🍖</span>
-          <div class="exp-details">
-            <span class="exp-name">Rations — Groceries</span>
-            <span class="exp-date">Oct 3</span>
-          </div>
-          <span class="exp-amount">₹800</span>
-        </li>
-        <li class="expense-item">
-          <span class="exp-icon">🗺️</span>
-          <div class="exp-details">
-            <span class="exp-name">Scouting — Monthly Pass</span>
-            <span class="exp-date">Oct 4</span>
-          </div>
-          <span class="exp-amount">₹500</span>
-        </li>
-        <li class="expense-item">
-          <span class="exp-icon">💊</span>
-          <div class="exp-details">
-            <span class="exp-name">Medicine — Pharmacy</span>
-            <span class="exp-date">Oct 6</span>
-          </div>
-          <span class="exp-amount">₹350</span>
-        </li>
-        <li class="expense-item">
-          <span class="exp-icon">🪓</span>
-          <div class="exp-details">
-            <span class="exp-name">Tools — Internet Bill</span>
-            <span class="exp-date">Oct 8</span>
-          </div>
-          <span class="exp-amount">₹299</span>
-        </li>
-        <li class="expense-item">
-          <span class="exp-icon">💎</span>
-          <div class="exp-details">
-            <span class="exp-name">Luxury Loot — Movie Night</span>
-            <span class="exp-date">Oct 9</span>
-          </div>
-          <span class="exp-amount">₹151</span>
-        </li>
-      </ul>
-    </section>
-  </div>
-
-  <!-- UPGRADE NUDGE -->
-  <section class="upgrade-nudge">
-    <div class="nudge-inner">
-      <div class="nudge-text">
-        <h3>🌿 You're playing with fake money</h3>
-        <p>Create a free account to track your real survival budget — takes 30 seconds.</p>
-      </div>
-      <div class="nudge-ctas">
-        <a href="/register" class="btn btn-primary btn-xl">Start My Real Survival 🌿</a>
-        <a href="/login" class="btn btn-ghost">I already have an account</a>
-      </div>
-    </div>
-  </section>
-
   <script>
-    const BUDGET = 20000;
-    let spent = 5600;
-    let expenseCount = 6;
+    const BUDGET = 15000;
+    const sampleExpenses = [
+      { icon: '🎮', name: 'Gaming — Distraction Tax',   amount: 649  },
+      { icon: '🛒', name: 'Groceries — Ration Supply',  amount: 1200 },
+      { icon: '🎬', name: 'Netflix — Morale Booster',   amount: 649  },
+      { icon: '💈', name: 'Haircut — Jungle Grooming',  amount: 200  },
+      { icon: '🍺', name: 'Beer — Liquid Courage',      amount: 500  },
+      { icon: '🚕', name: 'Cab — Emergency Extraction', amount: 280  },
+      { icon: '💊', name: 'Medicine — Survival Kit',    amount: 350  },
+      { icon: '📚', name: 'Books — Intel Gathering',    amount: 450  },
+    ];
 
-    // Dynamic date — runs once on load
-    const _n = new Date();
-    const _months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const daysLeft = new Date(_n.getFullYear(), _n.getMonth() + 1, 0).getDate() - _n.getDate();
-    document.getElementById('demoSubtitle').textContent = _months[_n.getMonth()] + ' ' + _n.getFullYear() + ' · Demo Expedition';
-    document.getElementById('statDays').textContent = daysLeft;
-
-    const categoryIcons = {
-      rations: '🍖', shelter: '🏕️', tools: '🪓',
-      medicine: '💊', travel: '🗺️', luxury: '💎'
-    };
-    const categoryNames = {
-      rations: 'Rations', shelter: 'Shelter', tools: 'Tools',
-      medicine: 'Medicine', travel: 'Scouting', luxury: 'Luxury Loot'
-    };
-
-    const toastMessages = {
-      green:    ['Meter updated! You survived another day 🔥', 'Nice move, survivor 🛡️', 'Still in the green zone ✅'],
-      yellow:   ['Caution — the jungle is closing in 🌿', 'Watch your step, survivor ⚠️', 'Meter updated. Tread carefully 🟡'],
-      red:      ['Danger zone entered. Every rupee counts 🔴', 'The meter is bleeding out... 💔', 'Critical territory. No luxury buys! 🚨'],
-      critical: ['💀 You\'re almost out of supplies!', 'MAYDAY. Budget nearly depleted 💀', 'One more big spend and it\'s over 🔴']
-    };
-
-    function getZone(pct) {
-      if (pct > 60) return 'green';
-      if (pct > 30) return 'yellow';
-      if (pct > 10) return 'red';
-      return 'critical';
-    }
+    let spent = 1950;
+    let txnCount = 3;
+    let expIdx = 0;
 
     function updateMeter() {
-      const pct = Math.max(0, ((BUDGET - spent) / BUDGET) * 100);
-      const zone = getZone(pct);
-      const remaining = BUDGET - spent;
+      const pct = Math.max(0, Math.round(((BUDGET - spent) / BUDGET) * 100));
+      const fill = document.getElementById('demo-fill');
+      const pctEl = document.getElementById('demo-pct');
+      fill.style.width = pct + '%';
+      pctEl.textContent = pct + '%';
 
-      document.getElementById('mainFill').style.width = pct.toFixed(1) + '%';
-      document.getElementById('meterPct').textContent = Math.round(pct) + '%';
-      document.getElementById('statRemaining').textContent = '₹' + Math.max(0, remaining).toLocaleString();
-      document.getElementById('statSpent').textContent = '₹' + spent.toLocaleString();
-      document.getElementById('statDaily').textContent = '₹' + Math.round(Math.max(0, remaining) / Math.max(1, daysLeft)).toLocaleString();
-      document.getElementById('expCount').textContent = expenseCount + ' entries';
-      // statDays is set once on load — do not overwrite here
+      if (pct > 60) {
+        fill.style.background = 'var(--green)';
+        fill.classList.remove('meter-critical','meter-warn');
+      } else if (pct > 30) {
+        fill.style.background = 'var(--yellow)';
+        fill.classList.add('meter-warn');
+        fill.classList.remove('meter-critical');
+      } else {
+        fill.style.background = 'var(--red)';
+        fill.classList.add('meter-critical');
+        fill.classList.remove('meter-warn');
+      }
 
-      const fill = document.getElementById('mainFill');
-      const pulse = document.getElementById('mainPulse');
-      const badge = document.getElementById('meterBadge');
-      fill.className = 'meter-fill';
-      pulse.className = 'meter-pulse';
-
-      const configs = {
-        green:    { fillClass: 'meter-green',    pulseClass: '',              badge: '🟢 THRIVING',     badgeClass: 'badge-green' },
-        yellow:   { fillClass: 'meter-yellow',   pulseClass: 'pulse-yellow',  badge: '🟡 CAUTION',      badgeClass: 'badge-yellow' },
-        red:      { fillClass: 'meter-red',      pulseClass: 'pulse-red',     badge: '🔴 DANGER ZONE',  badgeClass: 'badge-red' },
-        critical: { fillClass: 'meter-critical', pulseClass: 'pulse-critical',badge: '💀 CRITICAL',     badgeClass: 'badge-critical' }
-      };
-      const c = configs[zone];
-      fill.classList.add(c.fillClass);
-      if (c.pulseClass) pulse.classList.add(c.pulseClass);
-      badge.textContent = c.badge;
-      badge.className = 'meter-badge ' + c.badgeClass;
+      document.getElementById('demo-spent-label').textContent     = `₹${spent.toLocaleString('en-IN')} spent`;
+      document.getElementById('demo-remaining-label').textContent = `₹${(BUDGET-spent).toLocaleString('en-IN')} left`;
+      document.getElementById('demo-txn-count').textContent       = txnCount;
+      document.getElementById('demo-daily-burn').textContent      = `₹${Math.round(spent/15)}`;
     }
 
-    function showToast(msg) {
+    function showToast(msg, type='success') {
       const t = document.getElementById('toast');
       t.textContent = msg;
-      t.classList.add('toast-show');
-      setTimeout(() => t.classList.remove('toast-show'), 3200);
+      t.className = 'toast toast-' + type + ' toast-show';
+      setTimeout(() => { t.className = 'toast'; }, 2800);
     }
 
-    function addExpenseItem(icon, name, amount) {
-      const list = document.getElementById('expenseList');
-      const li = document.createElement('li');
-      li.className = 'expense-item expense-item-new';
-      li.innerHTML = `
-        <span class="exp-icon">${icon}</span>
-        <div class="exp-details">
-          <span class="exp-name">${name}</span>
-          <span class="exp-date">Just now</span>
-        </div>
-        <span class="exp-amount">₹${amount.toLocaleString()}</span>
-      `;
-      list.insertBefore(li, list.firstChild);
-      setTimeout(() => li.classList.remove('expense-item-new'), 600);
+    function levelClass(amount) {
+      if (amount >= 800) return 'expense-danger';
+      if (amount >= 300) return 'expense-warning';
+      return 'expense-safe';
     }
 
-    function logExpense() {
-      const cat = document.getElementById('expCategory').value;
-      const amount = parseInt(document.getElementById('expAmount').value) || 0;
-      if (amount <= 0) return;
+    document.getElementById('log-expense-btn').addEventListener('click', () => {
+      const exp = sampleExpenses[expIdx % sampleExpenses.length];
+      expIdx++;
+      spent += exp.amount;
+      txnCount++;
 
-      spent += amount;
-      expenseCount++;
-      const icon = categoryIcons[cat];
-      const name = categoryNames[cat];
-      updateMeter();
-      addExpenseItem(icon, name + ' — Demo', amount);
+      const list = document.getElementById('expense-list');
+      const item = document.createElement('div');
+      item.className = `expense-item ${levelClass(exp.amount)} expense-new`;
+      item.innerHTML = `<span class="exp-icon">${exp.icon}</span><span class="exp-name">${exp.name}</span><span class="exp-amount">− ₹${exp.amount.toLocaleString('en-IN')}</span>`;
+      list.prepend(item);
+      setTimeout(() => item.classList.remove('expense-new'), 600);
 
-      const pct = Math.max(0, ((BUDGET - spent) / BUDGET) * 100);
-      const zone = getZone(pct);
-      const msgs = toastMessages[zone];
-      showToast(msgs[Math.floor(Math.random() * msgs.length)]);
-    }
-
-    function quickSpend(label, amount) {
-      spent += amount;
-      expenseCount++;
       updateMeter();
 
-      const icon = label.split(' ')[0];
-      addExpenseItem(icon, label.slice(icon.length + 1) + ' — Demo', amount);
-
-      const pct = Math.max(0, ((BUDGET - spent) / BUDGET) * 100);
-      const zone = getZone(pct);
-      const msgs = toastMessages[zone];
-      showToast(msgs[Math.floor(Math.random() * msgs.length)]);
-    }
+      const remaining = BUDGET - spent;
+      if (remaining < 0) {
+        showToast('💀 BUDGET DEPLETED. Mission failed.', 'danger');
+      } else if (remaining < 3000) {
+        showToast(`⚠️ CRITICAL! Only ₹${remaining.toLocaleString('en-IN')} left!`, 'warning');
+      } else {
+        showToast(`💸 −₹${exp.amount} logged. Stay sharp.`, 'success');
+      }
+    });
 
     updateMeter();
   </script>

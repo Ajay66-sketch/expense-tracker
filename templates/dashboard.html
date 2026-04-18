@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — SurviveTheMonth 🌿</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet"/>
 </head>
 <body class="dashboard-page">
 
@@ -182,23 +183,23 @@
 
     if (p > 60) {
       fill.classList.add('meter-green');
-      badge.textContent  = '🟢 SURVIVING';
-      badge.className    = 'meter-badge badge-green';
+      badge.textContent = '🟢 SURVIVING';
+      badge.className   = 'meter-badge badge-green';
     } else if (p > 30) {
       fill.classList.add('meter-yellow');
       pulse.classList.add('pulse-yellow');
-      badge.textContent  = '🟡 CAUTION';
-      badge.className    = 'meter-badge badge-yellow';
+      badge.textContent = '🟡 CAUTION';
+      badge.className   = 'meter-badge badge-yellow';
     } else if (p > 10) {
       fill.classList.add('meter-red');
       pulse.classList.add('pulse-red');
-      badge.textContent  = '🔴 DANGER ZONE';
-      badge.className    = 'meter-badge badge-red';
+      badge.textContent = '🔴 DANGER ZONE';
+      badge.className   = 'meter-badge badge-red';
     } else {
       fill.classList.add('meter-critical');
       pulse.classList.add('pulse-critical');
-      badge.textContent  = '💀 CRITICAL';
-      badge.className    = 'meter-badge badge-critical';
+      badge.textContent = '💀 CRITICAL';
+      badge.className   = 'meter-badge badge-critical';
     }
   }
 
