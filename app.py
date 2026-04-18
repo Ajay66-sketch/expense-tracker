@@ -6,8 +6,14 @@ from functools import wraps
 import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'jungle-survival-secret-key-change-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///surviveThemonth.db'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'jungle-survival-secret-key-change-in-production')
+
+# Use Postgres in production (DATABASE_URL env var), SQLite locally
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///surviveThemonth.db')
+# Render gives 'postgres://' but SQLAlchemy needs 'postgresql://'
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -261,4 +267,4 @@ with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
