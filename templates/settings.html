@@ -3,66 +3,115 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings — SurviveTheMonth</title>
+  <title>Settings — SurviveTheMonth 🌿</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet"/>
 </head>
-<body>
+<body class="auth-body">
 
-<nav class="navbar">
-  <a href="{{ url_for('dashboard') }}" class="navbar-brand">🌿 SURVIVE<span>THEMONTH</span></a>
-  <div class="nav-links">
-    <a href="{{ url_for('dashboard') }}" class="nav-link">← Dashboard</a>
-    <a href="{{ url_for('logout') }}" class="nav-link">Exit</a>
+  <div class="jungle-bg">
+    <div class="leaf leaf-1">🌿</div>
+    <div class="leaf leaf-3">🍃</div>
+    <div class="leaf leaf-5">🌿</div>
   </div>
-</nav>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-  <div class="flash-container">
-    {% for category, message in messages %}
-      <div class="flash flash-{{ category }}">{{ message }}</div>
-    {% endfor %}
-  </div>
-  {% endif %}
-{% endwith %}
+  <nav class="nav">
+    <a href="{{ url_for('dashboard') }}" class="nav-logo">🌿 SurviveTheMonth</a>
+    <div class="nav-links">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">← Dashboard</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-ghost">🚪 Exit</a>
+    </div>
+  </nav>
 
-<div class="settings-wrap">
-  <h2 style="color:var(--jungle-glow); margin-bottom:1.5rem; letter-spacing:0.1em;">⚙ SETTINGS</h2>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div style="max-width:480px; margin:1rem auto; padding:0 1rem;">
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
 
-  <div class="card">
-    <div class="section-title">Survivor Profile</div>
-    <div style="margin-bottom:1.25rem;">
-      <div class="form-label">Survivor ID</div>
-      <div class="mono" style="color:var(--text-primary); font-size:1rem;">{{ user.username }}</div>
+  <div class="auth-wrapper" style="max-width:480px; padding-top:2rem;">
+
+    <!-- PROFILE CARD -->
+    <div class="auth-card" style="margin-bottom:1.25rem;">
+      <div class="auth-emblem">⚙️</div>
+      <h1 class="auth-title">Base Camp Settings</h1>
+      <p class="auth-sub">Adjust your survival parameters.</p>
+
+      <div style="background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius); padding:1rem 1.25rem; margin-bottom:1.5rem;">
+        <div class="field-label" style="margin-bottom:0.4rem;">🧑 Survivor Identity</div>
+        <div style="font-family:var(--font-display); font-size:1.6rem; letter-spacing:0.05em; color:var(--green);">
+          {{ user.username }}
+        </div>
+      </div>
+
+      <!-- BUDGET FORM -->
+      <form method="POST" action="{{ url_for('settings') }}" style="display:flex; flex-direction:column; gap:1rem;">
+        <div class="field-group">
+          <label class="field-label" for="monthly_budget">💰 Monthly Survival Budget (₹)</label>
+          <div class="input-prefix-wrap">
+            <span class="input-prefix">₹</span>
+            <input
+              type="number"
+              id="monthly_budget"
+              name="monthly_budget"
+              class="field-input input-with-prefix"
+              value="{{ user.monthly_budget|int }}"
+              min="1"
+              step="100"
+              required
+            >
+          </div>
+        </div>
+
+        <!-- LIVE METER PREVIEW -->
+        <div class="live-meter-preview">
+          <div class="meter-label-row">
+            <span class="meter-label-text">NEW SURVIVAL METER</span>
+            <span class="meter-label-pct" id="settings-pct">100%</span>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill" id="settings-fill" style="width:100%; background:var(--green);"></div>
+            <div class="meter-scanline"></div>
+          </div>
+          <div class="meter-status">
+            <span id="settings-budget-display">Current: ₹{{ user.monthly_budget|int }}</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-lg btn-primary btn-full">💾 Save Changes</button>
+      </form>
     </div>
 
-    <div class="divider"></div>
+    <!-- DANGER ZONE -->
+    <div class="auth-card" style="border-color: rgba(239,68,68,0.3);">
+      <div class="field-label" style="color:var(--red); margin-bottom:0.75rem;">⚠️ DANGER ZONE</div>
+      <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:1.25rem; line-height:1.5;">
+        Ready to abandon the jungle? Your data will remain safe until you return.
+      </p>
+      <a href="{{ url_for('logout') }}" class="btn btn-danger btn-full">🚪 Leave the Jungle</a>
+    </div>
 
-    <div class="section-title" style="margin-top:1.25rem;">Monthly Budget</div>
-    <form method="POST" action="{{ url_for('settings') }}">
-      <div class="form-group">
-        <label class="form-label" for="monthly_budget">Budget (₹)</label>
-        <input
-          type="number"
-          id="monthly_budget"
-          name="monthly_budget"
-          class="form-control"
-          value="{{ user.monthly_budget|int }}"
-          min="1"
-          step="100"
-          required
-        >
-      </div>
-      <button type="submit" class="btn btn-primary">💾 Save Budget</button>
-    </form>
   </div>
 
-  <div class="card" style="margin-top:1.5rem;">
-    <div class="section-title">Danger Zone</div>
-    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">Ready to abandon the jungle?</p>
-    <a href="{{ url_for('logout') }}" class="btn btn-danger">🚪 Log Out</a>
-  </div>
-</div>
+  <script>
+    const input = document.getElementById('monthly_budget');
+    const fill  = document.getElementById('settings-fill');
+    const pct   = document.getElementById('settings-pct');
+    const label = document.getElementById('settings-budget-display');
+
+    input.addEventListener('input', () => {
+      const val = parseFloat(input.value);
+      if (!val || val <= 0) return;
+      fill.style.width      = '100%';
+      fill.style.background = 'var(--green)';
+      pct.textContent       = '100%';
+      label.textContent     = `New budget: ₹${val.toLocaleString('en-IN')}`;
+    });
+  </script>
 
 </body>
 </html>
