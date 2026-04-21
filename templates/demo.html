@@ -33,22 +33,22 @@
 
       <div class="demo-budget-display">
         <span class="demo-budget-label">BUDGET</span>
-        <span class="demo-budget-val" id="demo-budget-val">₹15,000</span>
+        <span class="demo-budget-val" id="demo-budget-val">₹30,000</span>
       </div>
 
       <!-- BIG METER -->
       <div class="big-meter-wrap">
         <div class="meter-label-row">
           <span class="meter-label-text">💚 SURVIVAL STATUS</span>
-          <span class="meter-label-pct" id="demo-pct">87%</span>
+          <span class="meter-label-pct" id="demo-pct">94%</span>
         </div>
         <div class="meter-track big-track">
-          <div class="meter-fill big-fill" id="demo-fill" style="width:87%"></div>
+          <div class="meter-fill big-fill" id="demo-fill" style="width:94%"></div>
           <div class="meter-scanline"></div>
         </div>
         <div class="meter-status">
           <span id="demo-spent-label">₹1,950 spent</span>
-          <span id="demo-remaining-label">₹13,050 left</span>
+          <span id="demo-remaining-label">₹28,050 left</span>
         </div>
       </div>
 
@@ -110,32 +110,45 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const BUDGET = 15000;
+    const BUDGET = 30000;
     const sampleExpenses = [
-      { icon: '🎮', name: 'Gaming — Distraction Tax',   amount: 649  },
-      { icon: '🛒', name: 'Groceries — Ration Supply',  amount: 1200 },
+      { icon: '🎮', name: 'Gaming — Distraction Tax',   amount: 1649 },
+      { icon: '🛒', name: 'Groceries — Ration Supply',  amount: 2200 },
       { icon: '🎬', name: 'Netflix — Morale Booster',   amount: 649  },
-      { icon: '💈', name: 'Haircut — Jungle Grooming',  amount: 200  },
-      { icon: '🍺', name: 'Beer — Liquid Courage',      amount: 500  },
-      { icon: '🚕', name: 'Cab — Emergency Extraction', amount: 280  },
-      { icon: '💊', name: 'Medicine — Survival Kit',    amount: 350  },
-      { icon: '📚', name: 'Books — Intel Gathering',    amount: 450  },
+      { icon: '💈', name: 'Haircut — Jungle Grooming',  amount: 400  },
+      { icon: '🍺', name: 'Beer — Liquid Courage',      amount: 800  },
+      { icon: '🚕', name: 'Cab — Emergency Extraction', amount: 580  },
+      { icon: '💊', name: 'Medicine — Survival Kit',    amount: 750  },
+      { icon: '📚', name: 'Books — Intel Gathering',    amount: 950  },
+      { icon: '🍕', name: 'Pizza — Emergency Ration',   amount: 1200 },
+      { icon: '✈️', name: 'Travel — Jungle Escape',     amount: 4500 },
+      { icon: '👟', name: 'Shoes — Field Gear',         amount: 2999 },
+      { icon: '🎵', name: 'Spotify — Jungle Soundtrack',amount: 119  },
     ];
 
     let spent = 1950;
     let txnCount = 3;
     let expIdx = 0;
+    let missionFailed = false;
+
+    // Calculate real days left in current month
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const daysLeft = daysInMonth - now.getDate();
+    document.getElementById('demo-days').textContent = daysLeft;
 
     function updateMeter() {
-      const pct = Math.max(0, Math.round(((BUDGET - spent) / BUDGET) * 100));
-      const fill = document.getElementById('demo-fill');
+      const remaining = BUDGET - spent;
+      const pct = Math.max(0, Math.round((remaining / BUDGET) * 100));
+      const fill  = document.getElementById('demo-fill');
       const pctEl = document.getElementById('demo-pct');
+
       fill.style.width = pct + '%';
       pctEl.textContent = pct + '%';
 
       if (pct > 60) {
         fill.style.background = 'var(--green)';
-        fill.classList.remove('meter-critical','meter-warn');
+        fill.classList.remove('meter-critical', 'meter-warn');
       } else if (pct > 30) {
         fill.style.background = 'var(--yellow)';
         fill.classList.add('meter-warn');
@@ -147,9 +160,12 @@
       }
 
       document.getElementById('demo-spent-label').textContent     = `₹${spent.toLocaleString('en-IN')} spent`;
-      document.getElementById('demo-remaining-label').textContent = `₹${(BUDGET-spent).toLocaleString('en-IN')} left`;
+      document.getElementById('demo-remaining-label').textContent = `₹${Math.max(0, remaining).toLocaleString('en-IN')} left`;
       document.getElementById('demo-txn-count').textContent       = txnCount;
-      document.getElementById('demo-daily-burn').textContent      = `₹${Math.round(spent/15)}`;
+
+      // Real avg/day based on days elapsed
+      const daysElapsed = now.getDate();
+      document.getElementById('demo-daily-burn').textContent = `₹${Math.round(spent / daysElapsed).toLocaleString('en-IN')}`;
     }
 
     function showToast(msg, type='success') {
@@ -160,12 +176,48 @@
     }
 
     function levelClass(amount) {
-      if (amount >= 800) return 'expense-danger';
-      if (amount >= 300) return 'expense-warning';
+      if (amount >= 1500) return 'expense-danger';
+      if (amount >= 500)  return 'expense-warning';
       return 'expense-safe';
     }
 
+    function showMissionFailed() {
+      const panel = document.querySelector('.demo-log-panel');
+      panel.innerHTML = `
+        <div style="
+          background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05));
+          border: 2px solid var(--red);
+          border-radius: var(--radius-lg);
+          padding: 3rem 2rem;
+          text-align: center;
+          animation: slideIn 0.4s ease;
+        ">
+          <div style="font-size:4rem; margin-bottom:1rem;">💀</div>
+          <div style="font-family:var(--font-display); font-size:3rem; color:var(--red); letter-spacing:0.05em; margin-bottom:0.5rem;">MISSION FAILED</div>
+          <div style="font-family:var(--font-mono); font-size:0.85rem; color:var(--text-muted); margin-bottom:2rem; letter-spacing:0.08em;">
+            BUDGET DEPLETED · ₹${spent.toLocaleString('en-IN')} SPENT · ${txnCount} EXPENSES
+          </div>
+          <p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:2rem; line-height:1.6;">
+            You burned through ₹${BUDGET.toLocaleString('en-IN')} before the month ended.<br/>
+            Think you can do better with real money on the line?
+          </p>
+          <a href="/register" class="btn btn-lg btn-danger btn-pulse btn-full" style="margin-bottom:1rem;">🌿 Try For Real</a>
+          <button onclick="resetDemo()" class="btn btn-lg btn-outline-green btn-full">🔄 Try Again</button>
+        </div>
+      `;
+    }
+
+    function resetDemo() {
+      spent = 1950;
+      txnCount = 3;
+      expIdx = 0;
+      missionFailed = false;
+      location.reload();
+    }
+
     document.getElementById('log-expense-btn').addEventListener('click', () => {
+      if (missionFailed) return;
+
       const exp = sampleExpenses[expIdx % sampleExpenses.length];
       expIdx++;
       spent += exp.amount;
@@ -181,12 +233,16 @@
       updateMeter();
 
       const remaining = BUDGET - spent;
-      if (remaining < 0) {
+      if (remaining <= 0) {
+        missionFailed = true;
+        setTimeout(showMissionFailed, 800);
         showToast('💀 BUDGET DEPLETED. Mission failed.', 'danger');
-      } else if (remaining < 3000) {
+      } else if (remaining < 5000) {
         showToast(`⚠️ CRITICAL! Only ₹${remaining.toLocaleString('en-IN')} left!`, 'warning');
+      } else if (remaining < 10000) {
+        showToast(`🟡 WARNING! ₹${remaining.toLocaleString('en-IN')} remaining.`, 'warning');
       } else {
-        showToast(`💸 −₹${exp.amount} logged. Stay sharp.`, 'success');
+        showToast(`💸 −₹${exp.amount.toLocaleString('en-IN')} logged. Stay sharp.`, 'success');
       }
     });
 

@@ -49,10 +49,10 @@
       <div class="hero-meter-wrap">
         <div class="meter-label-row">
           <span class="meter-label-text">💰 SURVIVAL BUDGET</span>
-          <span class="meter-label-pct" id="hero-pct">73%</span>
+          <span class="meter-label-pct" id="hero-pct">100%</span>
         </div>
         <div class="meter-track hero-track">
-          <div class="meter-fill hero-fill" id="hero-fill" style="width:73%"></div>
+          <div class="meter-fill hero-fill" id="hero-fill" style="width:100%; background:var(--green);"></div>
           <div class="meter-scanline"></div>
         </div>
         <div class="meter-status">
@@ -131,22 +131,23 @@
   </footer>
 
   <script>
-    // Animate the hero meter on load
+    // Animate the hero meter on load — loops forever to show the tension
     const fill = document.getElementById('hero-fill');
     const pct  = document.getElementById('hero-pct');
-    const values = [100, 91, 86, 73];
+    const values = [100, 91, 86, 73, 58, 41, 73, 86, 100];
     let i = 0;
-    fill.style.width = '100%';
-    pct.textContent = '100%';
-    const iv = setInterval(() => {
-      i++;
-      if (i >= values.length) { clearInterval(iv); return; }
+
+    function animateMeter() {
       fill.style.width = values[i] + '%';
-      pct.textContent = values[i] + '%';
-      fill.style.background = values[i] > 60
-        ? 'var(--green)' : values[i] > 30
-        ? 'var(--yellow)' : 'var(--red)';
-    }, 900);
+      pct.textContent  = values[i] + '%';
+      fill.style.background =
+        values[i] > 60 ? 'var(--green)' :
+        values[i] > 30 ? 'var(--yellow)' : 'var(--red)';
+      i = (i + 1) % values.length;
+    }
+
+    animateMeter();
+    setInterval(animateMeter, 1100);
   </script>
 </body>
 </html>
