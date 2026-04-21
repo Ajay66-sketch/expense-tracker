@@ -123,7 +123,7 @@
 
   </section>
 
-  <!-- ── RIGHT: EXPENSE TABLE ─────────────────────────────── -->
+  <!-- ── RIGHT: CHART + EXPENSE TABLE ────────────────────── -->
   <section class="expenses-section">
     <div class="expenses-header">
       <h3>📋 {{ now.strftime('%B %Y') }} Field Log</h3>
@@ -131,6 +131,29 @@
     </div>
 
     {% if expenses %}
+
+    <!-- CATEGORY BREAKDOWN CHART -->
+    {% set cat_totals = {} %}
+    {% for expense in expenses %}
+      {% if expense.category in cat_totals %}
+        {% set _ = cat_totals.update({expense.category: cat_totals[expense.category] + expense.amount}) %}
+      {% else %}
+        {% set _ = cat_totals.update({expense.category: expense.amount}) %}
+      {% endif %}
+    {% endfor %}
+
+    <div class="chart-card">
+      <div class="chart-header">
+        <span class="chart-title">📊 Spending Breakdown</span>
+        <span class="chart-total">₹{{ "{:,.0f}".format(total_spent) }} total</span>
+      </div>
+      <div class="chart-body">
+        <div class="chart-canvas-wrap">
+          <canvas id="categoryChart"></canvas>
+        </div>
+        <div class="chart-legend" id="chartLegend"></div>
+      </div>
+    </div>
     <div class="expense-table-wrap">
       <table class="expense-table">
         <thead>
@@ -170,6 +193,7 @@
 
 </div><!-- /dashboard-layout -->
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
   const pct = {{ survival_pct }};
 
@@ -204,6 +228,68 @@
   }
 
   applyMeterState(pct);
+
+  // Category chart
+  const catCanvas = document.getElementById('categoryChart');
+  if (catCanvas) {
+    const catData = {{ cat_totals | tojson }};
+    const labels  = Object.keys(catData);
+    const values  = Object.values(catData);
+    const total   = values.reduce((a, b) => a + b, 0);
+
+    const COLORS = [
+      '#22c55e','#eab308','#ef4444','#3b82f6',
+      '#a855f7','#f97316','#06b6d4','#ec4899'
+    ];
+
+    new Chart(catCanvas, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: COLORS.slice(0, labels.length),
+          borderColor: '#0a0f0a',
+          borderWidth: 3,
+          hoverOffset: 8,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ₹${ctx.parsed.toLocaleString('en-IN')} (${((ctx.parsed/total)*100).toFixed(1)}%)`
+            },
+            backgroundColor: '#111c11',
+            borderColor: '#254025',
+            borderWidth: 1,
+            titleColor: '#e8f5e9',
+            bodyColor: '#7fa87f',
+            padding: 10,
+          }
+        }
+      }
+    });
+
+    // Build custom legend
+    const legend = document.getElementById('chartLegend');
+    labels.forEach((label, i) => {
+      const pctVal = ((values[i] / total) * 100).toFixed(1);
+      const div = document.createElement('div');
+      div.className = 'legend-item';
+      div.innerHTML = `
+        <span class="legend-dot" style="background:${COLORS[i]}"></span>
+        <span class="legend-label">${label}</span>
+        <span class="legend-val">₹${values[i].toLocaleString('en-IN')}</span>
+        <span class="legend-pct">${pctVal}%</span>
+      `;
+      legend.appendChild(div);
+    });
+  }
 </script>
 
 </body>
