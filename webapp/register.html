@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — SurviveTheMonth</title>
+<link rel="icon" href="static/favicon.ico">
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <main class="auth-page">
+    <h1>Register</h1>
+    <div id="flash" class="flash" style="display:none"></div>
+    <form id="register-form" novalidate>
+      <label>Username
+        <input type="text" name="username" required autocomplete="username">
+      </label>
+      <label>Password
+        <input type="password" name="password" required autocomplete="new-password">
+      </label>
+      <label>Confirm Password
+        <input type="password" name="confirm_password" required autocomplete="new-password">
+      </label>
+      <label>Monthly Budget (optional, default ₹30,000)
+        <input type="number" name="monthly_budget" min="1" step="1">
+      </label>
+      <button type="submit" class="btn btn-primary btn-full">Create Account</button>
+    </form>
+    <p><a href="login.html">Already have an account? Log In</a></p>
+  </main>
+  <script src="static/config.js"></script>
+  <script src="static/app.js"></script>
+  <script>
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = new FormData(e.target);
+      if (form.get('password') !== form.get('confirm_password')) {
+        showFlash('Passwords do not match.');
+        return;
+      }
+      try {
+        const data = await api('/api/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            username: form.get('username'),
+            password: form.get('password'),
+            monthly_budget: form.get('monthly_budget') || undefined,
+          }),
+        });
+        setToken(data.token);
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        showFlash(err.message);
+      }
+    });
+  </script>
+</body>
+</html>

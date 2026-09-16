@@ -1,31 +1,32 @@
-from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify, send_from_directory
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+from flask_jwt_extended import (
+    JWTManager, create_access_token, get_jwt_identity, jwt_required
+)
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timezone
-from functools import wraps
+from datetime import datetime, timezone, timedelta
 import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'jungle-survival-secret-key-change-in-production')
 
-# Use Postgres in production (DATABASE_URL env var), SQLite locally
+# ── Config ─────────────────────────────────────────────────
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'dev-secret-change-me')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
+
 database_url = os.environ.get('DATABASE_URL', 'sqlite:///surviveThemonth.db')
-# Render gives 'postgres://' but SQLAlchemy needs 'postgresql://'
 if database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
+# Comma-separated list of allowed frontend origins, e.g.
+# "https://your-app.vercel.app,http://localhost:3000"
+FRONTEND_ORIGINS = os.environ.get('FRONTEND_ORIGINS', 'http://localhost:3000').split(',')
 
-# ── Favicon ────────────────────────────────────────────────
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(
-        os.path.join(app.root_path, 'static'),
-        'favicon.ico',
-        mimetype='image/vnd.microsoft.icon'
-    )
+db = SQLAlchemy(app)
+jwt = JWTManager(app)
+CORS(app, resources={r"/api/*": {"origins": FRONTEND_ORIGINS}}, supports_credentials=False)
 
 CATEGORIES = ['Rations', 'Shelter', 'Tools', 'Medicine', 'Expedition', 'Signal', 'Supplies', 'Other']
 DEFAULT_BUDGET = 30000
@@ -38,6 +39,7 @@ DEMO_EXPENSES = [
     {'id': 5, 'description': 'Fuel & Transit', 'amount': 2100, 'category': 'Expedition', 'date': '2025-07-08'},
 ]
 
+# ── Models ─────────────────────────────────────────────────
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -51,28 +53,26 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def survival_pct(self):
+    def _month_expenses(self):
         now = datetime.now(timezone.utc)
-        month_expenses = Expense.query.filter(
+        return Expense.query.filter(
             Expense.user_id == self.id,
             db.extract('month', Expense.date) == now.month,
             db.extract('year', Expense.date) == now.year
         ).all()
-        total_spent = sum(e.amount for e in month_expenses)
-        if self.monthly_budget <= 0:
-            return 0
-        spent_pct = (total_spent / self.monthly_budget) * 100
-        survival = max(0, 100 - spent_pct)
-        return round(survival, 1)
 
     def current_month_spent(self):
-        now = datetime.now(timezone.utc)
-        month_expenses = Expense.query.filter(
-            Expense.user_id == self.id,
-            db.extract('month', Expense.date) == now.month,
-            db.extract('year', Expense.date) == now.year
-        ).all()
-        return sum(e.amount for e in month_expenses)
+        return sum(e.amount for e in self._month_expenses())
+
+    def survival_pct(self):
+        if self.monthly_budget <= 0:
+            return 0
+        spent_pct = (self.current_month_spent() / self.monthly_budget) * 100
+        return round(max(0, 100 - spent_pct), 1)
+
+    def to_dict(self):
+        return {'id': self.id, 'username': self.username, 'monthly_budget': self.monthly_budget}
+
 
 class Expense(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -82,189 +82,184 @@ class Expense(db.Model):
     date = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-def login_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'user_id' not in session:
-            flash('You need to log in first.', 'warning')
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'description': self.description,
+            'amount': self.amount,
+            'category': self.category,
+            'date': self.date.isoformat() if self.date else None,
+        }
 
-@app.route('/')
-def index():
-    return render_template('landing.html')
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if 'user_id' in session:
-        return redirect(url_for('dashboard'))
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-        user = User.query.filter_by(username=username).first()
-        if user and user.check_password(password):
-            session['user_id'] = user.id
-            flash(f'Welcome back, {user.username}! The jungle awaits.', 'success')
-            return redirect(url_for('dashboard'))
-        flash('Invalid credentials. Try again, survivor.', 'danger')
-    return render_template('login.html')
+def current_user():
+    return db.session.get(User, int(get_jwt_identity()))
 
-@app.route('/register', methods=['GET', 'POST'])
+
+# ── Auth ───────────────────────────────────────────────────
+@app.route('/api/register', methods=['POST'])
 def register():
-    if 'user_id' in session:
-        return redirect(url_for('dashboard'))
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-        confirm = request.form.get('confirm_password', '')
-        budget_str = request.form.get('monthly_budget', '').strip()
+    data = request.get_json(silent=True) or {}
+    username = (data.get('username') or '').strip()
+    password = data.get('password') or ''
+    budget_raw = data.get('monthly_budget')
 
-        if not username or not password:
-            flash('Username and password are required.', 'danger')
-            return render_template('register.html')
-        if password != confirm:
-            flash('Passwords do not match.', 'danger')
-            return render_template('register.html')
-        if User.query.filter_by(username=username).first():
-            flash('Username already taken. Choose another.', 'danger')
-            return render_template('register.html')
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required.'}), 400
+    if User.query.filter_by(username=username).first():
+        return jsonify({'error': 'Username already taken.'}), 409
 
-        budget = DEFAULT_BUDGET
-        if budget_str:
-            try:
-                budget = float(budget_str)
-                if budget <= 0:
-                    raise ValueError
-            except ValueError:
-                flash('Invalid budget amount.', 'danger')
-                return render_template('register.html')
+    budget = DEFAULT_BUDGET
+    if budget_raw not in (None, ''):
+        try:
+            budget = float(budget_raw)
+            if budget <= 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Invalid budget amount.'}), 400
 
-        user = User(username=username, monthly_budget=budget)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
-        session['user_id'] = user.id
-        flash(f'Welcome to the jungle, {username}! Survive the month.', 'success')
-        return redirect(url_for('dashboard'))
-    return render_template('register.html')
+    user = User(username=username, monthly_budget=budget)
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
 
-@app.route('/demo')
+    token = create_access_token(identity=str(user.id))
+    return jsonify({'token': token, 'user': user.to_dict()}), 201
+
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json(silent=True) or {}
+    username = (data.get('username') or '').strip()
+    password = data.get('password') or ''
+
+    user = User.query.filter_by(username=username).first()
+    if not user or not user.check_password(password):
+        return jsonify({'error': 'Invalid credentials.'}), 401
+
+    token = create_access_token(identity=str(user.id))
+    return jsonify({'token': token, 'user': user.to_dict()})
+
+
+@app.route('/api/me', methods=['GET'])
+@jwt_required()
+def me():
+    user = current_user()
+    return jsonify(user.to_dict())
+
+
+# ── Demo (public) ──────────────────────────────────────────
+@app.route('/api/demo', methods=['GET'])
 def demo():
     total_spent = sum(e['amount'] for e in DEMO_EXPENSES)
     budget = DEFAULT_BUDGET
     survival_pct = max(0, round(100 - (total_spent / budget * 100), 1))
-    return render_template('demo.html',
-                           expenses=DEMO_EXPENSES,
-                           total_spent=total_spent,
-                           budget=budget,
-                           survival_pct=survival_pct,
-                           categories=CATEGORIES)
+    return jsonify({
+        'expenses': DEMO_EXPENSES,
+        'total_spent': total_spent,
+        'budget': budget,
+        'survival_pct': survival_pct,
+        'categories': CATEGORIES,
+    })
 
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    user = db.session.get(User, session['user_id'])
-    now = datetime.now(timezone.utc)
-    expenses = Expense.query.filter(
-        Expense.user_id == user.id,
-        db.extract('month', Expense.date) == now.month,
-        db.extract('year', Expense.date) == now.year
-    ).order_by(Expense.date.desc()).all()
-    total_spent = sum(e.amount for e in expenses)
-    survival_pct = user.survival_pct()
-    return render_template('dashboard.html',
-                           user=user,
-                           expenses=expenses,
-                           total_spent=total_spent,
-                           survival_pct=survival_pct,
-                           categories=CATEGORIES,
-                           now=now)
 
-@app.route('/add', methods=['POST'])
-@login_required
+@app.route('/api/categories', methods=['GET'])
+def categories():
+    return jsonify({'categories': CATEGORIES})
+
+
+# ── Expenses (protected) ───────────────────────────────────
+@app.route('/api/expenses', methods=['GET'])
+@jwt_required()
+def list_expenses():
+    user = current_user()
+    expenses = sorted(user._month_expenses(), key=lambda e: e.date, reverse=True)
+    return jsonify({
+        'expenses': [e.to_dict() for e in expenses],
+        'total_spent': user.current_month_spent(),
+        'survival_pct': user.survival_pct(),
+        'budget': user.monthly_budget,
+        'categories': CATEGORIES,
+    })
+
+
+@app.route('/api/expenses', methods=['POST'])
+@jwt_required()
 def add_expense():
-    description = request.form.get('description', '').strip()
-    amount_str = request.form.get('amount', '').strip()
-    category = request.form.get('category', 'Other')
+    data = request.get_json(silent=True) or {}
+    description = (data.get('description') or '').strip()
+    amount_raw = data.get('amount')
+    category = data.get('category', 'Other')
 
-    if not description or not amount_str:
-        flash('Description and amount are required.', 'danger')
-        return redirect(url_for('dashboard'))
+    if not description or amount_raw in (None, ''):
+        return jsonify({'error': 'Description and amount are required.'}), 400
     try:
-        amount = float(amount_str)
+        amount = float(amount_raw)
         if amount <= 0:
             raise ValueError
-    except ValueError:
-        flash('Invalid amount entered.', 'danger')
-        return redirect(url_for('dashboard'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid amount.'}), 400
 
     if category not in CATEGORIES:
         category = 'Other'
 
-    expense = Expense(
-        description=description,
-        amount=amount,
-        category=category,
-        user_id=session['user_id']
-    )
+    expense = Expense(description=description, amount=amount, category=category,
+                       user_id=int(get_jwt_identity()))
     db.session.add(expense)
     db.session.commit()
-    flash(f'Expense logged: {description} (₹{amount:,.0f})', 'success')
-    return redirect(url_for('dashboard'))
+    return jsonify(expense.to_dict()), 201
 
-@app.route('/delete/<int:expense_id>', methods=['POST'])
-@login_required
+
+@app.route('/api/expenses/<int:expense_id>', methods=['DELETE'])
+@jwt_required()
 def delete_expense(expense_id):
-    expense = Expense.query.filter_by(id=expense_id, user_id=session['user_id']).first()
+    expense = Expense.query.filter_by(id=expense_id, user_id=int(get_jwt_identity())).first()
     if not expense:
-        flash('Expense not found.', 'danger')
-        return redirect(url_for('dashboard'))
+        return jsonify({'error': 'Expense not found.'}), 404
     db.session.delete(expense)
     db.session.commit()
-    flash('Expense removed from the log.', 'success')
-    return redirect(url_for('dashboard'))
+    return jsonify({'ok': True})
 
-@app.route('/settings', methods=['GET', 'POST'])
-@login_required
-def settings():
-    user = db.session.get(User, session['user_id'])
-    if request.method == 'POST':
-        budget_str = request.form.get('monthly_budget', '').strip()
-        try:
-            budget = float(budget_str)
-            if budget <= 0:
-                raise ValueError
-            user.monthly_budget = budget
-            db.session.commit()
-            flash('Budget updated. Survive harder.', 'success')
-        except ValueError:
-            flash('Invalid budget amount.', 'danger')
-        return redirect(url_for('settings'))
-    return render_template('settings.html', user=user)
 
-@app.route('/logout')
-@login_required
-def logout():
-    session.pop('user_id', None)
-    flash('You have left the jungle. See you next month.', 'info')
-    return redirect(url_for('login'))
+# ── Settings ───────────────────────────────────────────────
+@app.route('/api/settings', methods=['PUT'])
+@jwt_required()
+def update_settings():
+    data = request.get_json(silent=True) or {}
+    try:
+        budget = float(data.get('monthly_budget'))
+        if budget <= 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Invalid budget amount.'}), 400
 
-@app.route('/api/meter')
-@login_required
+    user = current_user()
+    user.monthly_budget = budget
+    db.session.commit()
+    return jsonify(user.to_dict())
+
+
+# ── Meter ──────────────────────────────────────────────────
+@app.route('/api/meter', methods=['GET'])
+@jwt_required()
 def api_meter():
-    user = db.session.get(User, session['user_id'])
-    pct = user.survival_pct()
+    user = current_user()
     spent = user.current_month_spent()
     return jsonify({
-        'survival_pct': pct,
+        'survival_pct': user.survival_pct(),
         'spent': spent,
         'budget': user.monthly_budget,
-        'remaining': user.monthly_budget - spent
+        'remaining': user.monthly_budget - spent,
     })
+
+
+@app.route('/api/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'ok'})
+
 
 with app.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=False, port=int(os.environ.get('PORT', 5000)))

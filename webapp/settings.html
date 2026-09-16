@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — SurviveTheMonth</title>
+<link rel="icon" href="static/favicon.ico">
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <main class="auth-page">
+    <nav class="topnav">
+      <span class="brand">SurviveTheMonth</span>
+      <a href="dashboard.html">Back to Dashboard</a>
+    </nav>
+    <h1>Settings</h1>
+    <div id="flash" class="flash" style="display:none"></div>
+    <form id="settings-form" novalidate>
+      <label>Monthly Budget
+        <input type="number" name="monthly_budget" id="budget-input" min="1" step="1" required>
+      </label>
+      <button type="submit" class="btn btn-primary btn-full">Save</button>
+    </form>
+  </main>
+  <script src="static/config.js"></script>
+  <script src="static/app.js"></script>
+  <script>
+    requireAuth();
+
+    async function loadSettings() {
+      try {
+        const user = await api('/api/me');
+        document.getElementById('budget-input').value = user.monthly_budget;
+      } catch (err) {
+        showFlash(err.message);
+      }
+    }
+
+    document.getElementById('settings-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = new FormData(e.target);
+      try {
+        await api('/api/settings', {
+          method: 'PUT',
+          body: JSON.stringify({ monthly_budget: form.get('monthly_budget') }),
+        });
+        showFlash('Budget updated.', 'success');
+      } catch (err) {
+        showFlash(err.message);
+      }
+    });
+
+    loadSettings();
+  </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: survivethemonth-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    envVars:
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: FRONTEND_ORIGINS
+        value: http://localhost:3000
+      - key: DATABASE_URL
+        sync: false

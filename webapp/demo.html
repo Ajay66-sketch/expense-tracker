@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo — SurviveTheMonth</title>
+<link rel="icon" href="static/favicon.ico">
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <main class="dashboard">
+    <nav class="topnav">
+      <span class="brand">SurviveTheMonth (Demo)</span>
+      <a href="index.html">Home</a>
+    </nav>
+    <div id="flash" class="flash" style="display:none"></div>
+    <section class="meter-card">
+      <h2>Survival: <span id="survival-pct">--</span>%</h2>
+      <p>Spent <span id="total-spent">--</span> of <span id="budget">--</span> this month</p>
+    </section>
+    <section class="expense-list-card">
+      <h3>Sample Log</h3>
+      <ul id="expense-list"></ul>
+    </section>
+    <p><a class="btn btn-primary" href="register.html">Create your own account</a></p>
+  </main>
+  <script src="static/config.js"></script>
+  <script src="static/app.js"></script>
+  <script>
+    (async () => {
+      try {
+        const data = await api('/api/demo');
+        document.getElementById('total-spent').textContent = money(data.total_spent);
+        document.getElementById('budget').textContent = money(data.budget);
+        document.getElementById('survival-pct').textContent = data.survival_pct;
+        document.getElementById('expense-list').innerHTML = data.expenses.map(e => `
+          <li>${e.description} — ${money(e.amount)} <em>(${e.category})</em></li>`).join('');
+      } catch (err) {
+        showFlash(err.message);
+      }
+    })();
+  </script>
+</body>
+</html>

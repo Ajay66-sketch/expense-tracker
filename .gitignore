@@ -1,7 +1,11 @@
-survive.db
+venv/
 __pycache__/
 *.pyc
-.env
 *.egg-info/
 dist/
 .DS_Store
+.env
+*.db
+instance/
+node_modules/
+.vercel/
